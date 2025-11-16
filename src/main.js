@@ -1,3 +1,4 @@
+import './main.css';
 import { initTimerDisplay } from './ui/time.js';
 import { initDiscardButton, initExportButton } from './ui/menu.js';
 import { initMetricsDisplay } from './initMetricsDisplay.js';
