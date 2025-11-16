@@ -2,7 +2,7 @@ import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-    base: '/bike-power-tracker/',
+    base: './',
     build: {
         outDir: 'dist',
         assetsDir: 'assets',
@@ -14,12 +14,12 @@ export default defineConfig({
             injectRegister: 'script',
             includeAssets: ['favicon.ico', 'assets/**/*'],
             manifest: {
-                id: '/bike-power-tracker/',
+                id: './',
                 name: 'Bike Power Tracker',
                 short_name: 'Bike Power Tracker',
                 description: 'Track your spin bike: power, cadence, and heart rate with bluetooth sensors',
-                start_url: '/bike-power-tracker/',
-                scope: '/bike-power-tracker/',
+                start_url: './',
+                scope: './',
                 display: 'standalone',
                 background_color: '#1a1a1a',
                 theme_color: '#2196F3',
