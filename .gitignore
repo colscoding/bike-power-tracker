@@ -1,0 +1,51 @@
+# Node
+node_modules/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+.dist/
+dist/
+build/
+
+# Vite
+.vite/
+
+# Playwright
+.playwright/
+playwright-report/
+test-results/
+
+# Logs and coverage
+logs/
+*.log
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.*.local
+
+# Editors
+.vscode/
+.idea/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc temporary
+*.tmp
+*.temp
+.tmp/
+
+# Lockfiles (if you prefer to ignore lockfiles, uncomment)
+# package-lock.json
+# yarn.lock
+
+
+# vite
+dev-dist
