@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>⚡🚴❤️ Bike Power Tracker 🐱🔥</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2196F3">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bike Power Tracker">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="assets/icons/icon-152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/icon-180.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="assets/icons/icon-192.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="./assets/favicon-Baj25luf.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/icon-72.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/icon-72.png">
+
+    <link rel='stylesheet' type='text/css' media='screen' href='data:text/css;base64,LyogUmVzZXQgKi8KKiB7CiAgICBtYXJnaW46IDA7CiAgICBwYWRkaW5nOiAwOwogICAgYm94LXNpemluZzogYm9yZGVyLWJveDsKICAgIGZvbnQtZmFtaWx5OiBzYW5zLXNlcmlmOwp9CgovKiBCb2R5IGxheW91dCAqLwpib2R5IHsKICAgIGhlaWdodDogMTAwdmg7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgIG92ZXJmbG93OiBoaWRkZW47Cn0KCi8qIFRvcCBiYXIgLSBmaXhlZCBoZWFkZXIgKi8KaGVhZGVyIHsKICAgIHBvc2l0aW9uOiBmaXhlZDsKICAgIHRvcDogMDsKICAgIGxlZnQ6IDA7CiAgICByaWdodDogMDsKICAgIGhlaWdodDogNjBweDsKICAgIGJhY2tncm91bmQ6IHdoaXRlOwogICAgYm94LXNoYWRvdzogMCAycHggOHB4IHJnYmEoMCwgMCwgMCwgMC4xKTsKICAgIGRpc3BsYXk6IGZsZXg7CiAgICBhbGlnbi1pdGVtczogY2VudGVyOwogICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICBwYWRkaW5nOiAwIDIwcHg7CiAgICB6LWluZGV4OiAxMDA7Cn0KCi8qIFRvcCBiYXIgY29udHJvbHMgY29udGFpbmVyICovCiN0b3BCYXJDb250cm9scyB7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgYWxpZ24taXRlbXM6IGNlbnRlcjsKICAgIGdhcDogMTJweDsKfQoKLyogU3RhcnQvc3RvcCwgcmVzZXQsIGFuZCBleHBvcnQgYnV0dG9ucyBpbiB0b3AgYmFyICovCiNzdGFydFN0b3AsCiNyZXNldEJ1dHRvbiwKI2V4cG9ydEJ1dHRvbiB7CiAgICBwYWRkaW5nOiA4cHggMTJweDsKICAgIGZvbnQtc2l6ZTogMjBweDsKICAgIGJvcmRlcjogbm9uZTsKICAgIGJvcmRlci1yYWRpdXM6IDZweDsKICAgIGJhY2tncm91bmQtY29sb3I6IHRyYW5zcGFyZW50OwogICAgY3Vyc29yOiBwb2ludGVyOwogICAgdHJhbnNpdGlvbjogYmFja2dyb3VuZC1jb2xvciAwLjE1cyBlYXNlOwogICAgbGluZS1oZWlnaHQ6IDE7Cn0KCiNyZXNldEJ1dHRvbiwKI2V4cG9ydEJ1dHRvbiB7CiAgICBmb250LXNpemU6IDE0cHg7Cn0KCiNzdGFydFN0b3A6aG92ZXIsCiNyZXNldEJ1dHRvbjpob3ZlciwKI2V4cG9ydEJ1dHRvbjpob3ZlciB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDk2OWRhMTQ7Cn0KCiNzdGFydFN0b3A6YWN0aXZlLAojcmVzZXRCdXR0b246YWN0aXZlLAojZXhwb3J0QnV0dG9uOmFjdGl2ZSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjMDk2OWRhMjY7Cn0KCi8qIEFwcCB0aXRsZSAqLwpoZWFkZXIgaDEgewogICAgZm9udC1zaXplOiAyMHB4OwogICAgZm9udC13ZWlnaHQ6IDYwMDsKICAgIGNvbG9yOiAjMzMzOwp9CgovKiBNYWluIGNvbnRlbnQgYXJlYSAtIGJlbG93IGhlYWRlciAqLwptYWluIHsKICAgIG1hcmdpbi10b3A6IDYwcHg7CiAgICBmbGV4OiAxOwogICAgZGlzcGxheTogZmxleDsKICAgIGFsaWduLWl0ZW1zOiBjZW50ZXI7CiAgICBqdXN0aWZ5LWNvbnRlbnQ6IGNlbnRlcjsKICAgIHBhZGRpbmc6IDAgMjBweCAyMHB4IDIwcHg7CiAgICBvdmVyZmxvdzogaGlkZGVuOwogICAgbWluLWhlaWdodDogMDsKfQoKLyogSGFtYnVyZ2VyIG1lbnUgaW4gaGVhZGVyICovCmRldGFpbHMgewogICAgcG9zaXRpb246IGFic29sdXRlOwogICAgbGVmdDogMjBweDsKICAgIGJhY2tncm91bmQ6IHRyYW5zcGFyZW50Owp9CgovKiBIYW1idXJnZXIgaWNvbiAqLwpzdW1tYXJ5IHsKICAgIGZvbnQtc2l6ZTogMjRweDsKICAgIHBhZGRpbmc6IDhweDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIGxpc3Qtc3R5bGU6IG5vbmU7CiAgICB1c2VyLXNlbGVjdDogbm9uZTsKICAgIGNvbG9yOiAjMzMzOwp9CgovKiBSZW1vdmUgZGVmYXVsdCB0cmlhbmdsZSAqLwpzdW1tYXJ5Ojotd2Via2l0LWRldGFpbHMtbWFya2VyIHsKICAgIGRpc3BsYXk6IG5vbmU7Cn0KCi8qIERyb3Bkb3duIG1lbnUgd2hlbiBvcGVuICovCiNjb250cm9scyB7CiAgICBwb3NpdGlvbjogYWJzb2x1dGU7CiAgICB0b3A6IDEwMCU7CiAgICBsZWZ0OiAwOwogICAgbWFyZ2luLXRvcDogOHB4OwogICAgYmFja2dyb3VuZDogd2hpdGU7CiAgICBib3JkZXItcmFkaXVzOiA4cHg7CiAgICBib3gtc2hhZG93OiAwIDRweCAxMnB4IHJnYmEoMCwgMCwgMCwgMC4xNSk7CiAgICBwYWRkaW5nOiA4cHg7CiAgICBkaXNwbGF5OiBmbGV4OwogICAgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsKICAgIGdhcDogNHB4OwogICAgbWluLXdpZHRoOiAxODBweDsKfQoKLyogTWVudSBidXR0b25zICovCiNjb250cm9scyBidXR0b24gewogICAgcGFkZGluZzogOHB4IDEycHg7CiAgICBmb250LXNpemU6IDE0cHg7CiAgICBib3JkZXI6IG5vbmU7CiAgICBib3JkZXItcmFkaXVzOiA2cHg7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiB0cmFuc3BhcmVudDsKICAgIGN1cnNvcjogcG9pbnRlcjsKICAgIHdoaXRlLXNwYWNlOiBub3dyYXA7CiAgICB0ZXh0LWFsaWduOiBsZWZ0OwogICAgdHJhbnNpdGlvbjogYmFja2dyb3VuZC1jb2xvciAwLjE1cyBlYXNlOwogICAgY29sb3I6ICMxZjIzMjg7CiAgICBmb250LXdlaWdodDogNDAwOwp9CgojY29udHJvbHMgYnV0dG9uOmhvdmVyIHsKICAgIGJhY2tncm91bmQtY29sb3I6ICMwOTY5ZGExNDsKfQoKI2NvbnRyb2xzIGJ1dHRvbjphY3RpdmUgewogICAgYmFja2dyb3VuZC1jb2xvcjogIzA5NjlkYTI2Owp9CgovKiBNZXRyaWNzIHRhYmxlICovCiNtZXRyaWNzVGFibGUgewogICAgdGV4dC1hbGlnbjogY2VudGVyOwogICAgd2lkdGg6IDEwMCU7CiAgICBtYXgtaGVpZ2h0OiAxMDAlOwogICAgb3ZlcmZsb3c6IGhpZGRlbjsKICAgIGRpc3BsYXk6IGZsZXg7CiAgICBmbGV4LWRpcmVjdGlvbjogY29sdW1uOwogICAganVzdGlmeS1jb250ZW50OiBjZW50ZXI7CiAgICB0cmFuc2l0aW9uOiBvcGFjaXR5IDAuM3MgZWFzZSwgZmlsdGVyIDAuM3MgZWFzZTsKfQoKLyogUGF1c2VkL3N0b3BwZWQgc3RhdGUgc3R5bGluZyAqLwojbWV0cmljc1RhYmxlLnBhdXNlZCB7CiAgICBvcGFjaXR5OiAwLjU7CiAgICBmaWx0ZXI6IGdyYXlzY2FsZSg1MCUpOwp9CgojbWV0cmljc1RhYmxlIGR0IHsKICAgIGZvbnQtc2l6ZTogbWluKDFlbSwgNHZoKTsKICAgIGNvbG9yOiAjNjY2OwogICAgbWFyZ2luLXRvcDogbWluKDE2cHgsIDJ2aCk7Cn0KCiNtZXRyaWNzVGFibGUgZHQ6Zmlyc3QtY2hpbGQgewogICAgbWFyZ2luLXRvcDogMDsKfQoKI21ldHJpY3NUYWJsZSBkZCB7CiAgICBmb250LXNpemU6IG1pbigxMmVtLCA0NXZ3LCAyMHZoKTsKICAgIGZvbnQtd2VpZ2h0OiBib2xkOwogICAgY29sb3I6ICMzMzM7CiAgICBtYXJnaW4tYm90dG9tOiBtaW4oOHB4LCAxdmgpOwogICAgbGluZS1oZWlnaHQ6IDAuOTsKfQ=='>
+  <script type="module" crossorigin src="./assets/index-C6LZjQ0y.js"></script>
+<link rel="manifest" href="./manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+
+<body>
+    <!-- PWA Install Prompt -->
+    <div id="installPrompt"
+        style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2196F3; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; max-width: 90%; text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px;">Install this app for a better experience!</p>
+        <button id="installButton"
+            style="background: white; color: #2196F3; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 8px; cursor: pointer; font-weight: bold;">Install</button>
+        <button id="dismissInstall"
+            style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Not
+            Now</button>
+    </div>
+
+    <!-- Service Worker Update Notification -->
+    <div id="updateNotification"
+        style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; max-width: 90%; text-align: center;">
+        <p style="margin: 0 0 12px 0; font-size: 14px;">A new version is available!</p>
+        <button id="updateButton"
+            style="background: white; color: #4CAF50; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 8px; cursor: pointer; font-weight: bold;">Update
+            Now</button>
+        <button id="dismissUpdate"
+            style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Later</button>
+    </div>
+
+    <header>
+        <details>
+            <summary>☰</summary>
+            <div id="controls">
+                <button id="connectPower">⚡ Connect Power</button>
+                <button id="connectCadence">🚴 Connect Cadence</button>
+                <button id="connectHeartrate">❤️ Connect Heartrate</button>
+                <button id="exportData">💾 Export Data</button>
+                <button id="discardButton">🗑️ Discard</button>
+                <a href="https://github.com/colscoding/bike-power-tracker" target="_blank" rel="noopener noreferrer"
+                    style="display: block; text-decoration: none;">
+                    <button style="width: 100%;">ℹ️ Homepage</button>
+                </a>
+            </div>
+        </details>
+        <div id="topBarControls">
+            <button id="startStop">▶️</button>
+            <h1 id="time"></h1>
+        </div>
+    </header>
+    <main>
+        <dl id="metricsTable">
+            <dt>Power</dt>
+            <dd id="power"></dd>
+            <dt>Cadence</dt>
+            <dd id="cadence"></dd>
+            <dt>Heart Rate</dt>
+            <dd id="heartrate"></dd>
+        </dl>
+    </main>
+</body>
+
+</html>
