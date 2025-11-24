@@ -83,10 +83,16 @@ function createApp() {
 
             // Store the message as-is (client sends JSON string for workout data)
             // Add message to stream with all fields
-            const messageId = await redisClient.xAdd(streamName, '*', {
+            const messageData = {
                 message: ensureString(message),
                 timestamp: Date.now().toString()
-            });
+            };
+
+            if (author) {
+                messageData.author = ensureString(author);
+            }
+
+            const messageId = await redisClient.xAdd(streamName, '*', messageData);
 
             res.json({
                 success: true,

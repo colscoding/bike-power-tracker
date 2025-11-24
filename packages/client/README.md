@@ -96,6 +96,8 @@ The client is deployed to GitHub Pages:
 
 🚴 **[https://colscoding.github.io/bike-power-tracker/](https://colscoding.github.io/bike-power-tracker/)**
 
+For VPS deployment of the full stack (Client + Service), see the [Deployment Guide](../../docs/DEPLOY.md).
+
 ## License
 
 ISC

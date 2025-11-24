@@ -14,11 +14,22 @@ const powerString = (power) => {
 
 const getTcxTrackpoint = (point) => {
     const timestamp = new Date(point.timestamp).toISOString();
-    const keyToString = { heartrate: hrString, cadence: cadenceString, power: powerString };
-    const parts = Object.entries(keyToString).map(([key, toStringFn]) => {
-        const value = point[key];
-        return value !== null ? toStringFn(value) : '';
-    }).filter(part => part !== '');
+
+    // Order matters in TCX schema: Time, Position, Altitude, Distance, HeartRate, Cadence, Extensions
+    const parts = [];
+
+    if (point.heartrate !== null) {
+        parts.push(hrString(point.heartrate));
+    }
+
+    if (point.cadence !== null) {
+        parts.push(cadenceString(point.cadence));
+    }
+
+    if (point.power !== null) {
+        parts.push(powerString(point.power));
+    }
+
     const tcx = `
 <Trackpoint>
     <Time>${timestamp}</Time>

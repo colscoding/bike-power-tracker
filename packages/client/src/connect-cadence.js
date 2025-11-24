@@ -50,9 +50,9 @@ export const connectCadenceBluetooth = async () => {
 
             let offset = 1; // Start after flags byte
 
-            // If wheel revolution data is present (bit 0), skip it (4 bytes)
+            // If wheel revolution data is present (bit 0), skip it (6 bytes: 4 for revs + 2 for time)
             if (flags & 0x01) {
-                offset = 5;
+                offset = 7;
             }
 
             const crankRevs = value.getUint16(offset, true);

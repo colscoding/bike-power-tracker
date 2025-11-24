@@ -87,8 +87,14 @@ pnpm test
 # Run client tests only
 pnpm test:client
 
-# Run E2E tests
-pnpm test:e2e
+# Run service tests only
+pnpm --filter service test
+
+# Run integration tests
+pnpm test:integration
+
+# Run E2E tests (Client)
+pnpm --filter client test:e2e
 ```
 
 ## Live Streaming

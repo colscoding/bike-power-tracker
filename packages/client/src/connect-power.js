@@ -40,7 +40,7 @@ export const connectPowerBluetooth = async () => {
     characteristic.addEventListener('characteristicvaluechanged', (event) => {
         const value = event.target.value;
         // Cycling power measurement format: bytes 2-3 contain instantaneous power (little-endian)
-        const power = value.getUint16(2, true);
+        const power = value.getInt16(2, true);
         const entry = { timestamp: Date.now(), value: power };
         listeners.forEach(listener => listener(entry));
     });
