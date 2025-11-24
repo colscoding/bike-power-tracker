@@ -1,0 +1,11 @@
+{
+    "name": "test-integration",
+    "version": "1.0.0",
+    "description": "End-to-end integration tests for Bike Power Tracker",
+    "scripts": {
+        "test": "playwright test"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0"
+    }
+}
