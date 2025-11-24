@@ -37,8 +37,6 @@ RUN npm ci --only=production && \
 
 # Copy application files from builder
 COPY --from=builder --chown=nodejs:nodejs /app/server.js ./
-COPY --from=builder --chown=nodejs:nodejs /app/public ./public
-COPY --from=builder --chown=nodejs:nodejs /app/scripts ./scripts
 
 # Switch to non-root user
 USER nodejs

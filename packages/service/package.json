@@ -16,13 +16,7 @@
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check .",
-        "docker:redis": "docker run -p 6379:6379 redis:latest",
-        "docker:build": "./build.sh",
-        "docker:up": "docker-compose up",
-        "docker:up:dev": "docker-compose --profile dev up",
-        "docker:down": "docker-compose down",
-        "prepare": "command -v husky >/dev/null 2>&1 && husky install || true"
+        "format:check": "prettier --check ."
     },
     "keywords": [
         "redis",
@@ -50,7 +44,6 @@
         "supertest": "^6.3.3",
         "nyc": "^15.1.0",
         "eslint": "^8.55.0",
-        "prettier": "^3.1.1",
-        "husky": "^8.0.3"
+        "prettier": "^3.1.1"
     }
 }

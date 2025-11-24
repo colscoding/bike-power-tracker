@@ -36,7 +36,6 @@ function createApp() {
     });
 
     app.use(express.json());
-    app.use(express.static('public'));
 
     // Create a new stream
     app.post('/api/streams/create', async (req, res) => {
@@ -214,11 +213,6 @@ function createApp() {
         req.on('close', () => {
             console.log(`Client disconnected from stream: ${streamName}`);
         });
-    });
-
-    // Serve the main page
-    app.get('/', (req, res) => {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 
     return app;
