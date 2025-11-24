@@ -5,18 +5,26 @@ const { ensureString } = require('./utils');
 const PORT = process.env.PORT || 3000;
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
 // Factory function to create the app (for testing)
 function createApp() {
     const app = express();
 
     // Create Redis client
-    const redisClient = redis.createClient({
+    const redisConfig = {
         socket: {
             host: REDIS_HOST,
             port: REDIS_PORT
         }
-    });
+    };
+
+    if (REDIS_PASSWORD) {
+        redisConfig.password = REDIS_PASSWORD;
+    }
+
+    const redisClient = redis.createClient(redisConfig);
 
     redisClient.on('error', (err) => console.error('Redis Client Error', err));
     redisClient.on('connect', () => console.log('Connected to Redis'));
@@ -26,7 +34,7 @@ function createApp() {
 
     // CORS middleware - allow client to access from different origin
     app.use((req, res, next) => {
-        res.header('Access-Control-Allow-Origin', '*');
+        res.header('Access-Control-Allow-Origin', CORS_ORIGIN);
         res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         if (req.method === 'OPTIONS') {

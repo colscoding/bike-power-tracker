@@ -4,7 +4,7 @@ Track your spin bike: power, cadence, and heart rate with Bluetooth sensors. Str
 
 ## Live App
 
-🚴 **[https://colscoding.github.io/bike-power-tracker/](https://colscoding.github.io/bike-power-tracker/)**
+🚴 **[https://bikepowertracker.com/](https://bikepowertracker.com/)**
 
 ## Monorepo Structure
 
@@ -136,7 +136,6 @@ The app can stream your workout data to a Redis Streams-based server for real-ti
 
 ### Stream Features
 
-- **Auto-generated stream names**: Each stream gets a unique timestamp-based name
 - **Real-time updates**: Data is sent every second while recording
 - **Server-Sent Events (SSE)**: Low-latency streaming using SSE protocol
 - **Multiple viewers**: Multiple users can watch the same stream simultaneously
