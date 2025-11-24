@@ -9,6 +9,7 @@ export class StreamManager {
         this.measurementsState = measurementsState;
         this.timeState = timeState;
         this.isStreaming = false;
+        this.isPaused = false;
         this.streamName = null;
         this.streamInterval = null;
         this.lastSentIndex = {
@@ -36,6 +37,7 @@ export class StreamManager {
             await createStream(this.streamName);
 
             this.isStreaming = true;
+            this.isPaused = false;
             this._startStreamingLoop();
 
             return this.streamName;
@@ -43,6 +45,24 @@ export class StreamManager {
             console.error('Failed to start streaming:', error);
             this.streamName = null;
             throw error;
+        }
+    }
+
+    /**
+     * Pause the stream (stop sending data but keep stream alive)
+     */
+    pauseStreaming() {
+        if (this.isStreaming) {
+            this.isPaused = true;
+        }
+    }
+
+    /**
+     * Resume the stream
+     */
+    resumeStreaming() {
+        if (this.isStreaming) {
+            this.isPaused = false;
         }
     }
 
@@ -55,6 +75,7 @@ export class StreamManager {
         }
 
         this.isStreaming = false;
+        this.isPaused = false;
         if (this.streamInterval) {
             clearInterval(this.streamInterval);
             this.streamInterval = null;
@@ -78,6 +99,7 @@ export class StreamManager {
     getStatus() {
         return {
             isStreaming: this.isStreaming,
+            isPaused: this.isPaused,
             streamName: this.streamName
         };
     }
@@ -88,7 +110,7 @@ export class StreamManager {
     _startStreamingLoop() {
         // Send data every 1 second
         this.streamInterval = setInterval(async () => {
-            if (!this.isStreaming || !this.timeState.running) {
+            if (!this.isStreaming || this.isPaused || !this.timeState.running) {
                 return;
             }
 

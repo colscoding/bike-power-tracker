@@ -10,18 +10,35 @@ export function initStreamingControls(streamManager, timeState) {
     const cancelBtn = document.getElementById('cancelStreamName');
     const confirmBtn = document.getElementById('confirmStreamName');
     const nameInput = document.getElementById('streamNameInput');
-    const streamStatusDisplay = document.getElementById('streamStatusDisplay');
-    const currentStreamName = document.getElementById('currentStreamName');
 
-    const updateStreamStatusDisplay = (isStreaming, name) => {
-        if (streamStatusDisplay && currentStreamName) {
-            if (isStreaming) {
-                streamStatusDisplay.style.display = 'flex';
-                currentStreamName.textContent = name;
+    // Toolbar elements
+    const toolbar = document.getElementById('activeStreamToolbar');
+    const toolbarStreamName = document.getElementById('toolbarStreamName');
+    const playPauseBtn = document.getElementById('streamPlayPauseBtn');
+    const stopBtn = document.getElementById('streamStopBtn');
+    const streamIndicator = document.querySelector('.stream-indicator');
+
+    const updateToolbar = (status) => {
+        if (!toolbar) return;
+
+        if (status.isStreaming) {
+            toolbar.style.display = 'flex';
+            document.body.classList.add('has-stream-toolbar');
+            if (toolbarStreamName) toolbarStreamName.textContent = status.streamName;
+
+            // Update Play/Pause button
+            if (status.isPaused) {
+                playPauseBtn.textContent = '▶️';
+                playPauseBtn.title = 'Resume Stream';
+                if (streamIndicator) streamIndicator.classList.add('paused');
             } else {
-                streamStatusDisplay.style.display = 'none';
-                currentStreamName.textContent = '';
+                playPauseBtn.textContent = '⏸️';
+                playPauseBtn.title = 'Pause Stream';
+                if (streamIndicator) streamIndicator.classList.remove('paused');
             }
+        } else {
+            toolbar.style.display = 'none';
+            document.body.classList.remove('has-stream-toolbar');
         }
     };
 
@@ -42,7 +59,8 @@ export function initStreamingControls(streamManager, timeState) {
             const streamName = await streamManager.startStreaming(customName || undefined);
             startStreamButton.textContent = '🔴 Stop Streaming';
             startStreamButton.classList.add('streaming');
-            updateStreamStatusDisplay(true, streamName);
+
+            updateToolbar(streamManager.getStatus());
 
             // Show notification
             showNotification(`Streaming to: ${streamName}`, 'success');
@@ -52,6 +70,44 @@ export function initStreamingControls(streamManager, timeState) {
             showNotification('Failed to start streaming: ' + error.message, 'error');
         }
     };
+
+    const stopStreaming = async () => {
+        try {
+            await streamManager.stopStreaming();
+            startStreamButton.textContent = '📡 Start Streaming';
+            startStreamButton.classList.remove('streaming');
+
+            updateToolbar(streamManager.getStatus());
+
+            showNotification('Streaming stopped', 'info');
+        } catch (error) {
+            console.error(error);
+            showNotification('Error stopping stream', 'error');
+        }
+    };
+
+    // Wire up toolbar buttons
+    if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', () => {
+            const status = streamManager.getStatus();
+            if (status.isPaused) {
+                streamManager.resumeStreaming();
+                showNotification('Stream Resumed', 'success');
+            } else {
+                streamManager.pauseStreaming();
+                showNotification('Stream Paused', 'info');
+            }
+            updateToolbar(streamManager.getStatus());
+        });
+    }
+
+    if (stopBtn) {
+        stopBtn.addEventListener('click', async () => {
+            if (confirm('Stop streaming?')) {
+                await stopStreaming();
+            }
+        });
+    }
 
     // Event listeners for modal
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
@@ -79,10 +135,7 @@ export function initStreamingControls(streamManager, timeState) {
     startStreamButton.addEventListener('click', async () => {
         if (streamManager.isStreaming) {
             // Stop streaming
-            streamManager.stopStreaming();
-            startStreamButton.textContent = '📡 Start Streaming';
-            startStreamButton.classList.remove('streaming');
-            updateStreamStatusDisplay(false);
+            await stopStreaming();
         } else {
             // Open modal to start streaming
             if (modal) {
@@ -96,7 +149,7 @@ export function initStreamingControls(streamManager, timeState) {
                     const streamName = await streamManager.startStreaming();
                     startStreamButton.textContent = '🔴 Stop Streaming';
                     startStreamButton.classList.add('streaming');
-                    updateStreamStatusDisplay(true, streamName);
+                    updateToolbar(streamManager.getStatus());
                     showNotification(`Streaming to: ${streamName}`, 'success');
                 } catch (error) {
                     console.error('Failed to start streaming:', error);
@@ -117,7 +170,7 @@ export function initStreamingControls(streamManager, timeState) {
                         streamManager.stopStreaming();
                         startStreamButton.textContent = '📡 Start Streaming';
                         startStreamButton.classList.remove('streaming');
-                        updateStreamStatusDisplay(false);
+                        updateToolbar(streamManager.getStatus());
                     }
                 }, 100);
             }

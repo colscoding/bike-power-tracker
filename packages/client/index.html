@@ -71,6 +71,23 @@
         </div>
     </div>
 
+    <!-- Active Stream Toolbar -->
+    <div id="activeStreamToolbar" class="stream-toolbar" style="display: none;">
+        <div class="stream-info">
+            <span class="stream-indicator">●</span>
+            <span class="stream-label">Live:</span>
+            <span id="toolbarStreamName" class="stream-name"></span>
+        </div>
+        <div class="stream-controls">
+            <button id="streamPlayPauseBtn" class="stream-control-btn" title="Pause Stream">
+                ⏸️
+            </button>
+            <button id="streamStopBtn" class="stream-control-btn stop" title="Stop Streaming">
+                ⏹️
+            </button>
+        </div>
+    </div>
+
     <header>
         <details>
             <summary>☰</summary>
@@ -111,11 +128,6 @@
                     <div id="topBarControls">
                         <button id="startStop">▶️</button>
                         <h1 id="time"></h1>
-                        <div id="streamStatusDisplay"
-                            style="display: none; align-items: center; gap: 8px; font-size: 14px; color: #2196F3; font-weight: bold;">
-                            <span>📡 Active Stream:</span>
-                            <span id="currentStreamName"></span>
-                        </div>
                     </div>
                 </div>
                 <dl id="metricsTable">
