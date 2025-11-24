@@ -150,3 +150,21 @@ export async function sendWorkoutData(streamName, workoutData) {
 
     return addMessage(streamName, message, 'bike-power-tracker');
 }
+
+/**
+ * Delete a stream
+ * @param {string} streamName - Name of the stream to delete
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function deleteStream(streamName) {
+    const response = await fetch(`${API_BASE_URL}/api/streams/${streamName}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete stream');
+    }
+
+    return response.json();
+}

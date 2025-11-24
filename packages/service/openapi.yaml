@@ -378,6 +378,85 @@ paths:
                 type: string
                 example: keep-alive
 
+  /api/streams/cleanup:
+    delete:
+      tags:
+        - Streams
+      summary: Cleanup inactive streams
+      description: |
+        Deletes streams that have been inactive for a specified retention period.
+        Inactive is defined as having a last message timestamp older than the cutoff.
+        Empty streams are also deleted.
+      operationId: cleanupStreams
+      parameters:
+        - name: retention
+          in: query
+          description: Retention period in milliseconds (default 24 hours)
+          schema:
+            type: integer
+            default: 86400000
+            minimum: 0
+      responses:
+        '200':
+          description: Cleanup successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deletedCount:
+                    type: integer
+                    description: Number of streams deleted
+                    example: 5
+                  message:
+                    type: string
+                    example: Deleted 5 inactive streams older than 86400000ms
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/streams/{streamName}:
+    delete:
+      tags:
+        - Streams
+      summary: Delete a specific stream
+      description: Deletes a stream by its name.
+      operationId: deleteStream
+      parameters:
+        - $ref: '#/components/parameters/StreamName'
+      responses:
+        '200':
+          description: Stream deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Stream chat-room-1 deleted successfully
+        '404':
+          description: Stream not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /:
     get:
       tags:

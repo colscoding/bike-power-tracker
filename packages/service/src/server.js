@@ -93,34 +93,42 @@ function createApp() {
     // List all streams
     app.get('/api/streams', async (req, res) => {
         try {
-            // Get all keys that match stream pattern
-            const keys = await redisClient.keys('*');
+            // Use SCAN to find keys instead of KEYS * to avoid blocking
+            const keys = [];
+            let cursor = 0;
 
-            const streamInfo = [];
+            do {
+                const reply = await redisClient.scan(cursor, { MATCH: '*', COUNT: 100 });
+                cursor = reply.cursor;
+                keys.push(...reply.keys);
+            } while (cursor !== 0);
 
-            for (const key of keys) {
+            // Process keys in parallel
+            const streamInfoPromises = keys.map(async (key) => {
                 try {
-                    // Check if key is a stream
                     const type = await redisClient.type(key);
                     if (type === 'stream') {
-                        // Get stream length
-                        const length = await redisClient.xLen(key);
+                        const [length, firstEntry, lastEntry] = await Promise.all([
+                            redisClient.xLen(key),
+                            redisClient.xRange(key, '-', '+', { COUNT: 1 }),
+                            redisClient.xRevRange(key, '+', '-', { COUNT: 1 })
+                        ]);
 
-                        // Get first and last entries
-                        const firstEntry = await redisClient.xRange(key, '-', '+', { COUNT: 1 });
-                        const lastEntry = await redisClient.xRevRange(key, '+', '-', { COUNT: 1 });
-
-                        streamInfo.push({
+                        return {
                             name: key,
                             length,
                             firstMessageId: firstEntry[0]?.id || null,
                             lastMessageId: lastEntry[0]?.id || null
-                        });
+                        };
                     }
                 } catch (err) {
                     console.error(`Error processing key ${key}:`, err);
+                    return null;
                 }
-            }
+            });
+
+            const results = await Promise.all(streamInfoPromises);
+            const streamInfo = results.filter(info => info !== null && info !== undefined);
 
             res.json({ streams: streamInfo });
         } catch (error) {
@@ -175,9 +183,17 @@ function createApp() {
         // Poll for new messages using BLOCK
         const poll = async () => {
             try {
+                // Check if stream still exists
+                const exists = await redisClient.exists(streamName);
+                if (!exists) {
+                    res.write(`data: ${JSON.stringify({ type: 'stream_deleted', streamName })}\n\n`);
+                    res.end();
+                    return;
+                }
+
                 const messages = await redisClient.xRead(
                     { key: streamName, id: lastId },
-                    { BLOCK: 500 }  // Block for 500ms waiting for new messages
+                    { BLOCK: 2000 }  // Block for 2s waiting for new messages
                 );
 
                 if (messages && messages.length > 0) {
@@ -215,6 +231,91 @@ function createApp() {
         });
     });
 
+    // Helper to cleanup streams
+    const cleanupStreams = async (retentionMs = 24 * 60 * 60 * 1000) => {
+        const cutoff = Date.now() - retentionMs;
+        let deletedCount = 0;
+
+        // Use SCAN to find keys
+        const keys = [];
+        let cursor = 0;
+        do {
+            const reply = await redisClient.scan(cursor, { MATCH: '*', COUNT: 100 });
+            cursor = reply.cursor;
+            keys.push(...reply.keys);
+        } while (cursor !== 0);
+
+        // Process keys
+        for (const key of keys) {
+            try {
+                const type = await redisClient.type(key);
+                if (type === 'stream') {
+                    const lastEntry = await redisClient.xRevRange(key, '+', '-', { COUNT: 1 });
+
+                    let shouldDelete = false;
+                    if (lastEntry && lastEntry.length > 0) {
+                        const lastId = lastEntry[0].id;
+                        const timestamp = parseInt(lastId.split('-')[0]);
+                        if (timestamp < cutoff) {
+                            shouldDelete = true;
+                        }
+                    } else {
+                        // Empty stream, delete it
+                        shouldDelete = true;
+                    }
+
+                    if (shouldDelete) {
+                        await redisClient.del(key);
+                        deletedCount++;
+                    }
+                }
+            } catch (err) {
+                console.error(`Error processing key ${key}:`, err);
+            }
+        }
+        return deletedCount;
+    };
+
+    // Expose cleanup function for internal use
+    app.cleanupStreams = cleanupStreams;
+
+    // Cleanup inactive streams
+    app.delete('/api/streams/cleanup', async (req, res) => {
+        try {
+            const retentionMs = req.query.retention ? parseInt(req.query.retention) : undefined;
+            const deletedCount = await cleanupStreams(retentionMs);
+
+            res.json({
+                success: true,
+                deletedCount,
+                message: `Deleted ${deletedCount} inactive streams`
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Delete a specific stream
+    app.delete('/api/streams/:streamName', async (req, res) => {
+        try {
+            const { streamName } = req.params;
+
+            const exists = await redisClient.exists(streamName);
+            if (!exists) {
+                return res.status(404).json({ error: 'Stream not found' });
+            }
+
+            await redisClient.del(streamName);
+
+            res.json({
+                success: true,
+                message: `Stream ${streamName} deleted successfully`
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     return app;
 }
 
@@ -223,8 +324,15 @@ if (require.main === module) {
     const app = createApp();
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
+
+        // Run cleanup every hour
+        setInterval(() => {
+            console.log('Running scheduled stream cleanup...');
+            app.cleanupStreams().then(count => {
+                if (count > 0) console.log(`Scheduled cleanup removed ${count} streams`);
+            }).catch(err => console.error('Scheduled cleanup failed:', err));
+        }, 60 * 60 * 1000);
     });
 }
 
 module.exports = createApp;
-

@@ -59,18 +59,11 @@ test.describe('System Integration', () => {
         // Stop workout
         await page.locator('#startStop').click();
 
-        // Open menu again to access stream controls
-        await page.locator('summary').click();
-
-        // Stop streaming
-        await startStreamBtn.click();        // 4. Verify data on the server
+        // 4. Verify data on the server BEFORE stopping streaming
         // We can use the API to check if streams were created
         const streamsResponse = await request.get('http://localhost:3000/api/streams');
         expect(streamsResponse.ok()).toBeTruthy();
         const streamsData = await streamsResponse.json();
-
-        // There should be at least one stream
-        expect(streamsData.streams.length).toBeGreaterThan(0);
 
         // Find the stream created by this test
         const workoutStream = streamsData.streams.find(s => s.name === uniqueStreamName);
@@ -85,9 +78,20 @@ test.describe('System Integration', () => {
         expect(messagesData.messages.length).toBeGreaterThan(0);
 
         // Verify message content
-        // The first message might be the stream creation message, so we look for one with 'message' field
         const workoutMessage = messagesData.messages.find(m => m.data && m.data.message);
         expect(workoutMessage).toBeDefined();
+
+        // Open menu again to access stream controls
+        await page.locator('summary').click();
+
+        // Stop streaming (this should trigger deletion)
+        await startStreamBtn.click();
+
+        // 5. Verify stream is deleted
+        const streamsResponseAfter = await request.get('http://localhost:3000/api/streams');
+        const streamsDataAfter = await streamsResponseAfter.json();
+        const workoutStreamAfter = streamsDataAfter.streams.find(s => s.name === uniqueStreamName);
+        expect(workoutStreamAfter).toBeUndefined();
 
         const messageData = JSON.parse(workoutMessage.data.message);
         expect(messageData).toHaveProperty('power');

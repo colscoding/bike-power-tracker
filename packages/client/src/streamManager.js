@@ -1,7 +1,7 @@
 /**
  * Manages streaming workout data to the server
  */
-import { createStream, sendWorkoutData } from './api/streamClient.js';
+import { createStream, sendWorkoutData, deleteStream } from './api/streamClient.js';
 import { getTimestring } from './getTimestring.js';
 
 export class StreamManager {
@@ -49,7 +49,7 @@ export class StreamManager {
     /**
      * Stop streaming workout data
      */
-    stopStreaming() {
+    async stopStreaming() {
         if (!this.isStreaming) {
             return;
         }
@@ -58,6 +58,14 @@ export class StreamManager {
         if (this.streamInterval) {
             clearInterval(this.streamInterval);
             this.streamInterval = null;
+        }
+
+        if (this.streamName) {
+            try {
+                await deleteStream(this.streamName);
+            } catch (error) {
+                console.error('Failed to delete stream:', error);
+            }
         }
 
         this.streamName = null;
