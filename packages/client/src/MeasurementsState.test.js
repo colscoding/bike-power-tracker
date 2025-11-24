@@ -35,93 +35,76 @@ test('MeasurementsState should add heartrate measurement with timestamp and valu
     assert.strictEqual(bike.heartrate[0].timestamp, timestamp);
 });
 
-test('MeasurementsState should throw error for heartrate 0 or lower', () => {
+test('MeasurementsState should ignore heartrate 0 or lower', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addHeartrate({ timestamp, value: 0 });
-    }, /Heartrate must be between 1 and 299/);
-
-    assert.throws(() => {
-        bike.addHeartrate({ timestamp, value: -10 });
-    }, /Heartrate must be between 1 and 299/);
+    bike.addHeartrate({ timestamp, value: 0 });
+    bike.addHeartrate({ timestamp, value: -10 });
 
     assert.strictEqual(bike.heartrate.length, 0);
 });
 
-test('MeasurementsState should throw error for heartrate 300 or higher', () => {
+test('MeasurementsState should ignore heartrate 300 or higher', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addHeartrate({ timestamp, value: 300 });
-    }, /Heartrate must be between 1 and 299/);
-
-    assert.throws(() => {
-        bike.addHeartrate({ timestamp, value: 350 });
-    }, /Heartrate must be between 1 and 299/);
+    bike.addHeartrate({ timestamp, value: 300 });
+    bike.addHeartrate({ timestamp, value: 350 });
 
     assert.strictEqual(bike.heartrate.length, 0);
 });
 
-test('MeasurementsState should throw error for power 0 or lower', () => {
+test('MeasurementsState should allow power 0', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addPower({ timestamp, value: 0 });
-    }, /Power must be between 1 and 2999/);
+    bike.addPower({ timestamp, value: 0 });
+    assert.strictEqual(bike.power.length, 1);
+    assert.strictEqual(bike.power[0].value, 0);
+});
 
-    assert.throws(() => {
-        bike.addPower({ timestamp, value: -50 });
-    }, /Power must be between 1 and 2999/);
+test('MeasurementsState should ignore power lower than 0', () => {
+    const bike = new MeasurementsState();
+    const timestamp = Date.now();
+
+    bike.addPower({ timestamp, value: -50 });
+    assert.strictEqual(bike.power.length, 0);
+});
+
+test('MeasurementsState should ignore power higher than 2999', () => {
+    const bike = new MeasurementsState();
+    const timestamp = Date.now();
+
+    bike.addPower({ timestamp, value: 3000 });
+    bike.addPower({ timestamp, value: 5000 });
 
     assert.strictEqual(bike.power.length, 0);
 });
 
-test('MeasurementsState should throw error for power higher than 2999', () => {
+test('MeasurementsState should allow cadence 0', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addPower({ timestamp, value: 3000 });
-    }, /Power must be between 1 and 2999/);
-
-    assert.throws(() => {
-        bike.addPower({ timestamp, value: 5000 });
-    }, /Power must be between 1 and 2999/);
-
-    assert.strictEqual(bike.power.length, 0);
+    bike.addCadence({ timestamp, value: 0 });
+    assert.strictEqual(bike.cadence.length, 1);
+    assert.strictEqual(bike.cadence[0].value, 0);
 });
 
-test('MeasurementsState should throw error for cadence 0 or lower', () => {
+test('MeasurementsState should ignore cadence lower than 0', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addCadence({ timestamp, value: 0 });
-    }, /Cadence must be between 1 and 299/);
-
-    assert.throws(() => {
-        bike.addCadence({ timestamp, value: -20 });
-    }, /Cadence must be between 1 and 299/);
-
+    bike.addCadence({ timestamp, value: -10 });
     assert.strictEqual(bike.cadence.length, 0);
 });
 
-
-test('MeasurementsState should throw error for cadence 300 or higher', () => {
+test('MeasurementsState should ignore cadence 300 or higher', () => {
     const bike = new MeasurementsState();
     const timestamp = Date.now();
 
-    assert.throws(() => {
-        bike.addCadence({ timestamp, value: 300 });
-    }, /Cadence must be between 1 and 299/);
-
-    assert.throws(() => {
-        bike.addCadence({ timestamp, value: 400 });
-    }, /Cadence must be between 1 and 299/);
+    bike.addCadence({ timestamp, value: 300 });
+    bike.addCadence({ timestamp, value: 350 });
 
     assert.strictEqual(bike.cadence.length, 0);
 });

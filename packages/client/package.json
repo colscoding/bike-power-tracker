@@ -1,0 +1,35 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "description": "Bike Power Tracker PWA - Track your spin bike with Bluetooth sensors and stream live data",
+  "scripts": {
+    "test": "NODE_ENV=test node --test src/**/*.test.js",
+    "test:watch": "NODE_ENV=test node --test --watch src/**/*.test.js",
+    "dev": "vite --host",
+    "dev:fresh": "npm run clear-cache && vite --host",
+    "start": "vite --host",
+    "start:test": "vite --host --mode test",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "clear-cache": "echo 'To clear browser cache: Open DevTools > Application > Clear Storage > Clear site data'",
+    "test:e2e": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js",
+    "test:e2e:ui": "NODE_ENV=test playwright test --ui --config=test-e2e/playwright.config.js"
+  },
+  "keywords": [
+    "bike",
+    "power",
+    "tracker",
+    "bluetooth",
+    "fitness",
+    "cycling",
+    "pwa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.56.1",
+    "vite": "^7.2.2",
+    "vite-plugin-pwa": "^1.1.0"
+  }
+}

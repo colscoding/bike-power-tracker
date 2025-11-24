@@ -1,0 +1,56 @@
+{
+    "name": "service",
+    "version": "1.0.0",
+    "description": "Redis Streams service with Node.js, Express, and real-time messaging",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js",
+        "dev:docker": "docker-compose up -d redis && nodemon server.js",
+        "test": "mocha tests/**/*.test.js --timeout 10000 --exit",
+        "test:unit": "mocha tests/unit.test.js --exit",
+        "test:integration": "mocha tests/redis.test.js --timeout 10000 --exit",
+        "test:api": "mocha tests/api.test.js --timeout 10000 --exit",
+        "test:coverage": "nyc npm test",
+        "test:watch": "nodemon --exec 'npm test'",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "docker:redis": "docker run -p 6379:6379 redis:latest",
+        "docker:build": "./build.sh",
+        "docker:up": "docker-compose up",
+        "docker:up:dev": "docker-compose --profile dev up",
+        "docker:down": "docker-compose down",
+        "prepare": "command -v husky >/dev/null 2>&1 && husky install || true"
+    },
+    "keywords": [
+        "redis",
+        "streams",
+        "nodejs",
+        "express",
+        "real-time",
+        "sse",
+        "server-sent-events"
+    ],
+    "author": "",
+    "license": "MIT",
+    "engines": {
+        "node": ">=14.0.0",
+        "npm": ">=6.0.0"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "redis": "^4.6.7"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.1",
+        "mocha": "^10.2.0",
+        "chai": "^4.3.10",
+        "supertest": "^6.3.3",
+        "nyc": "^15.1.0",
+        "eslint": "^8.55.0",
+        "prettier": "^3.1.1",
+        "husky": "^8.0.3"
+    }
+}

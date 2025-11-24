@@ -74,7 +74,7 @@ export const connectCadenceBluetooth = async () => {
                     const rpm = Math.round((revDelta / timeInSeconds) * 60);
 
                     // Sanity check for reasonable cadence values
-                    if (rpm > 0 && rpm < 300) {
+                    if (rpm >= 0 && rpm < 300) {
                         const entry = { timestamp: Date.now(), value: rpm };
                         listeners.forEach(listener => listener(entry));
                     }

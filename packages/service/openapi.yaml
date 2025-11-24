@@ -1,0 +1,525 @@
+openapi: 3.0.3
+info:
+  title: BPT Service - Redis Streams API
+  description: |
+    A real-time messaging service built on Redis Streams with Server-Sent Events (SSE) support.
+
+    This API provides endpoints to:
+    - Create and manage Redis streams
+    - Send messages to streams
+    - Retrieve message history
+    - Subscribe to real-time message updates via SSE
+
+    ## Key Features
+    - **Real-time messaging** using Server-Sent Events
+    - **Persistent streams** backed by Redis
+    - **Message history** with flexible querying
+    - **Stream metadata** including message counts and IDs
+
+    ## Base URL
+    - Development: `http://localhost:3000`
+    - Production: Configure via environment variables
+
+  version: 1.0.0
+  contact:
+    name: BPT Service API
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: http://localhost:3001
+    description: Development server (Docker)
+
+tags:
+  - name: Streams
+    description: Stream management operations
+  - name: Messages
+    description: Message operations within streams
+  - name: Real-time
+    description: Server-Sent Events for real-time updates
+  - name: Web
+    description: Web interface
+
+paths:
+  /api/streams/create:
+    post:
+      tags:
+        - Streams
+      summary: Create a new stream
+      description: |
+        Creates a new Redis stream with the specified name.
+        A dummy message is added to initialize the stream.
+      operationId: createStream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - streamName
+              properties:
+                streamName:
+                  type: string
+                  description: Unique name for the stream
+                  example: chat-room-1
+                  minLength: 1
+                  maxLength: 255
+                  pattern: ^[a-zA-Z0-9_-]+$
+            examples:
+              basic:
+                value:
+                  streamName: my-stream
+              chatRoom:
+                value:
+                  streamName: chat-room-1
+      responses:
+        '200':
+          description: Stream created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  streamName:
+                    type: string
+                    example: chat-room-1
+                  messageId:
+                    type: string
+                    description: Redis stream message ID (timestamp-sequence)
+                    example: "1700000000000-0"
+                  message:
+                    type: string
+                    example: Stream created successfully
+              examples:
+                success:
+                  value:
+                    success: true
+                    streamName: chat-room-1
+                    messageId: "1700000000000-0"
+                    message: Stream created successfully
+        '400':
+          description: Bad request - missing or invalid stream name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingName:
+                  value:
+                    error: Stream name is required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/streams:
+    get:
+      tags:
+        - Streams
+      summary: List all streams
+      description: |
+        Retrieves a list of all available Redis streams with metadata including:
+        - Stream name
+        - Message count
+        - First and last message IDs
+      operationId: listStreams
+      responses:
+        '200':
+          description: List of all streams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  streams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StreamInfo'
+              examples:
+                multipleStreams:
+                  value:
+                    streams:
+                      - name: chat-room-1
+                        length: 42
+                        firstMessageId: "1700000000000-0"
+                        lastMessageId: "1700001234567-0"
+                      - name: notifications
+                        length: 15
+                        firstMessageId: "1700000100000-0"
+                        lastMessageId: "1700001200000-0"
+                emptyList:
+                  value:
+                    streams: []
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/streams/{streamName}/messages:
+    post:
+      tags:
+        - Messages
+      summary: Add a message to a stream
+      description: |
+        Adds a new message to the specified stream.
+        Messages include content, author, and automatic timestamp.
+      operationId: addMessage
+      parameters:
+        - $ref: '#/components/parameters/StreamName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+                  description: The message content
+                  example: Hello, World!
+                  minLength: 1
+                author:
+                  type: string
+                  description: Message author (defaults to 'anonymous')
+                  example: John Doe
+                  default: anonymous
+            examples:
+              withAuthor:
+                value:
+                  message: Hello, everyone!
+                  author: Alice
+              anonymous:
+                value:
+                  message: Anonymous message
+      responses:
+        '200':
+          description: Message added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  messageId:
+                    type: string
+                    description: Redis stream message ID
+                    example: "1700001234567-0"
+                  streamName:
+                    type: string
+                    example: chat-room-1
+              examples:
+                success:
+                  value:
+                    success: true
+                    messageId: "1700001234567-0"
+                    streamName: chat-room-1
+        '400':
+          description: Bad request - missing message content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                missingMessage:
+                  value:
+                    error: Message is required
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Messages
+      summary: Get messages from a stream
+      description: |
+        Retrieves messages from a stream with optional filtering by ID range and count limit.
+        Supports pagination using Redis stream IDs.
+      operationId: getMessages
+      parameters:
+        - $ref: '#/components/parameters/StreamName'
+        - name: start
+          in: query
+          description: |
+            Starting message ID (inclusive).
+            Use '-' for the first message in the stream.
+          schema:
+            type: string
+            default: '-'
+            example: '-'
+        - name: end
+          in: query
+          description: |
+            Ending message ID (inclusive).
+            Use '+' for the last message in the stream.
+          schema:
+            type: string
+            default: '+'
+            example: '+'
+        - name: count
+          in: query
+          description: Maximum number of messages to return
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+            example: 50
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  streamName:
+                    type: string
+                    example: chat-room-1
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+              examples:
+                withMessages:
+                  value:
+                    streamName: chat-room-1
+                    messages:
+                      - id: "1700000000000-0"
+                        data:
+                          type: stream_created
+                          timestamp: "1700000000000"
+                      - id: "1700001234567-0"
+                        data:
+                          message: Hello, World!
+                          author: Alice
+                          timestamp: "1700001234567"
+                emptyStream:
+                  value:
+                    streamName: chat-room-1
+                    messages: []
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/streams/{streamName}/listen:
+    get:
+      tags:
+        - Real-time
+      summary: Listen to real-time messages (SSE)
+      description: |
+        Establishes a Server-Sent Events (SSE) connection to receive real-time messages
+        from the specified stream. The connection remains open and pushes new messages
+        as they arrive.
+
+        ## Event Types
+        - **connected**: Sent immediately after connection is established
+        - **message**: Sent when a new message is added to the stream
+
+        ## Connection Lifecycle
+        1. Client opens connection
+        2. Server sends 'connected' event
+        3. Server continuously polls Redis for new messages
+        4. New messages are pushed to client as they arrive
+        5. Connection closes when client disconnects
+
+      operationId: listenStream
+      parameters:
+        - $ref: '#/components/parameters/StreamName'
+      responses:
+        '200':
+          description: SSE connection established
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Server-Sent Events stream. Each event is a JSON object
+                  with 'type' and other relevant fields.
+              examples:
+                connectionFlow:
+                  value: |
+                    data: {"type":"connected","streamName":"chat-room-1"}
+
+                    data: {"type":"message","id":"1700001234567-0","data":{"message":"Hello!","author":"Alice","timestamp":"1700001234567"}}
+
+                    data: {"type":"message","id":"1700001234568-0","data":{"message":"Hi there!","author":"Bob","timestamp":"1700001234568"}}
+
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/event-stream
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+
+  /:
+    get:
+      tags:
+        - Web
+      summary: Serve web interface
+      description: Serves the main HTML page with the web-based user interface
+      operationId: serveWebInterface
+      responses:
+        '200':
+          description: HTML page
+          content:
+            text/html:
+              schema:
+                type: string
+
+components:
+  parameters:
+    StreamName:
+      name: streamName
+      in: path
+      required: true
+      description: The unique name of the stream
+      schema:
+        type: string
+        example: chat-room-1
+        pattern: ^[a-zA-Z0-9_-]+$
+
+  schemas:
+    StreamInfo:
+      type: object
+      description: Metadata about a Redis stream
+      properties:
+        name:
+          type: string
+          description: Stream name
+          example: chat-room-1
+        length:
+          type: integer
+          description: Number of messages in the stream
+          example: 42
+          minimum: 0
+        firstMessageId:
+          type: string
+          nullable: true
+          description: ID of the first message in the stream
+          example: "1700000000000-0"
+        lastMessageId:
+          type: string
+          nullable: true
+          description: ID of the last message in the stream
+          example: "1700001234567-0"
+      required:
+        - name
+        - length
+        - firstMessageId
+        - lastMessageId
+
+    Message:
+      type: object
+      description: A message from a Redis stream
+      properties:
+        id:
+          type: string
+          description: Redis stream message ID (timestamp-sequence)
+          example: "1700001234567-0"
+        data:
+          type: object
+          description: Message payload (field-value pairs)
+          additionalProperties: true
+          example:
+            message: Hello, World!
+            author: Alice
+            timestamp: "1700001234567"
+      required:
+        - id
+        - data
+
+    SSEEvent:
+      type: object
+      description: Server-Sent Event payload
+      properties:
+        type:
+          type: string
+          enum: [connected, message]
+          description: Event type
+          example: message
+      required:
+        - type
+      discriminator:
+        propertyName: type
+        mapping:
+          connected: '#/components/schemas/ConnectedEvent'
+          message: '#/components/schemas/MessageEvent'
+
+    ConnectedEvent:
+      allOf:
+        - $ref: '#/components/schemas/SSEEvent'
+        - type: object
+          properties:
+            streamName:
+              type: string
+              description: Name of the stream client is connected to
+              example: chat-room-1
+          required:
+            - streamName
+
+    MessageEvent:
+      allOf:
+        - $ref: '#/components/schemas/SSEEvent'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: Message ID
+              example: "1700001234567-0"
+            data:
+              type: object
+              description: Message payload
+              additionalProperties: true
+              example:
+                message: Hello!
+                author: Alice
+                timestamp: "1700001234567"
+          required:
+            - id
+            - data
+
+    Error:
+      type: object
+      description: Error response
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: Stream name is required
+      required:
+        - error
+
+  securitySchemes:
+    # Currently no authentication required
+    # Add authentication schemes here if needed in the future
+
+security: []
+  # No security required by default
+  # Add security requirements here if authentication is implemented

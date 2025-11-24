@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Metrics Monitor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Training Metrics Monitor</h1>
+            <p class="subtitle">Stream and view real-time heartrate, cadence, and power data</p>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="section">
+                    <div class="section-title">📝 Create Session</div>
+                    <div class="input-group">
+                        <input type="text" id="newStreamName" placeholder="Session name (e.g., Morning Ride)...">
+                    </div>
+                    <button onclick="createStream()">Create Session</button>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">📋 Training Sessions</div>
+                    <button onclick="loadStreams()" style="width: 100%; margin-bottom: 10px;">Refresh Sessions</button>
+                    <ul class="stream-list" id="streamList">
+                        <div class="empty-state">No sessions yet</div>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="main-area">
+                <div id="statusMessage"></div>
+
+                <div id="streamDetails" style="display: none;">
+                    <div class="section">
+                        <div class="section-title">
+                            📊 Session: <span id="currentStreamName"></span>
+                            <span id="listeningBadge" style="display: none;" class="listening-badge">● Live</span>
+                        </div>
+
+                        <div class="flex-row" style="margin-bottom: 15px;">
+                            <button class="btn-secondary" onclick="toggleListen()">Start Live View</button>
+                            <button onclick="loadMessages()">Refresh Data</button>
+                        </div>
+
+                        <div class="messages-container" id="messagesContainer">
+                            <div class="empty-state">No data yet</div>
+                        </div>
+
+                        <div class="section-title">📈 Add Metrics</div>
+                        <div class="input-group">
+                            <input type="number" id="heartrate" placeholder="Heart Rate (bpm)..." min="0" max="250">
+                        </div>
+                        <div class="input-group">
+                            <input type="number" id="cadence" placeholder="Cadence (rpm)..." min="0" max="200">
+                        </div>
+                        <div class="input-group">
+                            <input type="number" id="power" placeholder="Power (watts)..." min="0" max="2000">
+                        </div>
+                        <button onclick="sendMessage()">Send Metrics</button>
+                    </div>
+                </div>
+
+                <div id="noStreamSelected" class="empty-state" style="padding: 80px 40px;">
+                    <h2 style="color: #2d3748; margin-bottom: 10px;">Welcome to Training Metrics Monitor</h2>
+                    <p>Create a new training session or select an existing one from the sidebar to get started.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

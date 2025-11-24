@@ -7,7 +7,8 @@ class MeasurementsState {
 
     addHeartrate({ timestamp, value }) {
         if (value <= 0 || value >= 300) {
-            throw new Error('Heartrate must be between 1 and 299');
+            console.warn(`Invalid heartrate value: ${value}`);
+            return;
         }
         this.heartrate.push({
             timestamp: timestamp,
@@ -16,8 +17,9 @@ class MeasurementsState {
     }
 
     addPower({ timestamp, value }) {
-        if (value <= 0 || value >= 3000) {
-            throw new Error('Power must be between 1 and 2999');
+        if (value < 0 || value >= 3000) {
+            console.warn(`Invalid power value: ${value}`);
+            return;
         }
         this.power.push({
             timestamp: timestamp,
@@ -26,8 +28,9 @@ class MeasurementsState {
     }
 
     addCadence({ timestamp, value }) {
-        if (value <= 0 || value >= 300) {
-            throw new Error('Cadence must be between 1 and 299');
+        if (value < 0 || value >= 300) {
+            console.warn(`Invalid cadence value: ${value}`);
+            return;
         }
         this.cadence.push({
             timestamp: timestamp,

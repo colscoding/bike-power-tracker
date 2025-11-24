@@ -1,6 +1,44 @@
 import { getCsvString } from "../create-csv";
 import { getTcxString } from "../create-tcx";
 
+export const initMetricsToggle = () => {
+    // Your Metrics Toggle
+    const toggleYour = document.getElementById('toggleYourMetrics');
+    const yourMetricsSection = document.getElementById('yourMetrics');
+
+    if (toggleYour && yourMetricsSection) {
+        // Initial state check
+        toggleYour.checked = yourMetricsSection.style.display !== 'none';
+
+        toggleYour.addEventListener('change', (e) => {
+            const show = e.target.checked;
+            yourMetricsSection.style.display = show ? 'flex' : 'none';
+        });
+    }
+
+    // Stream Metrics Toggle
+    const toggleStream = document.getElementById('toggleStreamMetrics');
+    const streamMetricsSection = document.getElementById('streamMetrics');
+    const closeStreamBtn = document.getElementById('closeStreamView');
+
+    if (toggleStream && streamMetricsSection) {
+        // Initial state check
+        toggleStream.checked = streamMetricsSection.style.display !== 'none';
+
+        toggleStream.addEventListener('change', (e) => {
+            const show = e.target.checked;
+            streamMetricsSection.style.display = show ? 'flex' : 'none';
+
+            // If we're hiding it via toggle, we might want to disconnect? 
+            // Or just hide the view? The user request implies just show/hide like the other one.
+            // However, the stream view usually implies a connection. 
+            // If the user toggles it ON, and there is no connection, it will show empty data.
+            // If the user toggles it OFF, the connection might persist in background?
+            // For now, let's just toggle visibility.
+        });
+    }
+}
+
 export const initDiscardButton = ({ measurementsState, timeState }) => {
     // Discard button - in menu with confirmation dialog
     const discardButton = document.getElementById('discardButton');

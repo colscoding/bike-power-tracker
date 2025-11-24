@@ -1,6 +1,21 @@
 import { registerSW } from 'virtual:pwa-register'
 
 export const registerServiceWorker = () => {
+    // Don't register service worker in development to avoid caching issues
+    if (import.meta.env.DEV) {
+        console.log('Service Worker disabled in development mode');
+        // Unregister existing service workers if any to ensure fresh content
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister();
+                    console.log('Unregistered existing service worker');
+                }
+            });
+        }
+        return;
+    }
+
     // Register service worker for PWA functionality using vite-plugin-pwa
     if (import.meta.env.MODE === 'test') {
         return;

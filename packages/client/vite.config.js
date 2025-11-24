@@ -8,6 +8,17 @@ export default defineConfig({
         assetsDir: 'assets',
         sourcemap: true,
     },
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+            }
+        },
+        headers: {
+            'Cache-Control': 'no-store' // Prevent browser caching in development
+        }
+    },
     plugins: [
         VitePWA({
             registerType: 'autoUpdate',
@@ -120,7 +131,7 @@ export default defineConfig({
                 ]
             },
             devOptions: {
-                enabled: true,
+                enabled: false, // Disable service worker in dev to prevent caching issues
                 type: 'module'
             }
         })

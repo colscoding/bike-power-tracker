@@ -39,8 +39,18 @@ export const connectHeartRateBluetooth = async () => {
     // Listen for heart rate changes
     characteristic.addEventListener('characteristicvaluechanged', (event) => {
         const value = event.target.value;
-        // Heart rate measurement format: first byte contains flags, second byte is heart rate
-        const heartRate = value.getUint8(1);
+        const flags = value.getUint8(0);
+        let heartRate;
+
+        // Check Heart Rate Value Format bit (bit 0)
+        if (flags & 0x01) {
+            // UINT16
+            heartRate = value.getUint16(1, true); // little-endian
+        } else {
+            // UINT8
+            heartRate = value.getUint8(1);
+        }
+
         const entry = { timestamp: Date.now(), value: heartRate };
         listeners.forEach(listener => listener(entry));
     });

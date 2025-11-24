@@ -1,0 +1,655 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+/* Body layout */
+body {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Top bar - fixed header */
+header {
+    position: relative;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 8vh;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2vw;
+    z-index: 100;
+}
+
+/* Top bar controls container */
+#topBarControls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Start/stop, reset, and export buttons in top bar */
+#startStop,
+#resetButton,
+#exportButton {
+    padding: 8px 12px;
+    font-size: 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    line-height: 1;
+}
+
+#resetButton,
+#exportButton {
+    font-size: 14px;
+}
+
+#startStop:hover,
+#resetButton:hover,
+#exportButton:hover {
+    background-color: #0969da14;
+}
+
+#startStop:active,
+#resetButton:active,
+#exportButton:active {
+    background-color: #0969da26;
+}
+
+/* App title */
+header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+/* Main content area - below header */
+main {
+    margin-top: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Main content wrapper for side-by-side metrics */
+#mainContent {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+/* Metrics sections */
+.metrics-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    padding: 0;
+    background: #ffffff;
+    position: relative;
+    container-type: size;
+}
+
+/* Section headers */
+.section-title {
+    font-size: min(1.5em, 3vh);
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: min(12px, 2vh) min(20px, 2vw);
+    margin-bottom: min(12px, 2vh);
+    background: #f6f8fa;
+    background: linear-gradient(135deg, #f6f8fa 0%, #ffffff 100%);
+    border-bottom: 2px solid #e1e4e8;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex: 0 0 auto;
+    height: 15cqh;
+    min-height: 40px;
+}
+
+.close-stream-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.close-stream-btn:hover {
+    background-color: #0969da14;
+}
+
+/* Stream title with status */
+.stream-title-with-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.last-update-inline {
+    font-size: min(0.8em, 2vh);
+    color: #656d76;
+    text-align: center;
+    font-style: italic;
+    margin-top: min(8px, 1vh);
+    padding: 0 min(20px, 2vw) min(12px, 2vh);
+}
+
+/* Adjust metrics table for side-by-side view */
+#metricsTable,
+#streamMetricsTable {
+    text-align: center;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    padding: 0 min(20px, 2vw) min(16px, 2vh);
+    overflow: hidden;
+}
+
+.metric-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+/* Responsive: stack vertically on smaller screens */
+@media (max-width: 768px) {
+    #mainContent {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .metrics-section {
+        flex: 1;
+    }
+}
+
+/* Hamburger menu in header */
+details {
+    position: absolute;
+    left: 20px;
+    background: transparent;
+}
+
+/* Hamburger icon */
+summary {
+    font-size: 24px;
+    padding: 8px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    color: #333;
+}
+
+/* Remove default triangle */
+summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Dropdown menu when open */
+#controls {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+}
+
+/* Menu buttons */
+#controls button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: left;
+    transition: background-color 0.15s ease;
+    color: #1f2328;
+    font-weight: 400;
+}
+
+#controls button:hover {
+    background-color: #0969da14;
+}
+
+#controls button:active {
+    background-color: #0969da26;
+}
+
+/* Menu toggle */
+.menu-toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #1f2328;
+}
+
+/* Switch slider */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked+.slider {
+    background-color: #2196F3;
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked+.slider:before {
+    transform: translateX(16px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* Metrics table */
+/* #metricsTable styles moved to shared block with #streamMetricsTable */
+
+/* Paused/stopped state styling */
+#metricsTable.paused {
+    opacity: 0.5;
+    filter: grayscale(50%);
+}
+
+#metricsTable dt,
+#streamMetricsTable dt {
+    font-size: 4cqh;
+    color: #666;
+    margin-top: 0;
+}
+
+#streamMetricsTable dt {
+    font-size: 4cqh;
+}
+
+#metricsTable dt:first-child,
+#streamMetricsTable dt:first-child {
+    margin-top: 0;
+}
+
+#metricsTable dd {
+    font-size: 18cqh;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0;
+    line-height: 0.9;
+}
+
+#streamMetricsTable dd {
+    font-size: 14cqh;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0;
+    line-height: 0.9;
+}
+
+/* Adjust font sizes when showing both metrics */
+#streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dd {
+    font-size: 18cqh;
+}
+
+#streamMetrics:not([style*="display: none"]) #streamMetricsTable dd {
+    font-size: 14cqh;
+}
+
+/* Further adjustment for mobile stacked view */
+@media (max-width: 768px) {
+    #streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dd {
+        font-size: 18cqh;
+    }
+
+    #streamMetrics:not([style*="display: none"]) #streamMetricsTable dd {
+        font-size: 14cqh;
+    }
+}
+
+#streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dt,
+#streamMetrics:not([style*="display: none"]) #streamMetricsTable dt {
+    font-size: 4cqh;
+}
+
+/* Stream Modal Styles */
+.stream-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.stream-modal-content {
+    background-color: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.stream-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.stream-modal-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.close-button:hover {
+    background-color: #0969da14;
+}
+
+.stream-modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Stream List */
+.stream-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.refresh-button {
+    padding: 10px 16px;
+    font-size: 14px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+}
+
+.refresh-button:hover {
+    background-color: #f6f8fa;
+}
+
+.streams-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stream-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid #d0d7de;
+    border-radius: 8px;
+    background-color: white;
+    transition: box-shadow 0.15s ease;
+}
+
+.stream-item:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stream-item-info {
+    flex: 1;
+}
+
+.stream-item-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1f2328;
+    margin-bottom: 4px;
+}
+
+.stream-item-meta {
+    font-size: 13px;
+    color: #656d76;
+}
+
+.connect-button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid #1f883d;
+    border-radius: 6px;
+    background-color: #1f883d;
+    color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+}
+
+.connect-button:hover {
+    background-color: #1a7f37;
+}
+
+.loading,
+.no-streams,
+.error {
+    text-align: center;
+    padding: 24px;
+    color: #656d76;
+    font-size: 14px;
+}
+
+.error {
+    color: #cf222e;
+}
+
+/* Stream Viewer */
+.stream-viewer-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.viewer-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 0;
+}
+
+.disconnect-button {
+    padding: 6px 12px;
+    font-size: 13px;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    background-color: white;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+}
+
+.disconnect-button:hover {
+    background-color: #f6f8fa;
+}
+
+.viewer-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-badge.connecting {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.status-badge.connected {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.status-badge.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.viewer-metrics {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 12px 16px;
+    padding: 16px;
+    background-color: #f6f8fa;
+    border-radius: 8px;
+}
+
+.viewer-metrics dt {
+    font-weight: 600;
+    color: #656d76;
+    font-size: 14px;
+}
+
+.viewer-metrics dd {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2328;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.last-update {
+    font-size: 12px;
+    color: #656d76;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Streaming indicator button state */
+#startStreamButton.streaming {
+    background-color: #cf222e;
+    color: white;
+}
+
+#startStreamButton.streaming:hover {
+    background-color: #a40e26;
+}
