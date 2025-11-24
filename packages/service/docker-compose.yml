@@ -4,7 +4,7 @@ services:
   # Redis service
   redis:
     image: redis:7-alpine
-    container_name: bpt-redis
+    container_name: redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
@@ -16,7 +16,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - bpt-network
+      - network
     restart: unless-stopped
 
   # Node.js application
@@ -25,7 +25,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: bpt-service
+    container_name: service
     ports:
       - "${APP_PORT:-3000}:3000"
     environment:
@@ -36,7 +36,7 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - bpt-network
+      - network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/streams', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -51,7 +51,7 @@ services:
       context: .
       dockerfile: Dockerfile.dev
       target: development
-    container_name: bpt-service-dev
+    container_name: service-dev
     ports:
       - "${APP_DEV_PORT:-3001}:3000"
     environment:
@@ -65,13 +65,13 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - bpt-network
+      - network
     command: npm run dev
     profiles:
       - dev
 
 networks:
-  bpt-network:
+  network:
     driver: bridge
 
 volumes:

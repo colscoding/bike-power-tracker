@@ -1,6 +1,6 @@
 const express = require('express');
 const redis = require('redis');
-const path = require('path');
+const { ensureString } = require('./utils');
 
 const PORT = process.env.PORT || 3000;
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
@@ -76,8 +76,7 @@ function createApp() {
             // Store the message as-is (client sends JSON string for workout data)
             // Add message to stream with all fields
             const messageId = await redisClient.xAdd(streamName, '*', {
-                message: typeof message === 'string' ? message : JSON.stringify(message),
-                author: author || 'anonymous',
+                message: ensureString(message),
                 timestamp: Date.now().toString()
             });
 
@@ -185,11 +184,12 @@ function createApp() {
                     for (const streamData of messages) {
                         for (const message of streamData.messages) {
                             lastId = message.id;
-                            res.write(`data: ${JSON.stringify({
+                            const dataString = JSON.stringify({
                                 type: 'message',
                                 id: message.id,
                                 data: message.message
-                            })}\n\n`);
+                            })
+                            res.write(`data: ${dataString}\n\n`);
                         }
                     }
                 }
@@ -227,3 +227,4 @@ if (require.main === module) {
 }
 
 module.exports = createApp;
+

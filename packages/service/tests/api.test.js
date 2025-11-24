@@ -4,7 +4,7 @@ const redis = require('redis');
 const http = require('http');
 
 // We'll create the app as a testable module
-const createApp = require('../server');
+const createApp = require('../src/server');
 
 describe('BPT Service API Tests', function () {
     let app;
@@ -150,16 +150,6 @@ describe('BPT Service API Tests', function () {
                     done(err);
                 });
             });
-        });
-    });
-
-    describe('GET /', function () {
-        it('should serve the main page', async function () {
-            const response = await request(app)
-                .get('/')
-                .expect(200);
-
-            expect(response.text).to.include('html');
         });
     });
 });

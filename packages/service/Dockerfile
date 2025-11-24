@@ -36,7 +36,7 @@ RUN npm ci --only=production && \
     npm cache clean --force
 
 # Copy application files from builder
-COPY --from=builder --chown=nodejs:nodejs /app/server.js ./
+COPY --from=builder --chown=nodejs:nodejs /app/src ./src
 
 # Switch to non-root user
 USER nodejs
@@ -52,4 +52,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["node", "src/server.js"]

@@ -2,7 +2,7 @@ const request = require('supertest');
 const { expect } = require('chai');
 const redis = require('redis');
 
-const createApp = require('../server');
+const createApp = require('../src/server');
 
 describe('Client Integration Tests', function () {
     let app;

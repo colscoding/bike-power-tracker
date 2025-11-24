@@ -269,13 +269,13 @@ export class StreamViewer {
         const elapsedEl = document.getElementById('streamElapsed');
 
         if (powerEl && data.power !== null && data.power !== undefined) {
-            powerEl.textContent = `${data.power} W`;
+            powerEl.textContent = `${data.power}`;
         }
         if (cadenceEl && data.cadence !== null && data.cadence !== undefined) {
-            cadenceEl.textContent = `${data.cadence} RPM`;
+            cadenceEl.textContent = `${data.cadence}`;
         }
         if (heartrateEl && data.heartrate !== null && data.heartrate !== undefined) {
-            heartrateEl.textContent = `${data.heartrate} BPM`;
+            heartrateEl.textContent = `${data.heartrate}`;
         }
         if (elapsedEl && data.elapsed) {
             elapsedEl.textContent = data.elapsed;
