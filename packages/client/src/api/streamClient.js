@@ -5,6 +5,20 @@
 
 // Use relative path for proxy in development, or custom URL in production
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_KEY = import.meta.env.VITE_API_KEY;
+
+/**
+ * Helper to get headers with authentication
+ * @param {object} [extraHeaders={}] - Additional headers to include
+ * @returns {object} - Headers object
+ */
+function getHeaders(extraHeaders = {}) {
+    const headers = { ...extraHeaders };
+    if (API_KEY) {
+        headers['X-API-Key'] = API_KEY;
+    }
+    return headers;
+}
 
 /**
  * Create a new stream
@@ -14,9 +28,9 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 export async function createStream(streamName) {
     const response = await fetch(`${API_BASE_URL}/api/streams/create`, {
         method: 'POST',
-        headers: {
+        headers: getHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ streamName }),
     });
 
@@ -33,7 +47,9 @@ export async function createStream(streamName) {
  * @returns {Promise<{streams: Array<{name: string, length: number, firstMessageId: string, lastMessageId: string}>}>}
  */
 export async function listStreams() {
-    const response = await fetch(`${API_BASE_URL}/api/streams`);
+    const response = await fetch(`${API_BASE_URL}/api/streams`, {
+        headers: getHeaders()
+    });
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Failed to list streams');
@@ -52,9 +68,9 @@ export async function listStreams() {
 export async function addMessage(streamName, message, author = 'anonymous') {
     const response = await fetch(`${API_BASE_URL}/api/streams/${streamName}/messages`, {
         method: 'POST',
-        headers: {
+        headers: getHeaders({
             'Content-Type': 'application/json',
-        },
+        }),
         body: JSON.stringify({ message, author }),
     });
 
@@ -79,7 +95,9 @@ export async function getMessages(streamName, options = {}) {
     const { start = '-', end = '+', count = 100 } = options;
     const params = new URLSearchParams({ start, end, count: count.toString() });
 
-    const response = await fetch(`${API_BASE_URL}/api/streams/${streamName}/messages?${params}`);
+    const response = await fetch(`${API_BASE_URL}/api/streams/${streamName}/messages?${params}`, {
+        headers: getHeaders()
+    });
 
     if (!response.ok) {
         const error = await response.json();
@@ -98,7 +116,11 @@ export async function getMessages(streamName, options = {}) {
  * @returns {EventSource} - The EventSource instance (call .close() to disconnect)
  */
 export function listenToStream(streamName, onMessage, onConnected, onError) {
-    const eventSource = new EventSource(`${API_BASE_URL}/api/streams/${streamName}/listen`);
+    let url = `${API_BASE_URL}/api/streams/${streamName}/listen`;
+    if (API_KEY) {
+        url += `?apiKey=${encodeURIComponent(API_KEY)}`;
+    }
+    const eventSource = new EventSource(url);
 
     eventSource.onmessage = (event) => {
         try {
@@ -159,6 +181,7 @@ export async function sendWorkoutData(streamName, workoutData) {
 export async function deleteStream(streamName) {
     const response = await fetch(`${API_BASE_URL}/api/streams/${streamName}`, {
         method: 'DELETE',
+        headers: getHeaders()
     });
 
     if (!response.ok) {

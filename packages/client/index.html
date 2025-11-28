@@ -100,6 +100,7 @@
                 <button id="startStreamButton">📡 Start Streaming</button>
                 <button id="viewStreamsButton">🌐 View Streams</button>
                 <button id="getNotifiedOnNewStreamButton">🔔 Notify on New Stream</button>
+                <button id="settingsButton">⚙️ Settings</button>
                 <a href="https://github.com/colscoding/bike-power-tracker" target="_blank" rel="noopener noreferrer"
                     style="display: block; text-decoration: none;">
                     <button style="width: 100%;">ℹ️ Homepage</button>
@@ -126,20 +127,20 @@
             <div id="yourMetrics" class="metrics-section">
                 <div id="yourMetricsToolbar" class="section-header">
                     <div id="topBarControls">
-                        <button id="startStop">▶️</button>
                         <h1 id="time"></h1>
+                        <button id="startStop">▶️</button>
                     </div>
                 </div>
                 <dl id="metricsTable">
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-power">
                         <dt>Power</dt>
                         <dd id="power"></dd>
                     </div>
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-cadence">
                         <dt>Cadence</dt>
                         <dd id="cadence"></dd>
                     </div>
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-heartrate">
                         <dt>Heart Rate</dt>
                         <dd id="heartrate"></dd>
                     </div>
@@ -154,15 +155,15 @@
                     <button id="closeStreamView" class="close-stream-btn">✖</button>
                 </div>
                 <dl id="streamMetricsTable">
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-power">
                         <dt>Power</dt>
                         <dd id="streamPower">--</dd>
                     </div>
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-cadence">
                         <dt>Cadence</dt>
                         <dd id="streamCadence">--</dd>
                     </div>
-                    <div class="metric-group">
+                    <div class="metric-group metric-group-heartrate">
                         <dt>Heart Rate</dt>
                         <dd id="streamHeartrate">--</dd>
                     </div>
@@ -175,6 +176,37 @@
             </div>
         </div>
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="stream-modal" style="display: none;">
+        <div class="stream-modal-content" style="max-width: 400px;">
+            <div class="stream-modal-header">
+                <h2>⚙️ Settings</h2>
+                <button id="closeSettingsModal" class="close-button">&times;</button>
+            </div>
+            <div class="stream-modal-body">
+                <p style="margin-bottom: 12px; color: #666;">Select metrics to track:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingPower" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">Power</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingCadence" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">Cadence</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingHeartrate" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">Heart Rate</span>
+                    </label>
+                </div>
+                <div style="display: flex; justify-content: flex-end;">
+                    <button id="saveSettings"
+                        style="padding: 8px 16px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

@@ -24,6 +24,17 @@ Node.js service using Redis Streams for real-time workout data streaming.
 - `POST /api/streams/:streamName/messages` - Add a message to a stream
 - `GET /api/streams/:streamName/listen` - Subscribe to real-time updates (SSE)
 
+## Configuration
+
+The service can be configured using environment variables:
+
+- `PORT`: Server port (default: 3000)
+- `REDIS_HOST`: Redis host (default: localhost)
+- `REDIS_PORT`: Redis port (default: 6379)
+- `REDIS_PASSWORD`: Redis password (optional)
+- `CORS_ORIGIN`: Allowed CORS origin (default: *)
+- `API_KEY`: Secret key for authentication. If set, all API requests must include `X-API-Key` header or `apiKey` query parameter.
+
 ## Development
 
 ```bash

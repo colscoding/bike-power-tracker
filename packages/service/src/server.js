@@ -1,5 +1,7 @@
 const express = require('express');
 const redis = require('redis');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { ensureString } = require('./utils');
 
 const PORT = process.env.PORT || 3000;
@@ -11,6 +13,18 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 // Factory function to create the app (for testing)
 function createApp() {
     const app = express();
+
+    // Security headers
+    app.use(helmet());
+
+    // Rate limiting
+    const limiter = rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    });
+    app.use(limiter);
 
     // Create Redis client
     const redisConfig = {
@@ -44,6 +58,24 @@ function createApp() {
     });
 
     app.use(express.json());
+
+    // API Key Authentication
+    const authenticate = (req, res, next) => {
+        const validApiKey = process.env.API_KEY;
+        if (!validApiKey) {
+            return next();
+        }
+
+        const apiKey = req.header('X-API-Key') || req.query.apiKey;
+
+        if (!apiKey || apiKey !== validApiKey) {
+            return res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
+        }
+        next();
+    };
+
+    // Apply authentication to all API routes
+    app.use('/api', authenticate);
 
     // Create a new stream
     app.post('/api/streams/create', async (req, res) => {
