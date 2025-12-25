@@ -1,15 +1,19 @@
 /**
  * Stream viewer UI - displays available streams and allows viewing live data
  */
-import { listStreams, listenToStream } from '../api/streamClient.js';
+import { listStreams, listenToStream, listenToAllStreams } from '../api/streamClient.js';
 
 export class StreamViewer {
     constructor() {
         this.modal = null;
         this.currentConnection = null;
         this.streamMetricsSection = null;
+        this.allStreamsMetricsSection = null;
+        this.allStreamsConnection = null;
+        this.streamCards = new Map();
         this.initModal();
         this.initInlineViewer();
+        this.initAllStreamsViewer();
     }
 
     /**
@@ -24,6 +28,21 @@ export class StreamViewer {
         const closeBtn = document.getElementById('closeStreamView');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.disconnectFromStream());
+        }
+    }
+
+    /**
+     * Initialize the all streams viewer
+     */
+    initAllStreamsViewer() {
+        this.allStreamsMetricsSection = document.getElementById('allStreamsMetrics');
+        if (!this.allStreamsMetricsSection) {
+            console.warn('All streams metrics section not found in DOM');
+            return;
+        }
+        const closeBtn = document.getElementById('closeAllStreamsView');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => this.disconnectFromAllStreams());
         }
     }
 
@@ -43,7 +62,10 @@ export class StreamViewer {
                 </div>
                 <div class="stream-modal-body">
                     <div class="stream-list-container">
-                        <button id="refreshStreamList" class="refresh-button">🔄 Refresh List</button>
+                        <div class="stream-list-controls" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <button id="refreshStreamList" class="refresh-button">🔄 Refresh List</button>
+                            <button id="viewAllStreamsBtn" class="connect-button" style="background-color: #4CAF50;">👁️ View All Streams</button>
+                        </div>
                         <div id="streamsList" class="streams-list">
                             <p class="loading">Loading streams...</p>
                         </div>
@@ -65,12 +87,16 @@ export class StreamViewer {
     setupEventListeners() {
         const closeBtn = document.getElementById('closeStreamModal');
         const refreshBtn = document.getElementById('refreshStreamList');
+        const viewAllBtn = document.getElementById('viewAllStreamsBtn');
 
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.close());
         }
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.refreshStreamList());
+        }
+        if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', () => this.connectToAllStreams());
         }
 
         // Close modal when clicking outside
@@ -197,9 +223,128 @@ export class StreamViewer {
     }
 
     /**
+     * Connect to all streams and view live data
+     */
+    connectToAllStreams() {
+        // Disconnect from any existing stream
+        this.disconnectFromStream();
+        this.disconnectFromAllStreams();
+
+        // Show all streams metrics section
+        if (!this.allStreamsMetricsSection) {
+            console.error('All streams metrics section not available');
+            return;
+        }
+        this.allStreamsMetricsSection.style.display = 'flex';
+
+        // Close the modal
+        this.close();
+
+        // Clear existing cards
+        const grid = document.getElementById('allStreamsGrid');
+        if (grid) grid.innerHTML = '';
+        this.streamCards.clear();
+
+        // Connect to all streams
+        this.allStreamsConnection = listenToAllStreams(
+            (data) => this.handleAllStreamsMessage(data),
+            () => console.log('Connected to all streams'),
+            (error) => console.error('All streams error:', error)
+        );
+    }
+
+    /**
+     * Disconnect from all streams
+     */
+    disconnectFromAllStreams() {
+        if (this.allStreamsConnection) {
+            this.allStreamsConnection.close();
+            this.allStreamsConnection = null;
+        }
+
+        // Hide all streams metrics section
+        if (this.allStreamsMetricsSection) {
+            this.allStreamsMetricsSection.style.display = 'none';
+        }
+
+        // Ensure your metrics is visible
+        const yourMetricsSection = document.getElementById('yourMetrics');
+        if (yourMetricsSection) {
+            yourMetricsSection.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Handle incoming message for all streams view
+     */
+    handleAllStreamsMessage(data) {
+        try {
+            const streamName = data.stream;
+            const messageData = typeof data.data === 'string'
+                ? JSON.parse(data.data)
+                : data.data;
+
+            this.updateStreamCard(streamName, messageData);
+        } catch (error) {
+            console.error('Error parsing stream message:', error, data);
+        }
+    }
+
+    /**
+     * Update or create a stream card
+     */
+    updateStreamCard(streamName, data) {
+        const grid = document.getElementById('allStreamsGrid');
+        if (!grid) return;
+
+        let card = this.streamCards.get(streamName);
+
+        if (!card) {
+            // Create new card
+            card = document.createElement('div');
+            card.className = 'stream-card';
+            card.innerHTML = `
+                <div class="stream-card-name" title="${streamName}">${streamName}</div>
+                <div class="stream-card-power">--</div>
+                <div class="stream-card-secondary">
+                    <div class="stream-card-metric">
+                        <span>CAD</span>
+                        <span class="card-cadence">--</span>
+                    </div>
+                    <div class="stream-card-metric">
+                        <span>HR</span>
+                        <span class="card-heartrate">--</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+            this.streamCards.set(streamName, card);
+        }
+
+        // Update values
+        if (data.power !== undefined && data.power !== null) {
+            const powerEl = card.querySelector('.stream-card-power');
+            if (powerEl) powerEl.textContent = data.power;
+        }
+
+        if (data.cadence !== undefined && data.cadence !== null) {
+            const cadenceEl = card.querySelector('.card-cadence');
+            if (cadenceEl) cadenceEl.textContent = data.cadence;
+        }
+
+        if (data.heartrate !== undefined && data.heartrate !== null) {
+            const hrEl = card.querySelector('.card-heartrate');
+            if (hrEl) hrEl.textContent = data.heartrate;
+        }
+    }
+
+    /**
      * Disconnect from the current stream
      */
     disconnectFromStream() {
+        // Also disconnect from all streams if active
+        this.disconnectFromAllStreams();
+
         if (this.currentConnection) {
             this.currentConnection.close();
             this.currentConnection = null;

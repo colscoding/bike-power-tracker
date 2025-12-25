@@ -99,7 +99,6 @@
                 <button id="discardButton">🗑️ Discard Data</button>
                 <button id="startStreamButton">📡 Start Streaming</button>
                 <button id="viewStreamsButton">🌐 View Streams</button>
-                <button id="getNotifiedOnNewStreamButton">🔔 Notify on New Stream</button>
                 <button id="settingsButton">⚙️ Settings</button>
                 <a href="https://github.com/colscoding/bike-power-tracker" target="_blank" rel="noopener noreferrer"
                     style="display: block; text-decoration: none;">
@@ -173,6 +172,15 @@
                     </div>
                 </dl>
                 <div id="streamLastUpdate" class="last-update-inline">Waiting for data...</div>
+            </div>
+            <div id="allStreamsMetrics" class="metrics-section" style="display: none;">
+                <div class="section-header">
+                    <h2 class="section-title">All Streams</h2>
+                    <button id="closeAllStreamsView" class="close-stream-btn">✖</button>
+                </div>
+                <div id="allStreamsGrid" class="streams-grid">
+                    <!-- Stream cards will be injected here -->
+                </div>
             </div>
         </div>
     </main>

@@ -59,6 +59,11 @@ function createApp() {
 
     app.use(express.json());
 
+    // Health check endpoint
+    app.get('/health', (req, res) => {
+        res.json({ status: 'ok' });
+    });
+
     // API Key Authentication
     const authenticate = (req, res, next) => {
         const validApiKey = process.env.API_KEY;
@@ -180,6 +185,117 @@ function createApp() {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    });
+
+    // Listen to new messages on all streams (Server-Sent Events)
+    app.get('/api/streams/listenAll', async (req, res) => {
+        // Set headers for Server-Sent Events
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
+
+        // Send initial connection message
+        res.write(`data: ${JSON.stringify({ type: 'connected', streamName: 'all' })}\n\n`);
+
+        console.log('Client connected to listenAll');
+
+        // Map to track the last ID for each stream
+        const streamCursors = new Map();
+
+        // Poll for new messages
+        const poll = async () => {
+            try {
+                // Discover all streams
+                const keys = [];
+                let cursor = 0;
+                do {
+                    const reply = await redisClient.scan(cursor, { MATCH: '*', COUNT: 100 });
+                    cursor = reply.cursor;
+                    keys.push(...reply.keys);
+                } while (cursor !== 0);
+
+                // Identify active streams
+                const activeStreams = new Set();
+                for (const key of keys) {
+                    try {
+                        const type = await redisClient.type(key);
+                        if (type === 'stream') {
+                            activeStreams.add(key);
+                            if (!streamCursors.has(key)) {
+                                // New stream found, start listening from now
+                                streamCursors.set(key, Date.now().toString());
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`Error checking type for ${key}:`, err);
+                    }
+                }
+
+                // Remove deleted streams from cursors
+                for (const key of streamCursors.keys()) {
+                    if (!activeStreams.has(key)) {
+                        streamCursors.delete(key);
+                    }
+                }
+
+                if (streamCursors.size === 0) {
+                    // No streams yet, wait and retry
+                    if (!res.destroyed) {
+                        setTimeout(poll, 1000);
+                    }
+                    return;
+                }
+
+                // Prepare streams for xRead
+                const streams = [];
+                for (const [key, id] of streamCursors.entries()) {
+                    streams.push({ key, id });
+                }
+
+                // Read with block
+                const response = await redisClient.xRead(
+                    streams,
+                    { BLOCK: 2000 }
+                );
+
+                if (response && response.length > 0) {
+                    for (const streamData of response) {
+                        const streamName = streamData.name;
+
+                        for (const message of streamData.messages) {
+                            // Update cursor
+                            streamCursors.set(streamName, message.id);
+
+                            const dataString = JSON.stringify({
+                                type: 'message',
+                                stream: streamName,
+                                id: message.id,
+                                data: message.message
+                            });
+                            res.write(`data: ${dataString}\n\n`);
+                        }
+                    }
+                }
+
+                // Continue polling
+                if (!res.destroyed) {
+                    setImmediate(poll);
+                }
+
+            } catch (error) {
+                console.error('Error in listenAll poll:', error);
+                if (!res.destroyed) {
+                    setTimeout(poll, 1000);
+                }
+            }
+        };
+
+        poll();
+
+        req.on('close', () => {
+            console.log('Client disconnected from listenAll');
+        });
     });
 
     // Get messages from a stream

@@ -150,6 +150,47 @@ export function listenToStream(streamName, onMessage, onConnected, onError) {
 }
 
 /**
+ * Connect to all streams and listen for real-time messages via SSE
+ * @param {function} onMessage - Callback function for new messages
+ * @param {function} [onConnected] - Callback function when connected
+ * @param {function} [onError] - Callback function for errors
+ * @returns {EventSource} - The EventSource instance (call .close() to disconnect)
+ */
+export function listenToAllStreams(onMessage, onConnected, onError) {
+    let url = `${API_BASE_URL}/api/streams/listenAll`;
+    if (API_KEY) {
+        url += `?apiKey=${encodeURIComponent(API_KEY)}`;
+    }
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'connected' && onConnected) {
+                onConnected(data);
+            } else if (data.type === 'message') {
+                onMessage(data);
+            }
+        } catch (error) {
+            console.error('Error parsing SSE message:', error);
+            if (onError) {
+                onError(error);
+            }
+        }
+    };
+
+    eventSource.onerror = (error) => {
+        console.error('SSE connection error:', error);
+        if (onError) {
+            onError(error);
+        }
+    };
+
+    return eventSource;
+}
+
+/**
  * Send workout data to a stream
  * @param {string} streamName - Name of the stream
  * @param {object} workoutData - Workout data to send

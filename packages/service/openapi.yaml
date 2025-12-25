@@ -33,16 +33,39 @@ servers:
     description: Development server (Docker)
 
 tags:
+  - name: Health
+    description: Service health monitoring
   - name: Streams
     description: Stream management operations
   - name: Messages
     description: Message operations within streams
   - name: Real-time
     description: Server-Sent Events for real-time updates
-  - name: Web
-    description: Web interface
 
 paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Returns the health status of the service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+              examples:
+                healthy:
+                  value:
+                    status: ok
+
   /api/streams/create:
     post:
       tags:
@@ -321,6 +344,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/streams/listenAll:
+    get:
+      tags:
+        - Real-time
+      summary: Listen to all streams (SSE)
+      description: |
+        Establishes a Server-Sent Events (SSE) connection to receive real-time messages
+        from all available streams. The connection remains open and pushes new messages
+        as they arrive from any stream.
+
+        ## Event Types
+        - **connected**: Sent immediately after connection is established
+        - **message**: Sent when a new message is added to any stream
+
+        ## Connection Lifecycle
+        1. Client opens connection
+        2. Server sends 'connected' event with streamName 'all'
+        3. Server continuously discovers and polls all Redis streams
+        4. New messages from any stream are pushed to client
+        5. Connection closes when client disconnects
+
+      operationId: listenAllStreams
+      responses:
+        '200':
+          description: SSE connection established
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: |
+                  Server-Sent Events stream. Each event is a JSON object
+                  with 'type' and other relevant fields.
+              examples:
+                connectionFlow:
+                  value: |
+                    data: {"type":"connected","streamName":"all"}
+
+                    data: {"type":"message","stream":"chat-room-1","id":"1700001234567-0","data":{"message":"Hello!","timestamp":"1700001234567"}}
+
+                    data: {"type":"message","stream":"notifications","id":"1700001234568-0","data":{"message":"New alert","timestamp":"1700001234568"}}
+
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                example: text/event-stream
+            Cache-Control:
+              schema:
+                type: string
+                example: no-cache
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+
   /api/streams/{streamName}/listen:
     get:
       tags:
@@ -457,21 +535,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /:
-    get:
-      tags:
-        - Web
-      summary: Serve web interface
-      description: Serves the main HTML page with the web-based user interface
-      operationId: serveWebInterface
-      responses:
-        '200':
-          description: HTML page
-          content:
-            text/html:
-              schema:
-                type: string
-
 components:
   parameters:
     StreamName:
@@ -596,9 +659,18 @@ components:
         - error
 
   securitySchemes:
-    # Currently no authentication required
-    # Add authentication schemes here if needed in the future
+    ApiKeyHeader:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key passed via X-API-Key header
+    ApiKeyQuery:
+      type: apiKey
+      in: query
+      name: apiKey
+      description: API key passed via query parameter
 
-security: []
-  # No security required by default
-  # Add security requirements here if authentication is implemented
+security:
+  - ApiKeyHeader: []
+  - ApiKeyQuery: []
+  # Note: Authentication is optional and only enforced when API_KEY environment variable is set
