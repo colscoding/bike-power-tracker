@@ -245,12 +245,57 @@ export class StreamViewer {
         if (grid) grid.innerHTML = '';
         this.streamCards.clear();
 
+        // Update status indicator if exists
+        const allStreamsStatus = document.getElementById('allStreamsStatus');
+        if (allStreamsStatus) {
+            allStreamsStatus.textContent = 'Connecting...';
+            allStreamsStatus.className = 'status-badge connecting';
+        }
+
         // Connect to all streams
         this.allStreamsConnection = listenToAllStreams(
             (data) => this.handleAllStreamsMessage(data),
-            () => console.log('Connected to all streams'),
-            (error) => console.error('All streams error:', error)
+            () => this.handleAllStreamsConnected(),
+            (error) => this.handleAllStreamsError(error)
         );
+    }
+
+    /**
+     * Handle all streams connected event
+     */
+    handleAllStreamsConnected() {
+        console.log('Connected to all streams');
+        const statusEl = document.getElementById('allStreamsStatus');
+        if (statusEl) {
+            statusEl.textContent = '🟢 Connected';
+            statusEl.className = 'status-badge connected';
+        }
+    }
+
+    /**
+     * Handle all streams error
+     */
+    handleAllStreamsError(error) {
+        console.error('All streams error:', error);
+        const statusEl = document.getElementById('allStreamsStatus');
+        if (!statusEl) return;
+
+        if (this.allStreamsConnection) {
+            const state = this.allStreamsConnection.readyState;
+            if (state === EventSource.CONNECTING) {
+                statusEl.textContent = '🔄 Reconnecting...';
+                statusEl.className = 'status-badge reconnecting';
+            } else if (state === EventSource.CLOSED) {
+                statusEl.textContent = '⚠️ Disconnected';
+                statusEl.className = 'status-badge disconnected';
+            } else {
+                statusEl.textContent = '🔴 Error';
+                statusEl.className = 'status-badge error';
+            }
+        } else {
+            statusEl.textContent = '🔴 Error';
+            statusEl.className = 'status-badge error';
+        }
     }
 
     /**
@@ -321,20 +366,26 @@ export class StreamViewer {
             this.streamCards.set(streamName, card);
         }
 
+        let messageData = {};
+        try {
+            messageData = JSON.parse(data.message)
+        } catch (error) {
+
+        }
         // Update values
-        if (data.power !== undefined && data.power !== null) {
+        if (messageData.power !== undefined && messageData.power !== null) {
             const powerEl = card.querySelector('.stream-card-power');
-            if (powerEl) powerEl.textContent = data.power;
+            if (powerEl) powerEl.textContent = messageData.power;
         }
 
-        if (data.cadence !== undefined && data.cadence !== null) {
+        if (messageData.cadence !== undefined && messageData.cadence !== null) {
             const cadenceEl = card.querySelector('.card-cadence');
-            if (cadenceEl) cadenceEl.textContent = data.cadence;
+            if (cadenceEl) cadenceEl.textContent = messageData.cadence;
         }
 
-        if (data.heartrate !== undefined && data.heartrate !== null) {
+        if (messageData.heartrate !== undefined && messageData.heartrate !== null) {
             const hrEl = card.querySelector('.card-heartrate');
-            if (hrEl) hrEl.textContent = data.heartrate;
+            if (hrEl) hrEl.textContent = messageData.heartrate;
         }
     }
 
@@ -433,8 +484,26 @@ export class StreamViewer {
     handleStreamError(error) {
         console.error('Stream error:', error);
         const statusEl = document.getElementById('streamStatus');
-        statusEl.textContent = '🔴 Error';
-        statusEl.className = 'status-badge error';
+
+        // Check if this is a connection/network error (EventSource fires error on disconnect)
+        if (this.currentConnection) {
+            const state = this.currentConnection.readyState;
+            if (state === EventSource.CONNECTING) {
+                // Browser is trying to reconnect
+                statusEl.textContent = '🔄 Reconnecting...';
+                statusEl.className = 'status-badge reconnecting';
+            } else if (state === EventSource.CLOSED) {
+                // Connection is closed
+                statusEl.textContent = '⚠️ Disconnected';
+                statusEl.className = 'status-badge disconnected';
+            } else {
+                statusEl.textContent = '🔴 Error';
+                statusEl.className = 'status-badge error';
+            }
+        } else {
+            statusEl.textContent = '🔴 Error';
+            statusEl.className = 'status-badge error';
+        }
     }
 
     /**

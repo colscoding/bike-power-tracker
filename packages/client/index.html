@@ -176,7 +176,10 @@
             <div id="allStreamsMetrics" class="metrics-section" style="display: none;">
                 <div class="section-header">
                     <h2 class="section-title">All Streams</h2>
-                    <button id="closeAllStreamsView" class="close-stream-btn">✖</button>
+                    <div class="viewer-status">
+                        <span id="allStreamsStatus" class="status-badge connecting">Connecting...</span>
+                        <button id="closeAllStreamsView" class="close-stream-btn">✖</button>
+                    </div>
                 </div>
                 <div id="allStreamsGrid" class="streams-grid">
                     <!-- Stream cards will be injected here -->

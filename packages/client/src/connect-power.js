@@ -5,7 +5,7 @@ export const connectPowerMock = async () => {
         const randomPower = Math.floor(Math.random() * 300) + 100; // 100-400W
         const entry = { timestamp: Date.now(), value: randomPower };
         listeners.forEach(listener => listener(entry));
-    }, 100);
+    }, 1000);
 
     return {
         disconnect: () => clearInterval(powerInterval),

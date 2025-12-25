@@ -51,8 +51,8 @@ export async function listStreams() {
         headers: getHeaders()
     });
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to list streams');
+        const error = await response.text();
+        throw new Error(error || 'Failed to list streams');
     }
 
     return response.json();

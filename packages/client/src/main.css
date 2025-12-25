@@ -627,6 +627,30 @@ input:checked+.slider:before {
     color: #991b1b;
 }
 
+.status-badge.disconnected {
+    background-color: #fef3c7;
+    color: #92400e;
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+.status-badge.reconnecting {
+    background-color: #dbeafe;
+    color: #1e40af;
+    animation: pulse-warning 1s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
 .viewer-metrics {
     display: grid;
     grid-template-columns: auto 1fr;

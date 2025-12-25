@@ -1,0 +1,16 @@
+{
+    "name": "@bpt/simulation",
+    "version": "1.0.0",
+    "description": "Simulation tools for testing the BPT streaming service",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "start": "node src/index.js",
+        "multi-user": "node src/multi-user.js",
+        "viewer": "node src/stream-viewer.js",
+        "stress": "node src/stress-test.js"
+    },
+    "dependencies": {
+        "eventsource": "^2.0.2"
+    }
+}
