@@ -855,3 +855,69 @@ body.has-stream-toolbar header {
     font-weight: 600;
     color: #333;
 }
+
+/* View Toggle Button */
+.view-toggle-btn {
+    background: transparent;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.15s ease;
+}
+
+.view-toggle-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.view-toggle-btn.active {
+    background-color: #e1e4e8;
+}
+
+/* Compact List View */
+.streams-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
+
+.stream-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.stream-row-name {
+    font-weight: 600;
+    color: #333;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+
+.stream-row-power {
+    font-weight: 700;
+    color: #2196F3;
+    min-width: 60px;
+    text-align: right;
+}
+
+.stream-row-power::after {
+    content: 'W';
+    font-size: 11px;
+    font-weight: 400;
+    color: #666;
+    margin-left: 2px;
+}

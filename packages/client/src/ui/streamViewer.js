@@ -11,6 +11,8 @@ export class StreamViewer {
         this.allStreamsMetricsSection = null;
         this.allStreamsConnection = null;
         this.streamCards = new Map();
+        this.streamRows = new Map();
+        this.isCompactView = false;
         this.initModal();
         this.initInlineViewer();
         this.initAllStreamsViewer();
@@ -43,6 +45,38 @@ export class StreamViewer {
         const closeBtn = document.getElementById('closeAllStreamsView');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => this.disconnectFromAllStreams());
+        }
+        const toggleViewBtn = document.getElementById('toggleViewBtn');
+        if (toggleViewBtn) {
+            toggleViewBtn.addEventListener('click', () => this.toggleAllStreamsView());
+        }
+    }
+
+    /**
+     * Toggle between grid and compact list view
+     */
+    toggleAllStreamsView() {
+        this.isCompactView = !this.isCompactView;
+        const grid = document.getElementById('allStreamsGrid');
+        const list = document.getElementById('allStreamsList');
+        const toggleBtn = document.getElementById('toggleViewBtn');
+
+        if (this.isCompactView) {
+            if (grid) grid.style.display = 'none';
+            if (list) list.style.display = 'flex';
+            if (toggleBtn) {
+                toggleBtn.textContent = '🔲';
+                toggleBtn.title = 'Toggle grid view';
+                toggleBtn.classList.add('active');
+            }
+        } else {
+            if (grid) grid.style.display = 'grid';
+            if (list) list.style.display = 'none';
+            if (toggleBtn) {
+                toggleBtn.textContent = '📋';
+                toggleBtn.title = 'Toggle compact view';
+                toggleBtn.classList.remove('active');
+            }
         }
     }
 
@@ -240,10 +274,13 @@ export class StreamViewer {
         // Close the modal
         this.close();
 
-        // Clear existing cards
+        // Clear existing cards and rows
         const grid = document.getElementById('allStreamsGrid');
+        const list = document.getElementById('allStreamsList');
         if (grid) grid.innerHTML = '';
+        if (list) list.innerHTML = '';
         this.streamCards.clear();
+        this.streamRows.clear();
 
         // Update status indicator if exists
         const allStreamsStatus = document.getElementById('allStreamsStatus');
@@ -340,31 +377,7 @@ export class StreamViewer {
      */
     updateStreamCard(streamName, data) {
         const grid = document.getElementById('allStreamsGrid');
-        if (!grid) return;
-
-        let card = this.streamCards.get(streamName);
-
-        if (!card) {
-            // Create new card
-            card = document.createElement('div');
-            card.className = 'stream-card';
-            card.innerHTML = `
-                <div class="stream-card-name" title="${streamName}">${streamName}</div>
-                <div class="stream-card-power">--</div>
-                <div class="stream-card-secondary">
-                    <div class="stream-card-metric">
-                        <span>CAD</span>
-                        <span class="card-cadence">--</span>
-                    </div>
-                    <div class="stream-card-metric">
-                        <span>HR</span>
-                        <span class="card-heartrate">--</span>
-                    </div>
-                </div>
-            `;
-            grid.appendChild(card);
-            this.streamCards.set(streamName, card);
-        }
+        const list = document.getElementById('allStreamsList');
 
         let messageData = {};
         try {
@@ -372,20 +385,71 @@ export class StreamViewer {
         } catch (error) {
 
         }
-        // Update values
-        if (messageData.power !== undefined && messageData.power !== null) {
-            const powerEl = card.querySelector('.stream-card-power');
-            if (powerEl) powerEl.textContent = messageData.power;
+
+        // Update grid card
+        if (grid) {
+            let card = this.streamCards.get(streamName);
+
+            if (!card) {
+                // Create new card
+                card = document.createElement('div');
+                card.className = 'stream-card';
+                card.innerHTML = `
+                    <div class="stream-card-name" title="${streamName}">${streamName}</div>
+                    <div class="stream-card-power">--</div>
+                    <div class="stream-card-secondary">
+                        <div class="stream-card-metric">
+                            <span>CAD</span>
+                            <span class="card-cadence">--</span>
+                        </div>
+                        <div class="stream-card-metric">
+                            <span>HR</span>
+                            <span class="card-heartrate">--</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+                this.streamCards.set(streamName, card);
+            }
+
+            // Update card values
+            if (messageData.power !== undefined && messageData.power !== null) {
+                const powerEl = card.querySelector('.stream-card-power');
+                if (powerEl) powerEl.textContent = messageData.power;
+            }
+
+            if (messageData.cadence !== undefined && messageData.cadence !== null) {
+                const cadenceEl = card.querySelector('.card-cadence');
+                if (cadenceEl) cadenceEl.textContent = messageData.cadence;
+            }
+
+            if (messageData.heartrate !== undefined && messageData.heartrate !== null) {
+                const hrEl = card.querySelector('.card-heartrate');
+                if (hrEl) hrEl.textContent = messageData.heartrate;
+            }
         }
 
-        if (messageData.cadence !== undefined && messageData.cadence !== null) {
-            const cadenceEl = card.querySelector('.card-cadence');
-            if (cadenceEl) cadenceEl.textContent = messageData.cadence;
-        }
+        // Update compact list row
+        if (list) {
+            let row = this.streamRows.get(streamName);
 
-        if (messageData.heartrate !== undefined && messageData.heartrate !== null) {
-            const hrEl = card.querySelector('.card-heartrate');
-            if (hrEl) hrEl.textContent = messageData.heartrate;
+            if (!row) {
+                // Create new row
+                row = document.createElement('div');
+                row.className = 'stream-row';
+                row.innerHTML = `
+                    <span class="stream-row-name" title="${streamName}">${streamName}</span>
+                    <span class="stream-row-power">--</span>
+                `;
+                list.appendChild(row);
+                this.streamRows.set(streamName, row);
+            }
+
+            // Update row power value
+            if (messageData.power !== undefined && messageData.power !== null) {
+                const powerEl = row.querySelector('.stream-row-power');
+                if (powerEl) powerEl.textContent = messageData.power;
+            }
         }
     }
 

@@ -178,11 +178,15 @@
                     <h2 class="section-title">All Streams</h2>
                     <div class="viewer-status">
                         <span id="allStreamsStatus" class="status-badge connecting">Connecting...</span>
+                        <button id="toggleViewBtn" class="view-toggle-btn" title="Toggle compact view">📋</button>
                         <button id="closeAllStreamsView" class="close-stream-btn">✖</button>
                     </div>
                 </div>
                 <div id="allStreamsGrid" class="streams-grid">
                     <!-- Stream cards will be injected here -->
+                </div>
+                <div id="allStreamsList" class="streams-compact-list" style="display: none;">
+                    <!-- Compact stream rows will be injected here -->
                 </div>
             </div>
         </div>
@@ -209,6 +213,21 @@
                     <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                         <input type="checkbox" id="settingHeartrate" checked style="width: 20px; height: 20px;">
                         <span style="font-size: 16px;">Heart Rate</span>
+                    </label>
+                </div>
+                <p style="margin-bottom: 12px; color: #666;">Export formats:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportTcx" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">TCX</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportCsv" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">CSV</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportJson" style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">JSON</span>
                     </label>
                 </div>
                 <div style="display: flex; justify-content: flex-end;">

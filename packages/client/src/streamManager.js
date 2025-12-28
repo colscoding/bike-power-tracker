@@ -81,13 +81,14 @@ export class StreamManager {
             this.streamInterval = null;
         }
 
-        if (this.streamName) {
-            try {
-                await deleteStream(this.streamName);
-            } catch (error) {
-                console.error('Failed to delete stream:', error);
-            }
-        }
+        // We don't delete the stream here so that data persists for a while (handled by server cleanup)
+        // if (this.streamName) {
+        //     try {
+        //         await deleteStream(this.streamName);
+        //     } catch (error) {
+        //         console.error('Failed to delete stream:', error);
+        //     }
+        // }
 
         this.streamName = null;
         this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0 };

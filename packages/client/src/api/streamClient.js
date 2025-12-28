@@ -203,9 +203,9 @@ export function listenToAllStreams(onMessage, onConnected, onError) {
  */
 export async function sendWorkoutData(streamName, workoutData) {
     const message = JSON.stringify({
-        power: workoutData.power || null,
-        cadence: workoutData.cadence || null,
-        heartrate: workoutData.heartrate || null,
+        power: workoutData.power ?? null,
+        cadence: workoutData.cadence ?? null,
+        heartrate: workoutData.heartrate ?? null,
         timestamp: workoutData.timestamp,
         elapsed: workoutData.elapsed,
         dataType: 'workout_metrics'

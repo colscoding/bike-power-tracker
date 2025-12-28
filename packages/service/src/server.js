@@ -224,7 +224,7 @@ function createApp() {
                             activeStreams.add(key);
                             if (!streamCursors.has(key)) {
                                 // New stream found, start listening from now
-                                streamCursors.set(key, Date.now().toString());
+                                streamCursors.set(key, '$');
                             }
                         }
                     } catch (err) {

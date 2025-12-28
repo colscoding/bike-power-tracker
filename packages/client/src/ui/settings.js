@@ -8,18 +8,27 @@ export function initSettings() {
     const settingPower = document.getElementById('settingPower');
     const settingCadence = document.getElementById('settingCadence');
     const settingHeartrate = document.getElementById('settingHeartrate');
+    const settingExportTcx = document.getElementById('settingExportTcx');
+    const settingExportCsv = document.getElementById('settingExportCsv');
+    const settingExportJson = document.getElementById('settingExportJson');
 
     // Load settings from localStorage
     const loadSettings = () => {
         const settings = JSON.parse(localStorage.getItem('bpt-settings')) || {
             power: true,
             cadence: true,
-            heartrate: true
+            heartrate: true,
+            exportTcx: true,
+            exportCsv: true,
+            exportJson: false
         };
 
         settingPower.checked = settings.power;
         settingCadence.checked = settings.cadence;
         settingHeartrate.checked = settings.heartrate;
+        settingExportTcx.checked = settings.exportTcx ?? true;
+        settingExportCsv.checked = settings.exportCsv ?? true;
+        settingExportJson.checked = settings.exportJson ?? false;
 
         applySettings(settings);
     };
@@ -29,7 +38,10 @@ export function initSettings() {
         const settings = {
             power: settingPower.checked,
             cadence: settingCadence.checked,
-            heartrate: settingHeartrate.checked
+            heartrate: settingHeartrate.checked,
+            exportTcx: settingExportTcx.checked,
+            exportCsv: settingExportCsv.checked,
+            exportJson: settingExportJson.checked
         };
 
         localStorage.setItem('bpt-settings', JSON.stringify(settings));
