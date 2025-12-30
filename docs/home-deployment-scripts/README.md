@@ -4,6 +4,8 @@ This directory contains scripts for deploying and managing the Bike Power Tracke
 
 ## Quick Start
 
+### Local Deployment (on the server itself)
+
 ```bash
 # Make all scripts executable
 chmod +x *.sh
@@ -15,7 +17,27 @@ chmod +x *.sh
 ./start.sh
 ```
 
+### Remote Deployment (from your laptop to a home server)
+
+```bash
+# Make scripts executable
+chmod +x *.sh
+
+# Find your server on the network
+./find-server.sh
+
+# Deploy to the server
+./deploy-to-server.sh 192.168.1.100 username
+
+# Manage the remote service
+./remote-control.sh status
+./remote-control.sh logs
+./remote-control.sh restart
+```
+
 ## Scripts Overview
+
+### Local Server Scripts
 
 | Script | Description |
 |--------|-------------|
@@ -29,6 +51,14 @@ chmod +x *.sh
 | [logs.sh](logs.sh) | View container logs |
 | [setup-cloudflare.sh](setup-cloudflare.sh) | Configure Cloudflare Tunnel |
 | [install-cron.sh](install-cron.sh) | Install automated cron jobs |
+
+### Remote Management Scripts
+
+| Script | Description |
+|--------|-------------|
+| [find-server.sh](find-server.sh) | Scan network to find your home server |
+| [deploy-to-server.sh](deploy-to-server.sh) | Copy files and deploy to remote server |
+| [remote-control.sh](remote-control.sh) | Start/stop/monitor service on remote server |
 
 ## Detailed Usage
 
@@ -253,5 +283,154 @@ docker exec bike_tracker_redis redis-cli -a "$REDIS_PASSWORD" BGSAVE
 
 ## Further Reading
 
+- [Remote Server Guide](../REMOTE_SERVER_GUIDE.md) - Complete guide for remote server management
 - [Home Deployment Guide](../HOME_DEPLOYMENT.md) - Full deployment documentation
 - [Database Plans](../DATABASE_PLAN.md) - Database configuration options
+
+---
+
+## Remote Management Scripts - Detailed Usage
+
+### find-server.sh - Network Discovery
+
+Find your home server on the local network:
+
+```bash
+# Auto-scan local network
+./find-server.sh
+
+# Scan specific subnet
+./find-server.sh 192.168.1.0/24
+
+# Discover via mDNS (Avahi)
+./find-server.sh --mdns
+
+# Scan for specific hostname
+./find-server.sh --hostname myserver
+```
+
+The script will:
+- Auto-detect your network subnet
+- Scan for devices with SSH (port 22) open
+- Try multiple methods: nmap, arp-scan, ping sweep
+- Display discovered hosts with SSH access
+
+### deploy-to-server.sh - Remote Deployment
+
+Deploy the Bike Power Tracker to your home server:
+
+```bash
+# Basic deployment
+./deploy-to-server.sh 192.168.1.100 username
+
+# Using specific SSH key
+./deploy-to-server.sh 192.168.1.100 username --key ~/.ssh/my_key
+
+# Deploy to custom directory
+./deploy-to-server.sh 192.168.1.100 username --dir ~/my-tracker
+
+# Skip build step (files only)
+./deploy-to-server.sh 192.168.1.100 username --no-build
+```
+
+This will:
+1. Test SSH connection
+2. Auto-detect Docker or Podman on server
+3. Sync files using rsync
+4. Generate `.env` with secure credentials
+5. Build containers
+6. Start services
+7. Verify health
+
+After deployment, your connection info is saved to `.server-config` for use with `remote-control.sh`.
+
+### remote-control.sh - Service Management
+
+Control the service running on your home server:
+
+```bash
+# Show status (uses saved config from deploy)
+./remote-control.sh status
+
+# Start/stop/restart
+./remote-control.sh start
+./remote-control.sh stop
+./remote-control.sh restart
+
+# View logs (live follow)
+./remote-control.sh logs
+
+# Health check
+./remote-control.sh health
+
+# Create backup on server
+./remote-control.sh backup
+
+# Update service (git pull + rebuild)
+./remote-control.sh update
+
+# Open SSH shell on server
+./remote-control.sh shell
+
+# Execute arbitrary command
+./remote-control.sh exec 'docker ps'
+./remote-control.sh exec 'df -h'
+```
+
+**Override connection settings:**
+
+```bash
+# Specify host/user directly
+./remote-control.sh status --host 192.168.1.100 --user christian
+
+# Use specific SSH key
+./remote-control.sh logs --key ~/.ssh/server_key
+```
+
+## Workflow Examples
+
+### Initial Setup from Laptop
+
+```bash
+# 1. Find your server
+./find-server.sh
+# Output: Found 192.168.1.100 (myserver.local)
+
+# 2. Set up SSH key (if not done)
+ssh-copy-id christian@192.168.1.100
+
+# 3. Deploy to server
+./deploy-to-server.sh 192.168.1.100 christian
+
+# 4. Open in browser
+# http://192.168.1.100:8080
+```
+
+### Daily Management
+
+```bash
+# Check if service is running
+./remote-control.sh status
+
+# View recent logs
+./remote-control.sh logs
+
+# Update after making changes
+./remote-control.sh update
+```
+
+### Troubleshooting
+
+```bash
+# Full health check
+./remote-control.sh health
+
+# SSH into server to debug
+./remote-control.sh shell
+
+# Check Docker containers
+./remote-control.sh exec 'docker ps -a'
+
+# View system resources
+./remote-control.sh exec 'free -h && df -h'
+```
