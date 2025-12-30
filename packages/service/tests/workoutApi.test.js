@@ -2,11 +2,12 @@
  * Comprehensive API Tests for Workout Endpoints
  * Tests REST API functionality including error handling
  */
-const request = require('supertest');
-const { expect } = require('chai');
-const redis = require('redis');
+import request from 'supertest';
+import assert from 'node:assert/strict';
+import * as redis from 'redis';
+import http from 'node:http';
 
-const createApp = require('../src/server');
+import createApp from '../src/server.ts';
 
 describe('Workout API Endpoints', function () {
     let app;
@@ -46,9 +47,9 @@ describe('Workout API Endpoints', function () {
                 .get('/health')
                 .expect(200);
 
-            expect(response.body).to.have.property('status');
-            expect(response.body).to.have.property('timestamp');
-            expect(response.body).to.have.property('redis');
+            assert.ok('status' in response.body);
+            assert.ok('timestamp' in response.body);
+            assert.ok('redis' in response.body);
         });
 
         it('should include database status in health check', async function () {
@@ -56,7 +57,7 @@ describe('Workout API Endpoints', function () {
                 .get('/health')
                 .expect(200);
 
-            expect(response.body).to.have.property('database');
+            assert.ok('database' in response.body);
         });
     });
 
@@ -69,9 +70,9 @@ describe('Workout API Endpoints', function () {
                 .send({ streamName })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
-            expect(response.body).to.have.property('streamName', streamName);
-            expect(response.body).to.have.property('messageId');
+            assert.strictEqual(response.body.success, true);
+            assert.strictEqual(response.body.streamName, streamName);
+            assert.ok('messageId' in response.body);
         });
 
         it('should return 400 when creating stream without name', async function () {
@@ -80,7 +81,7 @@ describe('Workout API Endpoints', function () {
                 .send({})
                 .expect(400);
 
-            expect(response.body).to.have.property('error');
+            assert.ok('error' in response.body);
         });
 
         it('should add messages to stream', async function () {
@@ -92,8 +93,8 @@ describe('Workout API Endpoints', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
-            expect(response.body).to.have.property('messageId');
+            assert.strictEqual(response.body.success, true);
+            assert.ok('messageId' in response.body);
         });
 
         it('should return 400 when message is missing', async function () {
@@ -102,7 +103,7 @@ describe('Workout API Endpoints', function () {
                 .send({ author: 'test' })
                 .expect(400);
 
-            expect(response.body).to.have.property('error');
+            assert.ok('error' in response.body);
         });
 
         it('should list all streams', async function () {
@@ -110,8 +111,8 @@ describe('Workout API Endpoints', function () {
                 .get('/api/streams')
                 .expect(200);
 
-            expect(response.body).to.have.property('streams');
-            expect(response.body.streams).to.be.an('array');
+            assert.ok('streams' in response.body);
+            assert.ok(Array.isArray(response.body.streams));
         });
 
         it('should get messages from stream', async function () {
@@ -119,9 +120,9 @@ describe('Workout API Endpoints', function () {
                 .get(`/api/streams/${streamName}/messages`)
                 .expect(200);
 
-            expect(response.body).to.have.property('streamName', streamName);
-            expect(response.body).to.have.property('messages');
-            expect(response.body.messages).to.be.an('array');
+            assert.strictEqual(response.body.streamName, streamName);
+            assert.ok('messages' in response.body);
+            assert.ok(Array.isArray(response.body.messages));
         });
 
         it('should support count parameter for messages', async function () {
@@ -137,7 +138,7 @@ describe('Workout API Endpoints', function () {
                 .query({ count: 2 })
                 .expect(200);
 
-            expect(response.body.messages.length).to.be.at.most(2);
+            assert.ok(response.body.messages.length <= 2);
         });
 
         it('should delete a stream', async function () {
@@ -145,7 +146,7 @@ describe('Workout API Endpoints', function () {
                 .delete(`/api/streams/${streamName}`)
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
         });
 
         it('should return 404 when deleting non-existent stream', async function () {
@@ -153,7 +154,7 @@ describe('Workout API Endpoints', function () {
                 .delete('/api/streams/non-existent-stream-12345')
                 .expect(404);
 
-            expect(response.body).to.have.property('error');
+            assert.ok('error' in response.body);
         });
     });
 
@@ -171,8 +172,8 @@ describe('Workout API Endpoints', function () {
                 .query({ retention: 0 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
-            expect(response.body).to.have.property('deletedCount');
+            assert.strictEqual(response.body.success, true);
+            assert.ok('deletedCount' in response.body);
         });
     });
 
@@ -187,11 +188,10 @@ describe('Workout API Endpoints', function () {
                 .then(() => {
                     const server = app.listen(0, () => {
                         const port = server.address().port;
-                        const http = require('http');
 
                         http.get(`http://localhost:${port}/api/streams/${testStream}/listen`, (res) => {
-                            expect(res.statusCode).to.equal(200);
-                            expect(res.headers['content-type']).to.include('text/event-stream');
+                            assert.strictEqual(res.statusCode, 200);
+                            assert.ok(res.headers['content-type'].includes('text/event-stream'));
                             res.destroy();
                             server.close();
 
@@ -213,7 +213,7 @@ describe('Workout API Endpoints', function () {
                 .get('/api/streams')
                 .expect(200);
 
-            expect(response.headers).to.have.property('access-control-allow-origin');
+            assert.ok('access-control-allow-origin' in response.headers);
         });
 
         it('should handle OPTIONS preflight', async function () {
@@ -221,7 +221,7 @@ describe('Workout API Endpoints', function () {
                 .options('/api/streams/create')
                 .expect(200);
 
-            expect(response.headers).to.have.property('access-control-allow-methods');
+            assert.ok('access-control-allow-methods' in response.headers);
         });
     });
 
@@ -279,7 +279,7 @@ describe('Message Formatting', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
 
             // Retrieve and verify
             const getResponse = await request(app)
@@ -289,9 +289,9 @@ describe('Message Formatting', function () {
             const lastMessage = getResponse.body.messages[getResponse.body.messages.length - 1];
             const parsedData = JSON.parse(lastMessage.data.message);
 
-            expect(parsedData.power).to.equal(250);
-            expect(parsedData.cadence).to.equal(85);
-            expect(parsedData.heartrate).to.equal(145);
+            assert.strictEqual(parsedData.power, 250);
+            assert.strictEqual(parsedData.cadence, 85);
+            assert.strictEqual(parsedData.heartrate, 145);
         });
 
         it('should handle null values in workout data', async function () {
@@ -310,7 +310,7 @@ describe('Message Formatting', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
         });
 
         it('should handle arrays in workout data', async function () {
@@ -328,7 +328,7 @@ describe('Message Formatting', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
         });
     });
 });

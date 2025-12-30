@@ -40,7 +40,7 @@ The BPT Service provides:
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐
 │   Client PWA    │────▶│   BPT Service    │────▶│    Redis    │
-│  (Vite + JS)    │◀────│   (Express)      │◀────│   Streams   │
+│  (Vite + TS)    │◀────│  (Express + TS)  │◀────│   Streams   │
 └─────────────────┘     └────────┬─────────┘     └─────────────┘
                                  │
                                  ▼
@@ -103,9 +103,11 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ### Authentication
 
-If `API_KEY` is set, all requests must include one of:
-- Header: `X-API-Key: your-api-key`
-- Query: `?apiKey=your-api-key`
+If `API_KEY` is set, all requests must include authentication:
+- Header (recommended): `X-API-Key: your-api-key`
+- Query (deprecated, for SSE backwards compatibility): `?apiKey=your-api-key`
+
+> **Note**: Query string authentication is deprecated and logs a security warning. Use the header method for all new implementations.
 
 ### Health Check
 
@@ -383,22 +385,49 @@ model Workout {
 ```
 service/
 ├── src/
-│   ├── server.js       # Main Express server (routes, middleware)
-│   ├── utils.js        # Utility functions
-│   └── db/             # Database layer (if using Prisma)
-│       ├── index.js    # Database client
-│       └── services/   # Database services
+│   ├── server.ts       # Main Express server entry point
+│   ├── config.ts       # Configuration and environment
+│   ├── redis.ts        # Redis client and connection pooling
+│   ├── utils.ts        # Utility functions
+│   ├── validation.ts   # Input validation middleware
+│   ├── middleware/     # Express middleware
+│   │   ├── auth.ts     # API key authentication
+│   │   ├── cors.ts     # CORS configuration
+│   │   └── index.ts    # Middleware exports
+│   ├── routes/         # API route handlers
+│   │   ├── health.ts   # Health check endpoint
+│   │   ├── streams.ts  # Stream CRUD + SSE endpoints
+│   │   ├── workouts.ts # Workout API (database)
+│   │   ├── users.ts    # User API (database)
+│   │   └── index.ts    # Route exports
+│   ├── db/             # Database layer (Prisma)
+│   │   ├── index.ts        # Prisma client
+│   │   ├── workoutService.ts # Workout operations
+│   │   └── userService.ts    # User operations
+│   └── types/          # TypeScript definitions
+│       ├── workout.ts
+│       ├── user.ts
+│       ├── stream.ts
+│       └── db.ts
 ├── tests/
-│   ├── unit.test.js    # Unit tests
-│   ├── api.test.js     # API integration tests
-│   ├── redis.test.js   # Redis connection tests
-│   └── client-integration.test.js  # Client integration tests
+│   ├── unit.test.js          # Unit tests
+│   ├── api.test.js           # API integration tests
+│   ├── workoutApi.test.js    # Workout API tests
+│   ├── workoutService.test.js # Workout service tests
+│   ├── userService.test.js   # User service tests
+│   ├── redis.test.js         # Redis connection tests
+│   ├── security.test.js      # Security/validation tests
+│   └── client-integration.test.js
+├── prisma/
+│   └── schema.prisma     # Database schema
 ├── nginx/
-│   └── default.conf    # Nginx configuration
+│   └── default.conf      # Nginx configuration
 ├── docker-compose.yml      # Development Docker config
 ├── docker-compose.prod.yml # Production Docker config
 ├── Dockerfile              # Production image
 ├── Dockerfile.dev          # Development image
+├── tsconfig.json           # TypeScript configuration
+├── eslint.config.mjs       # ESLint 9 flat config
 ├── openapi.yaml            # API specification
 └── package.json
 ```
@@ -415,12 +444,14 @@ node src/server.js
 
 ### Code Style
 
-The project uses ESLint and follows Node.js best practices:
+The project uses ESLint 9 (flat config) and follows Node.js best practices:
 
+- TypeScript with strict mode
 - ES Modules (`"type": "module"`)
 - Async/await for asynchronous code
 - JSDoc comments for documentation
 - Error handling with try/catch
+- Input validation middleware
 
 ## Testing
 
@@ -446,8 +477,14 @@ pnpm test -- --watch
 |------|-------------|
 | `unit.test.js` | Pure function tests, utilities |
 | `api.test.js` | HTTP endpoint tests |
+| `workoutApi.test.js` | Workout endpoint tests |
+| `workoutService.test.js` | Workout service layer tests |
+| `userService.test.js` | User/password service tests |
 | `redis.test.js` | Redis connection and stream tests |
+| `security.test.js` | Input validation and security tests |
 | `client-integration.test.js` | End-to-end client flows |
+
+**Total: 115+ tests across 8 test files**
 
 ## Deployment
 

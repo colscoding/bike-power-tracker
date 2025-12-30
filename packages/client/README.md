@@ -31,14 +31,17 @@ The BPT Client is a Progressive Web App (PWA) that connects to Bluetooth cycling
 |---------|-------------|
 | **Real-time Metrics** | Monitor power (watts), cadence (RPM), and heart rate (BPM) |
 | **Bluetooth Support** | Connect to BLE cycling sensors |
+| **Auto-Reconnect** | Automatic reconnection with exponential backoff (max 5 attempts) |
 | **Live Streaming** | Stream your workout to viewers in real-time |
 | **Stream Viewer** | Watch other cyclists' workouts live |
 | **Workout Timer** | Track elapsed time with start/stop/reset |
-| **Data Export** | Download as JSON, TCX (Garmin), or CSV |
+| **Data Export** | Download as JSON, TCX (Garmin), FIT, or CSV |
 | **PWA Install** | Install as native app on mobile/desktop |
 | **Offline Mode** | Works without internet once installed |
 | **Wake Lock** | Keeps screen on during workouts |
-| **Dark Theme** | Eye-friendly dark interface |
+| **Dark Theme** | Eye-friendly dark interface with auto-detect |
+| **Keyboard Shortcuts** | Space (start/stop), Escape, M, S, H, E |
+| **Accessibility** | Screen reader support, reduced motion, focus indicators |
 
 ## Quick Start
 
@@ -112,6 +115,7 @@ After recording, use the menu to export:
 |--------|-------------|---------|
 | **JSON** | Raw data with all details | Analysis, backup |
 | **TCX** | Training Center XML | Garmin Connect, Strava |
+| **FIT** | Flexible and Interoperable Data Transfer | Garmin devices, TrainingPeaks |
 | **CSV** | Comma-separated values | Excel, Google Sheets |
 
 ### Installing as PWA
@@ -176,31 +180,42 @@ After recording, use the menu to export:
 ```
 client/
 ├── src/
-│   ├── main.js              # App initialization
+│   ├── main.ts              # App initialization
 │   ├── main.css             # Global styles
-│   ├── elements.js          # DOM element references
-│   ├── MeasurementsState.js # State management
+│   ├── elements.ts          # DOM element references
+│   ├── MeasurementsState.ts # State management
+│   ├── streamManager.ts     # Streaming logic
 │   │
-│   ├── connect-*.js         # Bluetooth connections
-│   │   ├── connect-power.js
-│   │   ├── connect-cadence.js
-│   │   └── connect-heartrate.js
+│   ├── connect-*.ts         # Bluetooth connections
+│   │   ├── connect-power.ts
+│   │   ├── connect-cadence.ts
+│   │   └── connect-heartrate.ts
 │   │
 │   ├── api/                 # API clients
-│   │   ├── streamClient.js  # Real-time streaming
-│   │   └── workoutClient.js # Workout history
+│   │   ├── streamClient.ts  # Real-time streaming
+│   │   └── workoutClient.ts # Workout history
 │   │
 │   ├── ui/                  # UI components
-│   │   ├── menu.js          # Menu panel
-│   │   ├── settings.js      # Settings panel
-│   │   ├── streamViewer.js  # Stream viewing
-│   │   ├── notifications.js # Toast notifications
-│   │   ├── wakeLock.js      # Screen wake lock
-│   │   └── serviceWorker.js # SW registration
+│   │   ├── accessibility.ts # Keyboard shortcuts, screen reader
+│   │   ├── menu.ts          # Menu panel
+│   │   ├── settings.ts      # Settings panel
+│   │   ├── streamViewer.ts  # Stream viewing
+│   │   ├── notifications.ts # Toast notifications
+│   │   ├── time.ts          # Timer display
+│   │   ├── wakeLock.ts      # Screen wake lock
+│   │   ├── installPrompt.ts # PWA install
+│   │   └── serviceWorker.ts # SW registration
 │   │
-│   ├── create-csv.js        # CSV export
-│   ├── create-tcx.js        # TCX export
-│   └── merge-measurements.js # Data merging
+│   ├── types/               # TypeScript definitions
+│   │   ├── measurements.ts
+│   │   ├── bluetooth.ts
+│   │   ├── stream.ts
+│   │   └── ...              # Other types
+│   │
+│   ├── create-csv.ts        # CSV export
+│   ├── create-tcx.ts        # TCX export
+│   ├── create-fit.ts        # FIT export
+│   └── merge-measurements.ts # Data merging
 │
 ├── public/
 │   ├── assets/              # Icons, screenshots
@@ -210,6 +225,7 @@ client/
 ├── test-e2e/                # Playwright E2E tests
 ├── index.html               # Entry point
 ├── manifest.json            # PWA manifest
+├── tsconfig.json            # TypeScript config
 └── vite.config.js           # Vite configuration
 ```
 
@@ -268,19 +284,20 @@ pnpm dev:all  # Runs client + service
 
 ### Code Style
 
-- Vanilla JavaScript (ES Modules)
+- TypeScript with strict mode (ES Modules)
 - JSDoc comments for documentation
-- No build-time frameworks (keep it simple)
+- Type definitions in `src/types/`
 
 ### Key Files
 
 | File | Purpose |
 |------|---------|
-| `main.js` | App initialization, event wiring |
-| `MeasurementsState.js` | Central state management |
-| `connect-*.js` | Bluetooth GATT connections |
-| `streamClient.js` | SSE streaming client |
-| `elements.js` | DOM element references |
+| `main.ts` | App initialization, event wiring |
+| `MeasurementsState.ts` | Central state management |
+| `streamManager.ts` | Streaming to server |
+| `connect-*.ts` | Bluetooth GATT connections |
+| `api/streamClient.ts` | SSE streaming client |
+| `elements.ts` | DOM element references |
 
 ## Testing
 
@@ -295,11 +312,19 @@ pnpm test -- --watch
 ```
 
 Unit tests cover:
-- `MeasurementsState` - State management logic
-- `create-csv.js` - CSV generation
-- `create-tcx.js` - TCX generation
-- `merge-measurements.js` - Data merging
-- `getTimestring.js` - Time formatting
+- `MeasurementsState.ts` - State management logic
+- `streamManager.ts` - Streaming initialization and control
+- `create-csv.ts` - CSV generation
+- `create-tcx.ts` - TCX generation
+- `create-fit.ts` - FIT file generation
+- `merge-measurements.ts` - Data merging
+- `getTimestring.ts` - Time formatting
+- `connect-*.ts` - Bluetooth connection mocking
+- `ui/notifications.ts` - Notification utilities
+- `ui/time.ts` - Timer display logic
+- `ui/modal.ts` - Modal component
+
+**Total: 176 tests across 13 test files**
 
 ### E2E Tests (Playwright)
 

@@ -48,8 +48,8 @@ pnpm dev
 ```
 bike-power-tracker/
 ├── packages/
-│   ├── client/          # PWA (Vite + vanilla JS)
-│   ├── service/         # API (Express + Redis)
+│   ├── client/          # PWA (Vite + TypeScript)
+│   ├── service/         # API (Express + TypeScript + Redis)
 │   └── simulation/      # Testing tools
 ├── test-integration/    # Cross-package tests
 └── docs/                # Documentation
@@ -177,22 +177,24 @@ Closes #123
 
 ## Coding Standards
 
-### JavaScript
+### TypeScript
 
+- Use TypeScript with strict mode
 - Use ES Modules (`import`/`export`)
 - Use async/await for asynchronous code
 - Add JSDoc comments for functions
 - Use descriptive variable names
 - Keep functions small and focused
+- Define types in `src/types/` directories
 
 **Example:**
-```javascript
+```typescript
 /**
  * Calculate average power from measurements
- * @param {Array<{power: number}>} measurements - Array of power readings
- * @returns {number} Average power in watts
+ * @param measurements - Array of power readings
+ * @returns Average power in watts
  */
-export function calculateAveragePower(measurements) {
+export function calculateAveragePower(measurements: Array<{power: number}>): number {
     if (measurements.length === 0) return 0;
     
     const total = measurements.reduce((sum, m) => sum + (m.power || 0), 0);
@@ -216,11 +218,12 @@ export function calculateAveragePower(measurements) {
 
 ### Unit Tests
 
-Located in `*.test.js` files alongside source:
+Located in `*.test.ts` (client) or `*.test.js` (service) files:
 
-```javascript
-import { describe, it, assert } from 'node:test';
-import { calculateAveragePower } from './calculations.js';
+```typescript
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { calculateAveragePower } from './calculations.ts';
 
 describe('calculateAveragePower', () => {
     it('should return 0 for empty array', () => {

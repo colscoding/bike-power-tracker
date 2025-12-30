@@ -10,12 +10,16 @@ Track your cycling workouts with Bluetooth sensors. Monitor power, cadence, and 
 |---------|-------------|
 | ⚡ **Real-time Metrics** | Monitor power (watts), cadence (RPM), and heart rate (BPM) |
 | 📶 **Bluetooth Sensors** | Connect to BLE cycling power meters, cadence, and HR monitors |
+| � **Auto-Reconnect** | Automatic Bluetooth reconnection with exponential backoff |
 | 📡 **Live Streaming** | Stream your workout data in real-time to viewers |
 | 👁️ **Stream Viewer** | Watch live workout streams from other cyclists |
 | ⏱️ **Workout Timer** | Track workout duration with start/stop/reset |
-| 📊 **Data Export** | Download workouts as JSON, TCX (Garmin), or CSV |
+| 📊 **Data Export** | Download workouts as JSON, TCX (Garmin), FIT, or CSV |
 | 📱 **PWA Support** | Install as an app on mobile and desktop |
 | 🔌 **Offline Mode** | Works without internet once installed |
+| 🌙 **Dark Mode** | Eye-friendly dark theme with auto-detect |
+| ⌨️ **Keyboard Shortcuts** | Space, Escape, M, S, H, E for quick access |
+| ♿ **Accessibility** | Screen reader support, reduced motion, focus indicators |
 
 ## Quick Start
 
@@ -63,14 +67,14 @@ docker run -d -p 6379:6379 --name redis redis:alpine
 ```
 bike-power-tracker/
 ├── packages/
-│   ├── client/          # PWA application (Vite + vanilla JS)
-│   ├── service/         # Streaming API (Express + Redis Streams)
+│   ├── client/          # PWA application (Vite + TypeScript)
+│   ├── service/         # Streaming API (Express + TypeScript + Redis Streams)
 │   └── simulation/      # Testing & simulation tools
 ├── test-integration/    # Cross-package integration tests
 ├── docs/                # Documentation
 │   ├── DEPLOY.md        # VPS deployment guide
 │   ├── HOME_DEPLOYMENT.md    # Home server setup
-│   └── TUNNEL_OPTIONS.md     # Cloudflare tunnel guide
+│   └── CLOUDFLARE_TUNNEL_GUIDE.md  # Cloudflare tunnel guide
 ├── package.json         # Root workspace config
 └── pnpm-workspace.yaml  # PNPM workspace definition
 ```
@@ -86,17 +90,20 @@ bike-power-tracker/
 ## Tech Stack
 
 ### Client (PWA)
-- **Language**: Vanilla JavaScript (ES Modules)
-- **Build Tool**: Vite
-- **PWA**: vite-plugin-pwa + Workbox
-- **Testing**: Node.js test runner, Playwright
+- **Language**: TypeScript (ES Modules)
+- **Build Tool**: Vite 7.x
+- **PWA**: vite-plugin-pwa + Workbox 7.x
+- **Testing**: Node.js test runner (176 tests), Playwright E2E
 - **Deployment**: GitHub Pages
 
 ### Service (API)
 - **Runtime**: Node.js 18+
-- **Framework**: Express.js
+- **Language**: TypeScript (ES Modules)
+- **Framework**: Express.js 4.x
 - **Real-time**: Redis Streams + Server-Sent Events (SSE)
-- **Database**: SQLite/PostgreSQL (optional, via Prisma)
+- **Database**: PostgreSQL/SQLite (optional, via Prisma 5.x)
+- **Security**: Helmet, express-rate-limit, input validation
+- **Testing**: Mocha + Supertest (115 tests)
 - **API Spec**: OpenAPI 3.0
 - **Deployment**: Docker + Nginx
 
@@ -208,7 +215,7 @@ For deploying both client and service:
 |-------|-------------|
 | [DEPLOY.md](./docs/DEPLOY.md) | VPS deployment with Docker |
 | [HOME_DEPLOYMENT.md](./docs/HOME_DEPLOYMENT.md) | Home server setup |
-| [TUNNEL_OPTIONS.md](./docs/TUNNEL_OPTIONS.md) | Cloudflare tunnel for home servers |
+| [CLOUDFLARE_TUNNEL_GUIDE.md](./docs/CLOUDFLARE_TUNNEL_GUIDE.md) | Cloudflare tunnel for home servers |
 
 ### Docker Quick Deploy
 
@@ -258,7 +265,7 @@ DATABASE_URL=file:./data/bpt.db
 | [Simulation README](./packages/simulation/README.md) | Testing tools |
 | [DEPLOY.md](./docs/DEPLOY.md) | VPS deployment |
 | [HOME_DEPLOYMENT.md](./docs/HOME_DEPLOYMENT.md) | Home server guide |
-| [TUNNEL_OPTIONS.md](./docs/TUNNEL_OPTIONS.md) | Tunnel setup |
+| [CLOUDFLARE_TUNNEL_GUIDE.md](./docs/CLOUDFLARE_TUNNEL_GUIDE.md) | Tunnel setup |
 | [OpenAPI Spec](./packages/service/openapi.yaml) | Full API specification |
 
 ## License

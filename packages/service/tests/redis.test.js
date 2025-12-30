@@ -1,5 +1,5 @@
-const { expect } = require('chai');
-const redis = require('redis');
+import assert from 'node:assert/strict';
+import * as redis from 'redis';
 
 describe('Redis Streams Integration Tests', function () {
     let client;
@@ -39,23 +39,23 @@ describe('Redis Streams Integration Tests', function () {
                 timestamp: Date.now().toString()
             });
 
-            expect(messageId).to.be.a('string');
-            expect(messageId).to.match(/\d+-\d+/);
+            assert.strictEqual(typeof messageId, 'string');
+            assert.match(messageId, /\d+-\d+/);
         });
 
         it('should read messages from a stream', async function () {
             const messages = await client.xRange(testStreamName, '-', '+');
 
-            expect(messages).to.be.an('array');
-            expect(messages.length).to.be.at.least(1);
-            expect(messages[0]).to.have.property('id');
-            expect(messages[0]).to.have.property('message');
+            assert.ok(Array.isArray(messages));
+            assert.ok(messages.length >= 1);
+            assert.ok('id' in messages[0]);
+            assert.ok('message' in messages[0]);
         });
 
         it('should get stream length', async function () {
             const length = await client.xLen(testStreamName);
-            expect(length).to.be.a('number');
-            expect(length).to.be.at.least(1);
+            assert.strictEqual(typeof length, 'number');
+            assert.ok(length >= 1);
         });
 
         it('should add multiple messages to stream', async function () {
@@ -70,7 +70,7 @@ describe('Redis Streams Integration Tests', function () {
             }
 
             const length = await client.xLen(testStreamName);
-            expect(length).to.be.at.least(4); // 1 initial + 3 new
+            assert.ok(length >= 4); // 1 initial + 3 new
         });
 
         it('should read stream with count limit', async function () {
@@ -78,7 +78,7 @@ describe('Redis Streams Integration Tests', function () {
                 COUNT: 2
             });
 
-            expect(messages).to.have.length(2);
+            assert.strictEqual(messages.length, 2);
         });
 
         it('should read stream in reverse order', async function () {
@@ -86,34 +86,34 @@ describe('Redis Streams Integration Tests', function () {
                 COUNT: 1
             });
 
-            expect(messages).to.be.an('array');
-            expect(messages.length).to.equal(1);
+            assert.ok(Array.isArray(messages));
+            assert.strictEqual(messages.length, 1);
         });
     });
 
     describe('Stream Information', function () {
         it('should verify stream type', async function () {
             const type = await client.type(testStreamName);
-            expect(type).to.equal('stream');
+            assert.strictEqual(type, 'stream');
         });
 
         it('should list all keys', async function () {
             const keys = await client.keys('*');
-            expect(keys).to.be.an('array');
-            expect(keys).to.include(testStreamName);
+            assert.ok(Array.isArray(keys));
+            assert.ok(keys.includes(testStreamName));
         });
     });
 
     describe('Error Handling', function () {
         it('should handle non-existent stream', async function () {
             const messages = await client.xRange('non-existent-stream', '-', '+');
-            expect(messages).to.be.an('array');
-            expect(messages).to.have.length(0);
+            assert.ok(Array.isArray(messages));
+            assert.strictEqual(messages.length, 0);
         });
 
         it('should get length 0 for non-existent stream', async function () {
             const length = await client.xLen('non-existent-stream');
-            expect(length).to.equal(0);
+            assert.strictEqual(length, 0);
         });
     });
 });

@@ -1,16 +1,22 @@
 {
     "name": "service",
     "version": "1.0.0",
+    "type": "module",
     "description": "Redis Streams service with Node.js, Express, and real-time messaging",
-    "main": "src/server.js",
+    "main": "src/server.ts",
+    "exports": {
+        ".": "./src/server.ts"
+    },
     "scripts": {
-        "start": "node src/server.js",
-        "dev": "nodemon src/server.js",
-        "dev:docker": "docker-compose up -d redis && nodemon src/server.js",
-        "test": "mocha 'tests/**/*.test.js' --timeout 10000 --exit",
-        "test:unit": "mocha tests/unit.test.js tests/workoutService.test.js tests/userService.test.js --exit",
-        "test:integration": "mocha tests/redis.test.js tests/client-integration.test.js --timeout 10000 --exit",
-        "test:api": "mocha tests/api.test.js tests/workoutApi.test.js --timeout 10000 --exit",
+        "typecheck": "tsc --noEmit",
+        "start": "tsx src/server.ts",
+        "dev": "tsx watch src/server.ts",
+        "dev:docker": "docker-compose up -d redis && tsx watch src/server.ts",
+        "build": "tsc",
+        "test": "API_KEY= tsx node_modules/mocha/bin/mocha.js 'tests/**/*.test.js' --timeout 10000 --exit",
+        "test:unit": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/unit.test.js tests/workoutService.test.js tests/userService.test.js --exit",
+        "test:integration": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/redis.test.js tests/client-integration.test.js --timeout 10000 --exit",
+        "test:api": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/api.test.js tests/workoutApi.test.js --timeout 10000 --exit",
         "test:coverage": "nyc npm test",
         "test:watch": "nodemon --exec 'npm test'",
         "lint": "eslint .",
@@ -37,8 +43,8 @@
     "author": "",
     "license": "MIT",
     "engines": {
-        "node": ">=14.0.0",
-        "npm": ">=6.0.0"
+        "node": ">=18.0.0",
+        "npm": ">=8.0.0"
     },
     "dependencies": {
         "@prisma/client": "^5.22.0",
@@ -48,13 +54,20 @@
         "redis": "^4.6.7"
     },
     "devDependencies": {
-        "chai": "^4.3.10",
-        "eslint": "^8.55.0",
+        "@eslint/js": "^9.17.0",
+        "@types/express": "^5.0.6",
+        "@types/mocha": "^10.0.10",
+        "@types/node": "^25.0.3",
+        "@types/supertest": "^6.0.3",
+        "eslint": "^9.17.0",
+        "globals": "^15.14.0",
         "mocha": "^10.2.0",
         "nodemon": "^3.0.1",
         "nyc": "^15.1.0",
         "prettier": "^3.1.1",
         "prisma": "^5.22.0",
-        "supertest": "^6.3.3"
+        "supertest": "^6.3.3",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3"
     }
 }

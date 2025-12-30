@@ -1,8 +1,8 @@
-const request = require('supertest');
-const { expect } = require('chai');
-const redis = require('redis');
+import request from 'supertest';
+import assert from 'node:assert/strict';
+import * as redis from 'redis';
 
-const createApp = require('../src/server');
+import createApp from '../src/server.ts';
 
 describe('Client Integration Tests', function () {
     let app;
@@ -43,8 +43,8 @@ describe('Client Integration Tests', function () {
                 .send({ streamName: testStreamName })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
-            expect(response.body).to.have.property('streamName', testStreamName);
+            assert.strictEqual(response.body.success, true);
+            assert.strictEqual(response.body.streamName, testStreamName);
         });
 
         it('should send workout data as JSON string message', async function () {
@@ -67,8 +67,8 @@ describe('Client Integration Tests', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
-            expect(response.body).to.have.property('messageId');
+            assert.strictEqual(response.body.success, true);
+            assert.ok('messageId' in response.body);
         });
 
         it('should retrieve workout data messages from stream', async function () {
@@ -95,25 +95,25 @@ describe('Client Integration Tests', function () {
                 .query({ count: 100 })
                 .expect(200);
 
-            expect(response.body).to.have.property('streamName', testStreamName);
-            expect(response.body).to.have.property('messages');
-            expect(response.body.messages).to.be.an('array');
-            expect(response.body.messages.length).to.be.at.least(3);
+            assert.strictEqual(response.body.streamName, testStreamName);
+            assert.ok('messages' in response.body);
+            assert.ok(Array.isArray(response.body.messages));
+            assert.ok(response.body.messages.length >= 3);
 
             // Verify message structure
             const lastMessage = response.body.messages[response.body.messages.length - 1];
-            expect(lastMessage).to.have.property('id');
-            expect(lastMessage).to.have.property('data');
+            assert.ok('id' in lastMessage);
+            assert.ok('data' in lastMessage);
 
             // Parse the message data
             const messageData = lastMessage.data.message;
-            expect(messageData).to.be.a('string');
+            assert.strictEqual(typeof messageData, 'string');
 
             const parsedData = JSON.parse(messageData);
-            expect(parsedData).to.have.property('power');
-            expect(parsedData).to.have.property('cadence');
-            expect(parsedData).to.have.property('heartrate');
-            expect(parsedData).to.have.property('dataType', 'workout_metrics');
+            assert.ok('power' in parsedData);
+            assert.ok('cadence' in parsedData);
+            assert.ok('heartrate' in parsedData);
+            assert.strictEqual(parsedData.dataType, 'workout_metrics');
         });
 
         it('should list streams including workout streams', async function () {
@@ -121,13 +121,13 @@ describe('Client Integration Tests', function () {
                 .get('/api/streams')
                 .expect(200);
 
-            expect(response.body).to.have.property('streams');
-            expect(response.body.streams).to.be.an('array');
+            assert.ok('streams' in response.body);
+            assert.ok(Array.isArray(response.body.streams));
 
             const ourStream = response.body.streams.find(s => s.name === testStreamName);
-            expect(ourStream).to.exist;
-            expect(ourStream).to.have.property('length');
-            expect(ourStream.length).to.be.at.least(1);
+            assert.ok(ourStream);
+            assert.ok('length' in ourStream);
+            assert.ok(ourStream.length >= 1);
         });
 
         it('should handle CORS headers correctly', async function () {
@@ -135,7 +135,7 @@ describe('Client Integration Tests', function () {
                 .get('/api/streams')
                 .expect(200);
 
-            expect(response.headers).to.have.property('access-control-allow-origin', '*');
+            assert.strictEqual(response.headers['access-control-allow-origin'], '*');
         });
 
         it('should accept OPTIONS requests for CORS preflight', async function () {
@@ -143,7 +143,7 @@ describe('Client Integration Tests', function () {
                 .options('/api/streams/create')
                 .expect(200);
 
-            expect(response.headers).to.have.property('access-control-allow-methods');
+            assert.ok('access-control-allow-methods' in response.headers);
         });
     });
 
@@ -156,7 +156,7 @@ describe('Client Integration Tests', function () {
                 .send({ streamName: workoutStreamName })
                 .expect(200);
 
-            expect(response.body).to.have.property('streamName', workoutStreamName);
+            assert.strictEqual(response.body.streamName, workoutStreamName);
 
             // Clean up
             await redisClient.del(workoutStreamName);
@@ -182,7 +182,7 @@ describe('Client Integration Tests', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
         });
 
         it('should handle missing optional workout fields', async function () {
@@ -200,7 +200,7 @@ describe('Client Integration Tests', function () {
                 })
                 .expect(200);
 
-            expect(response.body).to.have.property('success', true);
+            assert.strictEqual(response.body.success, true);
         });
     });
 });
