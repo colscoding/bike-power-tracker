@@ -1,6 +1,13 @@
 # Database Implementation Plan
 
-This document outlines the strategy for introducing a persistent relational database to the Bike Power Tracker service.
+This document outlines the strategy for introducing a persistent database to the Bike Power Tracker service.
+
+## Related Documentation
+
+For detailed implementation guides, see:
+- [PostgreSQL Implementation Guide](DATABASE_POSTGRESQL.md) - Recommended for production
+- [SQLite Implementation Guide](DATABASE_SQLITE.md) - Recommended for self-hosted/single-user
+- [MongoDB Implementation Guide](DATABASE_MONGODB.md) - Alternative for flexible schemas
 
 ## 1. Motivation
 
@@ -29,22 +36,39 @@ Currently, the service relies entirely on Redis. While Redis is excellent for re
 
 ## 3. Database Options
 
-### Option A: PostgreSQL (Recommended)
+### Option A: PostgreSQL (Recommended for Production)
 *   **Type**: Relational (SQL).
 *   **Pros**: Robust, excellent JSONB support for flexible data, strong ecosystem, standard for Node.js services.
 *   **Cons**: Requires running another container.
 *   **Verdict**: Best choice for structured user/workout data mixed with JSON metrics.
+*   **Details**: See [PostgreSQL Implementation Guide](DATABASE_POSTGRESQL.md)
 
-### Option B: SQLite
+### Option B: SQLite (Recommended for Self-Hosted)
 *   **Type**: Embedded SQL.
-*   **Pros**: Zero configuration, single file, no extra container needed.
-*   **Cons**: Harder to manage backups/migrations in a containerized environment; concurrency limits.
-*   **Verdict**: Good for simple self-hosted instances, but Postgres is better for a "service" architecture.
+*   **Pros**: Zero configuration, single file, no extra container needed, low resource usage.
+*   **Cons**: Limited concurrent write performance; single-user scenarios only.
+*   **Verdict**: Ideal for home servers, Raspberry Pi, and single-user deployments.
+*   **Details**: See [SQLite Implementation Guide](DATABASE_SQLITE.md)
 
 ### Option C: MongoDB
 *   **Type**: Document (NoSQL).
-*   **Pros**: Native JSON storage, flexible schema.
-*   **Cons**: Weaker support for relationships (Users <-> Workouts) compared to SQL.
+*   **Pros**: Native JSON storage, flexible schema, powerful aggregation framework.
+*   **Cons**: Higher memory usage, weaker support for relationships compared to SQL.
+*   **Verdict**: Good for rapidly evolving schemas or when horizontal scaling is needed.
+*   **Details**: See [MongoDB Implementation Guide](DATABASE_MONGODB.md)
+
+### Comparison Matrix
+
+| Feature | PostgreSQL | SQLite | MongoDB |
+|---------|------------|--------|---------|
+| **Setup Complexity** | Medium | Low | Medium |
+| **Container Required** | Yes | No | Yes |
+| **Concurrent Users** | Excellent | Limited | Good |
+| **Memory Usage** | Medium | Low | High |
+| **JSON Support** | JSONB (excellent) | JSON text | Native |
+| **Migrations** | Prisma | Prisma | Schema-less |
+| **Backup Complexity** | Medium | Low (file copy) | Medium |
+| **Best For** | Production, multi-user | Home server, single-user | Flexible schemas |
 
 ## 4. Implementation Strategy
 
@@ -99,8 +123,47 @@ model Workout {
     *   Create `GET /api/workouts/:id` to get details.
 
 ## 5. Migration Plan
+
+### Quick Start (PostgreSQL)
+
 1.  Install dependencies: `npm install prisma @prisma/client`.
 2.  Initialize Prisma: `npx prisma init`.
-3.  Define schema.
-4.  Update `docker-compose.yml`.
-5.  Refactor `server.js` to write to DB alongside Redis operations.
+3.  Define schema (see [PostgreSQL guide](DATABASE_POSTGRESQL.md#schema-design)).
+4.  Update `docker-compose.yml` with PostgreSQL service.
+5.  Run migrations: `npx prisma migrate dev`.
+6.  Refactor `server.js` to use database service layer.
+
+### Quick Start (SQLite)
+
+1.  Install dependencies: `npm install prisma @prisma/client`.
+2.  Initialize Prisma: `npx prisma init --datasource-provider sqlite`.
+3.  Define schema (see [SQLite guide](DATABASE_SQLITE.md#schema-design)).
+4.  Create data directory and run migrations.
+5.  Mount volume for persistence in Docker.
+
+### Quick Start (MongoDB)
+
+1.  Install dependencies: `npm install mongoose`.
+2.  Define Mongoose models (see [MongoDB guide](DATABASE_MONGODB.md#schema-design)).
+3.  Add MongoDB to `docker-compose.yml`.
+4.  Integrate with server.js.
+
+## 6. Decision Guide
+
+**Choose PostgreSQL if:**
+- You have multiple users
+- You need robust data integrity
+- You're deploying to a VPS or cloud
+- You want SQL querying capabilities
+
+**Choose SQLite if:**
+- Single user / personal use
+- Running on Raspberry Pi or low-power device
+- You want minimal operational overhead
+- Simpler backup (just copy the file)
+
+**Choose MongoDB if:**
+- Schema is rapidly evolving
+- Heavy use of aggregation pipelines
+- Planning for horizontal scaling
+- Team is more familiar with MongoDB
