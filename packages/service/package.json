@@ -7,16 +7,23 @@
         "start": "node src/server.js",
         "dev": "nodemon src/server.js",
         "dev:docker": "docker-compose up -d redis && nodemon src/server.js",
-        "test": "mocha tests/**/*.test.js --timeout 10000 --exit",
-        "test:unit": "mocha tests/unit.test.js --exit",
-        "test:integration": "mocha tests/redis.test.js --timeout 10000 --exit",
-        "test:api": "mocha tests/api.test.js --timeout 10000 --exit",
+        "test": "mocha 'tests/**/*.test.js' --timeout 10000 --exit",
+        "test:unit": "mocha tests/unit.test.js tests/workoutService.test.js tests/userService.test.js --exit",
+        "test:integration": "mocha tests/redis.test.js tests/client-integration.test.js --timeout 10000 --exit",
+        "test:api": "mocha tests/api.test.js tests/workoutApi.test.js --timeout 10000 --exit",
         "test:coverage": "nyc npm test",
         "test:watch": "nodemon --exec 'npm test'",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "db:generate": "prisma generate",
+        "db:migrate": "prisma migrate dev",
+        "db:migrate:deploy": "prisma migrate deploy",
+        "db:push": "prisma db push",
+        "db:studio": "prisma studio",
+        "db:seed": "node prisma/seed.js",
+        "postinstall": "prisma generate || true"
     },
     "keywords": [
         "redis",
@@ -34,6 +41,7 @@
         "npm": ">=6.0.0"
     },
     "dependencies": {
+        "@prisma/client": "^5.22.0",
         "express": "^4.18.2",
         "express-rate-limit": "^8.2.1",
         "helmet": "^8.1.0",
@@ -46,6 +54,7 @@
         "nodemon": "^3.0.1",
         "nyc": "^15.1.0",
         "prettier": "^3.1.1",
+        "prisma": "^5.22.0",
         "supertest": "^6.3.3"
     }
 }

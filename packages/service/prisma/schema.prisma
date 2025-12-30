@@ -1,0 +1,138 @@
+// Prisma schema for Bike Power Tracker
+// Supports both PostgreSQL (production) and SQLite (self-hosted)
+// 
+// To use SQLite instead, change provider to "sqlite" and update DATABASE_URL
+// Example: DATABASE_URL="file:./data/biketracker.db"
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"  // Change to "sqlite" for self-hosted single-user deployments
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MANAGEMENT
+// ============================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   @map("password_hash")
+  
+  // OAuth support
+  provider      String?   // "google", "strava", etc.
+  providerId    String?   @map("provider_id")
+  
+  // Profile
+  displayName   String?   @map("display_name")
+  avatarUrl     String?   @map("avatar_url")
+  
+  // Settings stored as JSON
+  settings      String?   @default("{}") // JSON string for SQLite compatibility
+  
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lastLoginAt   DateTime? @map("last_login_at")
+  
+  // Relations
+  workouts      Workout[]
+  apiKeys       ApiKey[]
+  
+  @@map("users")
+  @@index([email])
+  @@index([provider, providerId])
+}
+
+model ApiKey {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  keyHash     String    @map("key_hash")
+  name        String
+  
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@map("api_keys")
+  @@index([keyHash])
+}
+
+// ============================================
+// WORKOUT DATA
+// ============================================
+
+model Workout {
+  id          String    @id @default(uuid())
+  userId      String?   @map("user_id")
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Stream reference (for active workouts)
+  streamName  String?   @map("stream_name")
+  
+  // Metadata
+  title       String?
+  description String?
+  sport       String    @default("cycling")
+  
+  // Timing
+  startTime   DateTime  @map("start_time")
+  endTime     DateTime? @map("end_time")
+  duration    Int?      // Duration in seconds
+  
+  // Status: ACTIVE, PAUSED, COMPLETED, ARCHIVED, DELETED
+  status      String    @default("ACTIVE")
+  
+  // Summary metrics (calculated on completion) - stored as JSON string
+  summary     String?
+  
+  // Archived telemetry data (moved from Redis on completion)
+  // Stored as JSON string (can be large)
+  telemetry   String?
+  
+  // Timestamps
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  
+  // Personal records achieved in this workout
+  personalRecords PersonalRecord[]
+  
+  @@map("workouts")
+  @@index([userId])
+  @@index([userId, startTime(sort: Desc)])
+  @@index([status])
+  @@index([startTime])
+  @@index([streamName])
+}
+
+// ============================================
+// ANALYTICS & RECORDS
+// ============================================
+
+model PersonalRecord {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  workoutId   String    @map("workout_id")
+  workout     Workout   @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  
+  // Record type and duration
+  metric      String    // "power", "heartrate", "speed"
+  duration    Int       // Duration in seconds (e.g., 60 for 1-min power)
+  
+  // Record value
+  value       Float
+  
+  // When achieved
+  achievedAt  DateTime  @map("achieved_at")
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  
+  @@map("personal_records")
+  @@unique([userId, metric, duration])
+  @@index([userId])
+}

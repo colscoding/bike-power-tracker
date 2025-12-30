@@ -1,14 +1,19 @@
 {
     "name": "@bpt/simulation",
-    "version": "1.0.0",
-    "description": "Simulation tools for testing the BPT streaming service",
+    "version": "2.0.0",
+    "description": "Simulation and testing tools for the BPT streaming service",
     "private": true,
     "type": "module",
     "scripts": {
         "start": "node src/index.js",
-        "multi-user": "node src/multi-user.js",
+        "multi": "node src/multi-user.js",
         "viewer": "node src/stream-viewer.js",
-        "stress": "node src/stress-test.js"
+        "stress": "node src/stress-test.js",
+        "help": "node src/index.js --help",
+        "demo": "node src/index.js --profile=intervals --duration=60",
+        "demo:multi": "node src/multi-user.js --users=5 --duration=60",
+        "cleanup": "node src/stream-viewer.js --cleanup",
+        "list": "node src/stream-viewer.js --list"
     },
     "dependencies": {
         "eventsource": "^2.0.2"

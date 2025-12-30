@@ -361,7 +361,9 @@ systemctl --user status bike-tracker.service
 
 Cloudflare Tunnel provides secure remote access without opening ports on your router.
 
-### Prerequisites
+> 📖 **For comprehensive Cloudflare setup instructions, see [CLOUDFLARE_TUNNEL_GUIDE.md](CLOUDFLARE_TUNNEL_GUIDE.md)**
+
+### Quick Start
 
 1. A domain name (can be free from Freenom or cheap from Cloudflare Registrar)
 2. Domain added to Cloudflare (free tier works)

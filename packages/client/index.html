@@ -97,6 +97,7 @@
                 <button id="connectHeartrate">❤️ Connect Heartrate</button>
                 <button id="exportData">💾 Export Data</button>
                 <button id="discardButton">🗑️ Discard Data</button>
+                <button id="workoutHistoryButton">📊 Workout History</button>
                 <button id="startStreamButton">📡 Start Streaming</button>
                 <button id="viewStreamsButton">🌐 View Streams</button>
                 <button id="settingsButton">⚙️ Settings</button>
@@ -233,6 +234,36 @@
                 <div style="display: flex; justify-content: flex-end;">
                     <button id="saveSettings"
                         style="padding: 8px 16px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout History Modal -->
+    <div id="workoutHistoryModal" class="stream-modal" style="display: none;">
+        <div class="stream-modal-content" style="max-width: 600px; max-height: 80vh;">
+            <div class="stream-modal-header">
+                <h2>📊 Workout History</h2>
+                <button id="closeWorkoutHistoryModal" class="close-button">&times;</button>
+            </div>
+            <div class="stream-modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
+                <!-- List Panel -->
+                <div id="workoutListPanel">
+                    <div class="workout-controls">
+                        <button id="historyRefresh" class="workout-control-btn" title="Refresh">🔄</button>
+                        <div class="workout-pagination">
+                            <button id="historyPrevPage" class="workout-control-btn" disabled>◀</button>
+                            <span id="historyPageInfo">Page 1 of 1</span>
+                            <button id="historyNextPage" class="workout-control-btn" disabled>▶</button>
+                        </div>
+                    </div>
+                    <div id="workoutList" class="workout-list">
+                        <!-- Workout cards will be injected here -->
+                    </div>
+                </div>
+                <!-- Detail Panel (hidden by default) -->
+                <div id="workoutDetailPanel" style="display: none;">
+                    <!-- Workout detail will be injected here -->
                 </div>
             </div>
         </div>

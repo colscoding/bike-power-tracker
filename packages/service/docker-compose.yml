@@ -9,15 +9,37 @@ services:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "${REDIS_PASSWORD:+-a}", "${REDIS_PASSWORD:-}", "ping"]
       interval: 10s
       timeout: 3s
       retries: 5
     networks:
       - network
     restart: unless-stopped
+
+  # PostgreSQL service (optional - comment out if using SQLite)
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-biketracker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-biketracker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-biketracker} -d ${POSTGRES_DB:-biketracker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network
+    restart: unless-stopped
+    profiles:
+      - postgres
 
   # Node.js application
   app:
@@ -32,6 +54,11 @@ services:
       - NODE_ENV=${NODE_ENV:-production}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-}
+      - DATABASE_URL=${DATABASE_URL:-}
+      - API_KEY=${API_KEY:-}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
     depends_on:
       redis:
         condition: service_healthy
@@ -39,7 +66,7 @@ services:
       - network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/streams', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -58,6 +85,9 @@ services:
       - NODE_ENV=development
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-}
+      - DATABASE_URL=${DATABASE_URL:-}
     volumes:
       - .:/app
       - /app/node_modules
@@ -76,4 +106,6 @@ networks:
 
 volumes:
   redis_data:
+    driver: local
+  postgres_data:
     driver: local

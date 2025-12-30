@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Bike Power Tracker PWA - Track your spin bike with Bluetooth sensors and stream live data",
   "scripts": {
-    "test": "NODE_ENV=test node --test src/**/*.test.js",
-    "test:watch": "NODE_ENV=test node --test --watch src/**/*.test.js",
+    "test": "NODE_ENV=test node --test src/*.test.js",
+    "test:watch": "NODE_ENV=test node --test --watch src/*.test.js",
     "dev": "vite --host",
     "dev:fresh": "npm run clear-cache && vite --host",
     "start": "vite --host",

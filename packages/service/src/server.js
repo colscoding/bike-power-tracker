@@ -1,16 +1,67 @@
+/**
+ * BPT Service - Main Server
+ * 
+ * Real-time workout streaming service built with Express, Redis Streams, and SSE.
+ * 
+ * This module provides:
+ * - REST API for stream and message management
+ * - Server-Sent Events (SSE) for real-time updates
+ * - Optional database integration for workout persistence
+ * - Health monitoring and authentication
+ * 
+ * @module server
+ * @requires express
+ * @requires redis
+ * @requires helmet
+ * @requires express-rate-limit
+ * 
+ * @example
+ * // Start the server
+ * const { createApp, startServer } = require('./server');
+ * const app = createApp();
+ * startServer(app, 3000);
+ * 
+ * @example
+ * // For testing
+ * const { createApp } = require('./server');
+ * const app = createApp();
+ * // Use supertest with app
+ */
+
 const express = require('express');
 const redis = require('redis');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { ensureString } = require('./utils');
+const { isDatabaseEnabled, testConnection, disconnectPrisma } = require('./db');
+const workoutService = require('./db/workoutService');
+const userService = require('./db/userService');
 
+/**
+ * Server configuration from environment variables
+ * @constant {number} PORT - Server port (default: 3000)
+ * @constant {string} REDIS_HOST - Redis server host (default: localhost)
+ * @constant {number} REDIS_PORT - Redis server port (default: 6379)
+ * @constant {string} REDIS_PASSWORD - Redis password (optional)
+ * @constant {string} CORS_ORIGIN - Allowed CORS origin (default: *)
+ */
 const PORT = process.env.PORT || 3000;
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
 const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || '*';
 
-// Factory function to create the app (for testing)
+/**
+ * Creates and configures the Express application
+ * 
+ * Sets up:
+ * - Security middleware (helmet, rate limiting)
+ * - Redis client connection
+ * - CORS configuration
+ * - All API routes
+ * 
+ * @returns {express.Application} Configured Express app
+ */
 function createApp() {
     const app = express();
 
@@ -60,8 +111,30 @@ function createApp() {
     app.use(express.json());
 
     // Health check endpoint
-    app.get('/health', (req, res) => {
-        res.json({ status: 'ok' });
+    app.get('/health', async (req, res) => {
+        const health = { status: 'ok', timestamp: new Date().toISOString() };
+
+        // Check Redis connection
+        try {
+            await redisClient.ping();
+            health.redis = 'connected';
+        } catch (err) {
+            health.redis = 'disconnected';
+            health.status = 'degraded';
+        }
+
+        // Check database connection if configured
+        if (isDatabaseEnabled()) {
+            const dbStatus = await testConnection();
+            health.database = dbStatus.connected ? 'connected' : 'disconnected';
+            if (!dbStatus.connected) {
+                health.status = 'degraded';
+            }
+        } else {
+            health.database = 'not configured';
+        }
+
+        res.json(health);
     });
 
     // API Key Authentication
@@ -478,14 +551,321 @@ function createApp() {
         }
     });
 
+    // ============================================
+    // WORKOUT API ENDPOINTS
+    // ============================================
+
+    // Create a new workout (starts tracking)
+    app.post('/api/workouts', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { streamName, title, sport, userId } = req.body;
+
+            if (!streamName) {
+                return res.status(400).json({ error: 'streamName is required' });
+            }
+
+            const workout = await workoutService.createWorkout({
+                userId: userId || null,
+                streamName,
+                title,
+                sport,
+            });
+
+            res.status(201).json({
+                success: true,
+                workout,
+            });
+        } catch (error) {
+            console.error('Error creating workout:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // List workouts with pagination
+    app.get('/api/workouts', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { userId, page = 1, limit = 20, status } = req.query;
+
+            const result = await workoutService.getWorkoutHistory(
+                userId || null,
+                {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    status,
+                }
+            );
+
+            res.json(result);
+        } catch (error) {
+            console.error('Error listing workouts:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Get single workout
+    app.get('/api/workouts/:workoutId', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { workoutId } = req.params;
+            const { includeTelemetry } = req.query;
+
+            const workout = await workoutService.getWorkout(workoutId, {
+                includeTelemetry: includeTelemetry === 'true',
+            });
+
+            if (!workout) {
+                return res.status(404).json({ error: 'Workout not found' });
+            }
+
+            res.json(workout);
+        } catch (error) {
+            console.error('Error getting workout:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Update workout metadata
+    app.patch('/api/workouts/:workoutId', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { workoutId } = req.params;
+            const { title, description, sport } = req.body;
+
+            const workout = await workoutService.updateWorkout(workoutId, {
+                title,
+                description,
+                sport,
+            });
+
+            res.json({
+                success: true,
+                workout,
+            });
+        } catch (error) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({ error: 'Workout not found' });
+            }
+            console.error('Error updating workout:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Complete a workout (archive from Redis to database)
+    app.post('/api/workouts/:workoutId/complete', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { workoutId } = req.params;
+            const { archiveTelemetry = true } = req.body;
+
+            // Get workout to find stream name
+            const existingWorkout = await workoutService.getWorkout(workoutId);
+            if (!existingWorkout) {
+                return res.status(404).json({ error: 'Workout not found' });
+            }
+
+            if (existingWorkout.status !== 'ACTIVE') {
+                return res.status(400).json({ error: 'Workout is not active' });
+            }
+
+            let telemetryData = null;
+            let summary = null;
+
+            // Extract telemetry from Redis stream if available
+            if (existingWorkout.streamName) {
+                try {
+                    const messages = await redisClient.xRange(
+                        existingWorkout.streamName,
+                        '-',
+                        '+'
+                    );
+
+                    if (messages && messages.length > 0) {
+                        // Parse telemetry data from messages
+                        telemetryData = messages.map(msg => {
+                            try {
+                                const data = msg.message.message
+                                    ? JSON.parse(msg.message.message)
+                                    : msg.message;
+                                return {
+                                    id: msg.id,
+                                    timestamp: parseInt(msg.id.split('-')[0]),
+                                    ...data,
+                                };
+                            } catch {
+                                return {
+                                    id: msg.id,
+                                    timestamp: parseInt(msg.id.split('-')[0]),
+                                    raw: msg.message,
+                                };
+                            }
+                        });
+
+                        // Calculate summary statistics
+                        summary = workoutService.calculateSummary(telemetryData);
+                    }
+                } catch (err) {
+                    console.error('Error reading stream for workout completion:', err);
+                }
+            }
+
+            // Complete the workout in database
+            const workout = await workoutService.completeWorkout(workoutId, {
+                summary,
+                telemetry: archiveTelemetry ? telemetryData : null,
+            });
+
+            // Optionally delete the Redis stream after archiving
+            if (existingWorkout.streamName && archiveTelemetry) {
+                try {
+                    await redisClient.del(existingWorkout.streamName);
+                } catch (err) {
+                    console.error('Error deleting stream after completion:', err);
+                }
+            }
+
+            res.json({
+                success: true,
+                workout: {
+                    ...workout,
+                    summary: workout.summary ? JSON.parse(workout.summary) : null,
+                },
+                archivedMessages: telemetryData ? telemetryData.length : 0,
+            });
+        } catch (error) {
+            console.error('Error completing workout:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Delete a workout
+    app.delete('/api/workouts/:workoutId', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { workoutId } = req.params;
+
+            // Get workout to check for stream
+            const workout = await workoutService.getWorkout(workoutId);
+            if (!workout) {
+                return res.status(404).json({ error: 'Workout not found' });
+            }
+
+            // Delete associated stream if exists
+            if (workout.streamName) {
+                try {
+                    await redisClient.del(workout.streamName);
+                } catch (err) {
+                    console.error('Error deleting stream:', err);
+                }
+            }
+
+            await workoutService.deleteWorkout(workoutId);
+
+            res.json({
+                success: true,
+                message: 'Workout deleted successfully',
+            });
+        } catch (error) {
+            if (error.code === 'P2025') {
+                return res.status(404).json({ error: 'Workout not found' });
+            }
+            console.error('Error deleting workout:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Get workout by stream name (useful for active workouts)
+    app.get('/api/workouts/by-stream/:streamName', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { streamName } = req.params;
+
+            const workout = await workoutService.getActiveWorkoutByStream(streamName);
+
+            if (!workout) {
+                return res.status(404).json({ error: 'Active workout not found for this stream' });
+            }
+
+            res.json(workout);
+        } catch (error) {
+            console.error('Error getting workout by stream:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // ============================================
+    // USER API ENDPOINTS
+    // ============================================
+
+    // Get user profile
+    app.get('/api/users/:userId', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { userId } = req.params;
+            const user = await userService.findUserById(userId);
+
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.json(user);
+        } catch (error) {
+            console.error('Error getting user:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
+    // Get user's workout statistics
+    app.get('/api/users/:userId/stats', async (req, res) => {
+        if (!isDatabaseEnabled()) {
+            return res.status(503).json({ error: 'Database not configured' });
+        }
+
+        try {
+            const { userId } = req.params;
+            const stats = await workoutService.getUserWorkoutStats(userId);
+
+            res.json(stats);
+        } catch (error) {
+            console.error('Error getting user stats:', error);
+            res.status(500).json({ error: error.message });
+        }
+    });
+
     return app;
 }
 
 // Start server only if not in test mode
 if (require.main === module) {
     const app = createApp();
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
+        console.log(`Database: ${isDatabaseEnabled() ? 'enabled' : 'disabled (Redis-only mode)'}`);
 
         // Run cleanup every hour
         setInterval(() => {
@@ -495,6 +875,34 @@ if (require.main === module) {
             }).catch(err => console.error('Scheduled cleanup failed:', err));
         }, 60 * 60 * 1000);
     });
+
+    // Graceful shutdown
+    const shutdown = async (signal) => {
+        console.log(`\n${signal} received. Starting graceful shutdown...`);
+
+        server.close(async () => {
+            console.log('HTTP server closed');
+
+            // Disconnect Prisma
+            try {
+                await disconnectPrisma();
+                console.log('Database connection closed');
+            } catch (err) {
+                console.error('Error closing database connection:', err);
+            }
+
+            process.exit(0);
+        });
+
+        // Force exit after 10 seconds
+        setTimeout(() => {
+            console.error('Forced shutdown after timeout');
+            process.exit(1);
+        }, 10000);
+    };
+
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 module.exports = createApp;
