@@ -15,6 +15,7 @@ import type { MeasurementType } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
 import type { SensorConnection, ConnectionStatus } from './types/bluetooth.js';
 import { showNotification } from './ui/notifications.js';
+import { showConnectionError, showReconnectionFailed } from './ui/connectionError.js';
 
 /**
  * Sensor type to connect function mapping
@@ -141,7 +142,8 @@ export const initConnectionButtons = ({
                 connectionsState[key].isConnected = false;
                 connectionsState[key].disconnect = null;
                 updateButtonText(key, 'disconnected');
-                showNotification(`${label} sensor connection lost`, 'error');
+                // Show reconnection failed dialog with retry option
+                showReconnectionFailed(key, () => connectFn(key));
                 break;
             case 'disconnected':
                 // Initial disconnect event, wait for reconnect attempt
@@ -175,8 +177,13 @@ export const initConnectionButtons = ({
                 showNotification(`Connected to ${deviceName}`, 'success');
             }
         } catch (error) {
-            console.error(`Error connecting ${key}:`, error);
-            showNotification(`Failed to connect ${getSensorLabel(key)} sensor`, 'error');
+            // Show user-friendly error dialog with troubleshooting tips
+            const shouldRetry = await showConnectionError(error, key, () => connectFn(key));
+            // If user clicked "Try Again" in the dialog, the retry callback is already called
+            // so we don't need to do anything here based on shouldRetry
+            if (!shouldRetry) {
+                console.log(`User dismissed ${key} connection error dialog`);
+            }
         }
     };
 

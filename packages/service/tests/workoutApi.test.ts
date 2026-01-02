@@ -12,7 +12,6 @@ import createApp from '../src/server.ts';
 describe('Workout API Endpoints', function () {
     let app;
     let redisClient;
-    const testStreamName = 'api-test-workout-' + Date.now();
 
     this.timeout(10000);
 
@@ -227,7 +226,7 @@ describe('Workout API Endpoints', function () {
 
     describe('Error Handling', function () {
         it('should handle invalid JSON gracefully', async function () {
-            const response = await request(app)
+            await request(app)
                 .post('/api/streams/create')
                 .set('Content-Type', 'application/json')
                 .send('{ invalid json }')
@@ -237,7 +236,7 @@ describe('Workout API Endpoints', function () {
         });
 
         it('should handle missing content-type header', async function () {
-            const response = await request(app)
+            await request(app)
                 .post('/api/streams/create')
                 .send('streamName=test')
                 .expect(400);

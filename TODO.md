@@ -23,7 +23,7 @@
 |----------|--------|-------|
 | **Architecture** | Modular monorepo, TypeScript, ES Modules | ⭐⭐⭐⭐⭐ |
 | **Code Quality** | TypeScript strict mode, ESLint 9, well-documented | ⭐⭐⭐⭐⭐ |
-| **Test Coverage** | 291 tests (176 client + 115 service), E2E with Playwright | ⭐⭐⭐⭐⭐ |
+| **Test Coverage** | 324 tests (209 client + 115 service), E2E with Playwright | ⭐⭐⭐⭐⭐ |
 | **Documentation** | Comprehensive READMEs and guides | ⭐⭐⭐⭐⭐ |
 | **Security** | Input validation, rate limiting, helmet, CORS | ⭐⭐⭐⭐ |
 | **DevOps** | Docker ready, CI needs work | ⭐⭐⭐ |
@@ -218,31 +218,6 @@ Completed all technical debt items from the backlog:
 
 ## Phase 2: Core Feature Completion (Priority: High)
 
-### 2.1 Authentication System
-
-Based on `docs/AUTHENTICATION_PLAN.md`:
-
-- [ ] **Implement OAuth login**
-  - Strava OAuth (cycling-focused users)
-  - Google OAuth (general users)
-  - Store tokens securely
-  - Refresh token handling
-
-- [ ] **Add JWT session management**
-  - Issue JWT on login
-  - Add middleware for protected routes
-  - Token refresh endpoint
-  - Logout/revocation
-
-- [ ] **User registration UI**
-  - Login/signup modal in client
-  - Profile page with settings
-  - Connected services management
-
-- [ ] **Stream ownership**
-  - Associate streams with users
-  - Private streams option
-  - Stream sharing permissions
 
 ### 2.2 Power & HR Zones
 
@@ -289,11 +264,6 @@ Based on `docs/AUTHENTICATION_PLAN.md`:
   - Upload TCX/FIT after workout
   - Auto-sync option in settings
 
-- [ ] **TCX enhancements**
-  - Add calories calculation (power × duration × factor)
-  - Add Lap statistics (avg/max power, HR, cadence)
-  - Add distance if speed sensor connected
-
 ---
 
 ## Phase 3: User Experience (Priority: Medium)
@@ -313,15 +283,11 @@ Based on `docs/AUTHENTICATION_PLAN.md`:
   - Battery level indicator (if supported)
   - Signal strength indicator
 
-- [ ] **Multi-device support**
-  - Allow multiple power meters (L/R balance)
-  - Multiple HR monitors (backup)
-  - Device priority/selection
 
-- [ ] **Connection error UI**
-  - Show user-friendly error messages
-  - Troubleshooting suggestions
-  - Retry button
+- [x] **Connection error UI** ✅ *Completed Dec 30, 2025*
+  - User-friendly error messages for all Bluetooth error types
+  - Troubleshooting suggestions with actionable tips
+  - Retry button for recoverable errors
 
 ### 3.2 Accessibility
 
@@ -355,30 +321,27 @@ Based on `docs/AUTHENTICATION_PLAN.md`:
   - ✅ Persist preference in localStorage (`bpt-dark-mode`)
   - ✅ Early init script prevents flash of light theme
 
-- [ ] **Lap/Interval markers**
-  - Add lap button during workout
-  - Mark in data with timestamp
-  - Show lap count in UI
-  - Include laps in export
 
-- [ ] **Undo for discard**
-  - Replace browser `confirm()` with custom modal
-  - 5-second undo option after discard
-  - Clear warning about data loss
+- [x] **Undo for discard** ✅ *Completed Dec 30, 2025*
+  - Custom confirmation modal with clear warning
+  - 5-second undo toast with countdown and progress bar
+  - Full data restoration including UI state
 
-- [ ] **Onboarding flow**
-  - First-run setup wizard
-  - FTP/HR max/weight entry
+- [x] **Onboarding flow** ✅ *Completed Dec 31, 2025*
+  - First-run setup wizard with multi-step flow
+  - FTP/HR max/weight entry with validation
   - Sensor pairing guide
-  - Feature tour
+  - Feature tour and keyboard shortcuts overview
 
-- [ ] **Keyboard shortcuts**
+- [x] **Keyboard shortcuts** ✅ *Completed Dec 31, 2025*
   ```
   Space     - Start/stop recording
   L         - Mark lap
   Escape    - Close modal/panel
   S         - Open settings
   M         - Open menu
+  H         - Open history
+  E         - Export data
   ```
 
 ### 3.4 Mobile Optimization
@@ -450,23 +413,6 @@ Based on `docs/AUTHENTICATION_PLAN.md`:
   - Track PRs for various durations
   - Notifications on new PRs
   - PR history
-
-### 4.4 Social Features
-
-- [ ] **Group workouts**
-  - Synchronized start time
-  - Live leaderboard during workout
-  - Chat during ride
-
-- [ ] **Workout sharing**
-  - Share completed workouts
-  - Social links (Twitter, Facebook)
-  - Embed workout summary
-
-- [ ] **Following/followers**
-  - Follow other users
-  - Activity feed
-  - Kudos system
 
 ---
 

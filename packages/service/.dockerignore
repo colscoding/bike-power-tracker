@@ -1,11 +1,67 @@
+# Dependencies
 node_modules
-npm-debug.log
+npm - debug.log
+package - lock.json
+
+# Build outputs(rebuilt in container)
+dist
+
+# Docker files(prevent recursive copy)
 Dockerfile
 Dockerfile.dev
-docker-compose.yml
-.git
-.gitignore
+docker - compose.yml
+docker - compose.prod.yml
+    .dockerignore
+
+# Git
+    .git
+    .gitignore
+    .gitattributes
+
+# Tests(not needed in production)
 tests
-.env
-.env.example
+    *.test.ts
+    *.test.js
+    *.spec.ts
+    *.spec.js
+coverage
+    .nyc_output
+
+# Environment files(use env vars instead)
+    .env
+    .env.*
+    !.env.example
+
+# Documentation
+    *.md
+!README.md
 openapi.yaml
+docs
+
+# IDE and editor files
+    .vscode
+    .idea
+    *.swp
+    *.swo
+    * ~
+
+# OS files
+    .DS_Store
+Thumbs.db
+
+# Development tools config
+    .eslintrc *
+    eslint.config.*
+.prettierrc *
+    prettier.config.*
+    nodemon.json
+tsconfig.test.json
+
+# Logs
+logs
+    *.log
+
+# Temporary files
+tmp
+temp
+    .cache

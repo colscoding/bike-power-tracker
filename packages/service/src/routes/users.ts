@@ -10,6 +10,7 @@ import { Router, Request, Response } from 'express';
 import { isDatabaseEnabled } from '../db';
 import * as userService from '../db/userService';
 import * as workoutService from '../db/workoutService';
+import { logger } from '../logger';
 
 /**
  * Create users router
@@ -42,7 +43,7 @@ export function createUsersRouter(): Router {
             res.json(user);
         } catch (error) {
             const err = error as Error;
-            console.error('Error getting user:', err);
+            logger.error({ err, userId: req.params.userId }, 'Error getting user');
             res.status(500).json({ error: err.message });
         }
     });
@@ -56,7 +57,7 @@ export function createUsersRouter(): Router {
             res.json(stats);
         } catch (error) {
             const err = error as Error;
-            console.error('Error getting user stats:', err);
+            logger.error({ err, userId: req.params.userId }, 'Error getting user stats');
             res.status(500).json({ error: err.message });
         }
     });

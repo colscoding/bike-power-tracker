@@ -33,6 +33,18 @@
                 if (stored === 'dark' || (!stored && prefersDark)) {
                     document.documentElement.setAttribute('data-theme', 'dark');
                 }
+
+                // High contrast mode initialization
+                var settings = localStorage.getItem('bpt-settings');
+                if (settings) {
+                    var parsed = JSON.parse(settings);
+                    if (parsed.highContrast) {
+                        document.documentElement.setAttribute('data-high-contrast', 'true');
+                    }
+                    if (parsed.colorblindPatterns) {
+                        document.documentElement.setAttribute('data-colorblind-patterns', 'true');
+                    }
+                }
             } catch (e) { }
         })();
     </script>
@@ -177,9 +189,14 @@
                                 style="display: none;">⏸️</button>
                             <button id="resumeButton" class="workout-btn workout-btn-resume" aria-label="Resume workout"
                                 style="display: none;">▶️</button>
+                            <button id="lapButton" class="workout-btn workout-btn-lap" aria-label="Mark lap"
+                                style="display: none;" title="Mark Lap (L)">🏁</button>
                             <button id="stopButton" class="workout-btn workout-btn-stop"
                                 aria-label="Stop and save workout" style="display: none;">⏹️</button>
                         </div>
+                    </div>
+                    <div id="lapCounter" class="lap-counter" style="display: none;" aria-live="polite">
+                        <span id="lapCountLabel">Laps: </span><span id="lapCount">0</span>
                     </div>
                 </div>
                 <dl id="metricsTable" aria-label="Live workout metrics">
@@ -252,52 +269,135 @@
     <!-- Settings Modal -->
     <div id="settingsModal" class="stream-modal" role="dialog" aria-labelledby="settingsModalTitle" aria-modal="true"
         style="display: none;">
-        <div class="stream-modal-content" style="max-width: 400px;">
+        <div class="stream-modal-content" style="max-width: 450px; max-height: 90vh;">
             <div class="stream-modal-header">
                 <h2 id="settingsModalTitle">⚙️ Settings</h2>
                 <button id="closeSettingsModal" class="close-button" aria-label="Close settings">&times;</button>
             </div>
-            <div class="stream-modal-body">
-                <fieldset style="border: none; padding: 0; margin-bottom: 20px;">
-                    <legend style="margin-bottom: 12px; color: #666; font-size: inherit;">Select metrics to track:
-                    </legend>
+            <div class="stream-modal-body" style="overflow-y: auto;">
+                <!-- Display Settings Section -->
+                <fieldset class="settings-fieldset"
+                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <legend style="font-weight: 600; padding: 0 8px;">📊 Dashboard Display</legend>
+                    <p style="margin-bottom: 12px; color: #666; font-size: 14px;">Select metrics to show:</p>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingPower" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">Power</span>
+                            <span style="font-size: 16px;">⚡ Power</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingCadence" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">Cadence</span>
+                            <span style="font-size: 16px;">🚴 Cadence</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingHeartrate" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">Heart Rate</span>
+                            <span style="font-size: 16px;">❤️ Heart Rate</span>
                         </label>
                     </div>
-                    <p style="margin-bottom: 12px; color: #666;">Export formats:</p>
-                    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #d0d7de;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingPower3s" style="width: 20px; height: 20px;">
+                            <div>
+                                <span style="font-size: 16px;">Show 3-second average power</span>
+                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Smooths power display for
+                                    easier reading</p>
+                            </div>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Accessibility Settings Section -->
+                <fieldset class="settings-fieldset"
+                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <legend style="font-weight: 600; padding: 0 8px;">♿ Accessibility</legend>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingHighContrast" style="width: 20px; height: 20px;">
+                            <div>
+                                <span style="font-size: 16px;">🔳 High Contrast Mode</span>
+                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Enhanced visibility for
+                                    visual impairments</p>
+                            </div>
+                        </label>
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingColorblindPatterns" style="width: 20px; height: 20px;">
+                            <div>
+                                <span style="font-size: 16px;">🎨 Colorblind-friendly Patterns</span>
+                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Use patterns instead of
+                                    colors for zones</p>
+                            </div>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <!-- Voice Feedback Settings Section -->
+                <fieldset class="settings-fieldset"
+                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <legend style="font-weight: 600; padding: 0 8px;">🔊 Voice Feedback</legend>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingVoiceEnabled" style="width: 20px; height: 20px;">
+                            <div>
+                                <span style="font-size: 16px;">Enable Voice Feedback</span>
+                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Text-to-speech announcements
+                                </p>
+                            </div>
+                        </label>
+                        <div style="margin-left: 30px; display: flex; flex-direction: column; gap: 8px;">
+                            <label class="settings-option"
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="settingVoiceLaps" checked style="width: 18px; height: 18px;">
+                                <span style="font-size: 14px;">Announce Laps</span>
+                            </label>
+                            <label class="settings-option"
+                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" id="settingVoiceZones" checked
+                                    style="width: 18px; height: 18px;">
+                                <span style="font-size: 14px;">Announce Zone Changes</span>
+                            </label>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Export Settings Section -->
+                <fieldset class="settings-fieldset"
+                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                    <legend style="font-weight: 600; padding: 0 8px;">💾 Export Formats</legend>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingExportTcx" checked style="width: 20px; height: 20px;">
                             <span style="font-size: 16px;">TCX</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingExportCsv" checked style="width: 20px; height: 20px;">
                             <span style="font-size: 16px;">CSV</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingExportJson" style="width: 20px; height: 20px;">
                             <span style="font-size: 16px;">JSON</span>
                         </label>
-                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                             <input type="checkbox" id="settingExportFit" style="width: 20px; height: 20px;">
                             <span style="font-size: 16px;">FIT (Garmin)</span>
                         </label>
                     </div>
-                    <div style="display: flex; justify-content: flex-end;">
-                        <button id="saveSettings"
-                            style="padding: 8px 16px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Save</button>
-                    </div>
+                </fieldset>
+
+                <div style="display: flex; justify-content: flex-end;">
+                    <button id="saveSettings"
+                        style="padding: 8px 16px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Save</button>
+                </div>
             </div>
         </div>
     </div>

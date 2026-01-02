@@ -112,13 +112,15 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+                globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+                // Cache the app shell and all static assets
                 runtimeCaching: [
                     {
+                        // Cache Google Fonts stylesheets
                         urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
                         handler: 'CacheFirst',
                         options: {
-                            cacheName: 'google-fonts-cache',
+                            cacheName: 'google-fonts-stylesheets',
                             expiration: {
                                 maxEntries: 10,
                                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
@@ -127,8 +129,77 @@ export default defineConfig({
                                 statuses: [0, 200]
                             }
                         }
+                    },
+                    {
+                        // Cache Google Fonts webfonts
+                        urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'google-fonts-webfonts',
+                            expiration: {
+                                maxEntries: 20,
+                                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    {
+                        // API calls - NetworkFirst with fallback to cache
+                        urlPattern: /\/api\/.*/i,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'api-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 // 24 hours
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            },
+                            networkTimeoutSeconds: 10 // Fall back to cache after 10s
+                        }
+                    },
+                    {
+                        // Images - CacheFirst with network fallback
+                        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+                        handler: 'CacheFirst',
+                        options: {
+                            cacheName: 'images-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
+                    },
+                    {
+                        // JavaScript and CSS - StaleWhileRevalidate
+                        urlPattern: /\.(?:js|css)$/i,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'static-resources',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200]
+                            }
+                        }
                     }
-                ]
+                ],
+                // Skip waiting and claim clients immediately
+                skipWaiting: true,
+                clientsClaim: true,
+                // Clean up old caches
+                cleanupOutdatedCaches: true,
+                // Precache the navigation routes
+                navigateFallback: 'index.html',
+                navigateFallbackDenylist: [/^\/api\//]
             },
             devOptions: {
                 enabled: false, // Disable service worker in dev to prevent caching issues

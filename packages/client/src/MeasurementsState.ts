@@ -2,11 +2,18 @@
  * Measurements State Management
  * 
  * Central state container for all workout measurement data.
+ * Integrates with IndexedDB for persistent storage and crash recovery.
  * 
  * @module MeasurementsState
  */
 
-import type { Measurement, MeasurementsData, MeasurementType } from './types/measurements.js';
+import type { Measurement, MeasurementsData, MeasurementType, LapMarker } from './types/measurements.js';
+import {
+    throttledSave,
+    flushPendingSave,
+    clearActiveWorkout,
+    isIndexedDBSupported
+} from './storage/workoutStorage.js';
 
 /**
  * Validation limits for measurement values
@@ -18,10 +25,16 @@ const VALIDATION_LIMITS = {
 } as const;
 
 /**
+ * Callback type for state change notifications
+ */
+export type StateChangeCallback = () => void;
+
+/**
  * State container for workout measurements.
  * 
  * Stores heart rate, power, and cadence measurements with timestamps.
  * Includes validation to reject invalid values.
+ * Automatically persists to IndexedDB for crash recovery.
  * 
  * @example
  * const state = new MeasurementsState();
@@ -32,6 +45,79 @@ export class MeasurementsState implements MeasurementsData {
     heartrate: Measurement[] = [];
     power: Measurement[] = [];
     cadence: Measurement[] = [];
+    laps: LapMarker[] = [];
+
+    private _persistenceEnabled: boolean;
+    private _startTime: number | null = null;
+    private _onChangeCallbacks: StateChangeCallback[] = [];
+
+    constructor(enablePersistence: boolean = true) {
+        this._persistenceEnabled = enablePersistence && isIndexedDBSupported();
+
+        // Set up page unload handler to save any pending changes
+        if (this._persistenceEnabled && typeof window !== 'undefined') {
+            window.addEventListener('beforeunload', () => {
+                flushPendingSave();
+            });
+
+            // Also save on visibility change (mobile browsers)
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    flushPendingSave();
+                }
+            });
+        }
+    }
+
+    /**
+     * Set the workout start time (used for persistence)
+     */
+    setStartTime(time: number | null): void {
+        this._startTime = time;
+    }
+
+    /**
+     * Get the workout start time
+     */
+    getStartTime(): number | null {
+        return this._startTime;
+    }
+
+    /**
+     * Register a callback for state changes
+     */
+    onChange(callback: StateChangeCallback): void {
+        this._onChangeCallbacks.push(callback);
+    }
+
+    /**
+     * Remove a state change callback
+     */
+    offChange(callback: StateChangeCallback): void {
+        const index = this._onChangeCallbacks.indexOf(callback);
+        if (index > -1) {
+            this._onChangeCallbacks.splice(index, 1);
+        }
+    }
+
+    /**
+     * Notify listeners and persist state
+     */
+    private _notifyChange(): void {
+        // Notify listeners
+        for (const callback of this._onChangeCallbacks) {
+            try {
+                callback();
+            } catch (e) {
+                console.error('State change callback error:', e);
+            }
+        }
+
+        // Persist to IndexedDB
+        if (this._persistenceEnabled) {
+            throttledSave(this.toJSON(), this._startTime);
+        }
+    }
 
     /**
      * Add a heart rate measurement
@@ -49,6 +135,7 @@ export class MeasurementsState implements MeasurementsData {
             timestamp: entry.timestamp,
             value: entry.value,
         });
+        this._notifyChange();
     }
 
     /**
@@ -67,6 +154,7 @@ export class MeasurementsState implements MeasurementsData {
             timestamp: entry.timestamp,
             value: entry.value,
         });
+        this._notifyChange();
     }
 
     /**
@@ -85,6 +173,7 @@ export class MeasurementsState implements MeasurementsData {
             timestamp: entry.timestamp,
             value: entry.value,
         });
+        this._notifyChange();
     }
 
     /**
@@ -112,11 +201,46 @@ export class MeasurementsState implements MeasurementsData {
 
     /**
      * Clear all measurements
+     * @param clearPersisted - Also clear persisted data from IndexedDB
      */
-    clear(): void {
+    async clear(clearPersisted: boolean = true): Promise<void> {
         this.heartrate = [];
         this.power = [];
         this.cadence = [];
+        this.laps = [];
+        this._startTime = null;
+
+        if (clearPersisted && this._persistenceEnabled) {
+            await clearActiveWorkout();
+        }
+
+        this._notifyChange();
+    }
+
+    /**
+     * Add a lap marker
+     * 
+     * @param startTime - The workout start time for calculating elapsed time
+     * @returns The new lap marker
+     */
+    addLap(startTime: number | null): LapMarker {
+        const timestamp = Date.now();
+        const lapNumber = this.laps.length + 1;
+        const lap: LapMarker = {
+            timestamp,
+            number: lapNumber,
+            elapsedMs: startTime ? timestamp - startTime : undefined,
+        };
+        this.laps.push(lap);
+        this._notifyChange();
+        return lap;
+    }
+
+    /**
+     * Get the current lap count
+     */
+    getLapCount(): number {
+        return this.laps.length;
     }
 
     /**
@@ -127,7 +251,37 @@ export class MeasurementsState implements MeasurementsData {
             heartrate: [...this.heartrate],
             power: [...this.power],
             cadence: [...this.cadence],
+            laps: [...this.laps],
         };
+    }
+
+    /**
+     * Restore state from persisted data
+     * @param data - The measurement data to restore
+     * @param startTime - The workout start time
+     */
+    restore(data: MeasurementsData, startTime: number | null): void {
+        this.heartrate = [...(data.heartrate || [])];
+        this.power = [...(data.power || [])];
+        this.cadence = [...(data.cadence || [])];
+        this.laps = [...(data.laps || [])];
+        this._startTime = startTime;
+
+        // Don't persist on restore - data is already persisted
+        for (const callback of this._onChangeCallbacks) {
+            try {
+                callback();
+            } catch (e) {
+                console.error('State change callback error:', e);
+            }
+        }
+    }
+
+    /**
+     * Enable or disable persistence
+     */
+    setPersistenceEnabled(enabled: boolean): void {
+        this._persistenceEnabled = enabled && isIndexedDBSupported();
     }
 
     /**

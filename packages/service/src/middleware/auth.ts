@@ -7,15 +7,18 @@
  */
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { API_KEY } from '../config';
+import { logger } from '../logger';
 
 /**
  * Creates authentication middleware
+ * Reads API_KEY from environment at request time to support dynamic configuration
  * @returns Express middleware for API key authentication
  */
 export function createAuthMiddleware(): RequestHandler {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!API_KEY) {
+        const apiKeyConfig = process.env.API_KEY;
+
+        if (!apiKeyConfig) {
             return next();
         }
 
@@ -27,9 +30,9 @@ export function createAuthMiddleware(): RequestHandler {
         const isSSEEndpoint = req.path.endsWith('/listen') || req.path.endsWith('/listenAll');
 
         if (queryApiKey && !isSSEEndpoint) {
-            console.warn(
-                `⚠️  SECURITY WARNING: API key passed in query string from ${req.ip} for non-SSE endpoint. ` +
-                'Query string API keys are only supported for SSE endpoints. Use the X-API-Key header.'
+            logger.warn(
+                { ip: req.ip, path: req.path },
+                'Security: API key passed in query string for non-SSE endpoint'
             );
             return res.status(401).json({
                 error: 'Unauthorized: API key in query string not allowed for this endpoint',
@@ -42,13 +45,13 @@ export function createAuthMiddleware(): RequestHandler {
 
         if (queryApiKey && isSSEEndpoint && !headerApiKey) {
             // Log deprecation warning for query string usage in SSE
-            console.warn(
-                `⚠️  DEPRECATION: API key passed in query string for SSE endpoint from ${req.ip}. ` +
-                'Consider using a custom SSE client that supports headers.'
+            logger.warn(
+                { ip: req.ip, path: req.path },
+                'Deprecation: API key passed in query string for SSE endpoint'
             );
         }
 
-        if (!apiKey || apiKey !== API_KEY) {
+        if (!apiKey || apiKey !== apiKeyConfig) {
             return res.status(401).json({
                 error: 'Unauthorized: Invalid API Key',
                 hint: 'Use the X-API-Key header for authentication'

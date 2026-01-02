@@ -11,8 +11,11 @@ import { getTcxString } from '../create-tcx.js';
 import { getFitData } from '../create-fit.js';
 import { showConfirmation, showWorkoutSummary, calculateWorkoutSummary } from './modal.js';
 import { announce } from './accessibility.js';
+import { showUndoNotification, createWorkoutBackup, restoreWorkoutBackup, type WorkoutBackup } from './undoNotification.js';
+import { resetLapCounter } from './lap.js';
 import type { MeasurementsState } from '../MeasurementsState.js';
 import type { TimeState } from '../getInitState.js';
+import type { ZoneState } from '../ZoneState.js';
 
 /**
  * Application settings stored in localStorage
@@ -81,19 +84,22 @@ export const initMetricsToggle = (): void => {
 interface InitDiscardButtonParams {
     measurementsState: MeasurementsState;
     timeState: TimeState;
+    zoneState?: ZoneState;
 }
 
 /**
  * Initialize the discard button.
  * 
  * Shows a custom confirmation dialog before clearing all workout data.
- * Resets workout controls to idle state.
+ * After discard, shows an undo notification for 5 seconds allowing
+ * the user to restore their data.
  * 
  * @param params - Object containing state objects
  */
 export const initDiscardButton = ({
     measurementsState,
     timeState,
+    zoneState,
 }: InitDiscardButtonParams): void => {
     const discardButton = document.getElementById('discardButton');
 
@@ -115,9 +121,15 @@ export const initDiscardButton = ({
             return;
         }
 
+        // Count data points for the warning message
+        const totalDataPoints =
+            measurementsState.power.length +
+            measurementsState.heartrate.length +
+            measurementsState.cadence.length;
+
         const confirmed = await showConfirmation(
             'Discard Workout',
-            'Are you sure you want to discard this workout? All recorded data will be permanently lost.',
+            `Are you sure you want to discard this workout? You have ${totalDataPoints} data points that will be deleted. You'll have 5 seconds to undo this action.`,
             {
                 confirmText: 'Discard',
                 cancelText: 'Keep Data',
@@ -127,11 +139,80 @@ export const initDiscardButton = ({
         );
 
         if (confirmed) {
+            // Create backup before clearing
+            const backup = createWorkoutBackup(measurementsState, timeState);
+
+            // Clear the workout data
             resetWorkoutState(measurementsState, timeState);
-            announce('Workout data discarded', 'polite');
+
+            // Reset zone tracking
+            if (zoneState) {
+                zoneState.reset();
+            }
+
+            // Dispatch event for zone state to reset
+            document.dispatchEvent(new CustomEvent('workout-discarded'));
+
+            // Reset lap counter display
+            resetLapCounter();
+
+            // Show undo notification
+            showUndoNotification({
+                message: 'Workout data discarded',
+                icon: '🗑️',
+                timeout: 5000,
+                onUndo: () => {
+                    // Restore the backup
+                    restoreWorkoutBackup(backup, measurementsState, timeState);
+
+                    // Restore UI state based on the backup
+                    restoreWorkoutUI(backup);
+
+                    announce('Workout data restored', 'polite');
+                },
+                onExpire: () => {
+                    // Data is already cleared, nothing more to do
+                    announce('Discard complete', 'polite');
+                },
+            });
         }
     });
 };
+
+/**
+ * Restore the workout UI based on backed up state
+ */
+function restoreWorkoutUI(backup: WorkoutBackup): void {
+    const startButton = document.getElementById('startButton') as HTMLButtonElement | null;
+    const pauseButton = document.getElementById('pauseButton') as HTMLButtonElement | null;
+    const resumeButton = document.getElementById('resumeButton') as HTMLButtonElement | null;
+    const stopButton = document.getElementById('stopButton') as HTMLButtonElement | null;
+    const timeElement = document.getElementById('time');
+
+    if (backup.running) {
+        // Was running when discarded
+        if (startButton) startButton.style.display = 'none';
+        if (pauseButton) pauseButton.style.display = 'inline-flex';
+        if (resumeButton) resumeButton.style.display = 'none';
+        if (stopButton) stopButton.style.display = 'inline-flex';
+    } else if (backup.startTime !== null) {
+        // Was paused when discarded
+        if (startButton) startButton.style.display = 'none';
+        if (pauseButton) pauseButton.style.display = 'none';
+        if (resumeButton) resumeButton.style.display = 'inline-flex';
+        if (stopButton) stopButton.style.display = 'inline-flex';
+    }
+
+    // Restore timer display if there was a start time
+    if (timeElement && backup.startTime !== null) {
+        const elapsed = (backup.endTime || Date.now()) - backup.startTime;
+        const seconds = Math.floor(elapsed / 1000);
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+        timeElement.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+}
 
 /**
  * Reset workout state to initial values
@@ -189,8 +270,9 @@ function downloadFile(blob: Blob, filename: string): void {
  * Exports workout data in configured formats (TCX, CSV, JSON).
  * 
  * @param measurementsState - The measurements state object
+ * @param zoneState - Optional zone state for including zone data in exports
  */
-export const initExportButton = (measurementsState: MeasurementsState): void => {
+export const initExportButton = (measurementsState: MeasurementsState, zoneState?: ZoneState): void => {
     const exportDataElem = document.getElementById('exportData');
 
     if (!exportDataElem) {
@@ -208,13 +290,36 @@ export const initExportButton = (measurementsState: MeasurementsState): void => 
 
             const timestamp = getExportTimestamp();
 
-            // Download JSON file
+            // Download JSON file (includes zone data)
             if (settings.exportJson) {
-                const exportData = {
+                const exportData: Record<string, unknown> = {
                     power: measurementsState.power,
                     heartrate: measurementsState.heartrate,
                     cadence: measurementsState.cadence,
                 };
+
+                // Include zone distribution data if available
+                if (zoneState) {
+                    const zoneData = zoneState.toJSON();
+                    if (zoneData.powerZones.some(z => z.timeInZoneMs > 0) ||
+                        zoneData.hrZones.some(z => z.timeInZoneMs > 0)) {
+                        exportData.zoneDistribution = {
+                            power: zoneData.powerZones.map(z => ({
+                                zone: z.zone,
+                                name: z.name,
+                                timeSeconds: Math.round(z.timeInZoneMs / 1000),
+                            })),
+                            heartrate: zoneData.hrZones.map(z => ({
+                                zone: z.zone,
+                                name: z.name,
+                                timeSeconds: Math.round(z.timeInZoneMs / 1000),
+                            })),
+                            ftp: zoneData.ftp,
+                            maxHr: zoneData.maxHr,
+                        };
+                    }
+                }
+
                 const jsonString = JSON.stringify(exportData, null, 2);
                 const jsonBlob = new Blob([jsonString], { type: 'application/json' });
                 downloadFile(jsonBlob, `bike-measurements-${timestamp}.json`);
@@ -258,6 +363,7 @@ export const initExportButton = (measurementsState: MeasurementsState): void => 
 interface InitWorkoutSummaryParams {
     measurementsState: MeasurementsState;
     timeState: TimeState;
+    zoneState?: ZoneState;
 }
 
 /**
@@ -271,6 +377,7 @@ interface InitWorkoutSummaryParams {
 export const initWorkoutSummaryModal = ({
     measurementsState,
     timeState,
+    zoneState,
 }: InitWorkoutSummaryParams): void => {
     document.addEventListener('workoutComplete', async (event) => {
         const detail = (event as CustomEvent).detail;
@@ -288,7 +395,8 @@ export const initWorkoutSummaryModal = ({
         const summary = calculateWorkoutSummary(
             detail.startTime || timeState.startTime || Date.now(),
             detail.endTime || timeState.endTime || Date.now(),
-            measurementsState
+            measurementsState,
+            zoneState
         );
 
         await showWorkoutSummary(summary, {

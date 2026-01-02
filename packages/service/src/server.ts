@@ -27,23 +27,27 @@
 import express, { Application } from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
 
 import { PORT, RATE_LIMIT, CLEANUP } from './config';
-import { createRedisClient } from './redis';
-import { createAuthMiddleware, corsMiddleware, logCorsWarnings } from './middleware';
+import { createRedisClient, RedisClientType } from './redis';
+import { logger } from './logger';
+import { createAuthMiddleware, corsMiddleware, logCorsWarnings, errorHandler } from './middleware';
 import {
     createHealthRouter,
     createStreamsRouter,
     createWorkoutsRouter,
     createUsersRouter,
 } from './routes';
-import { isDatabaseEnabled, disconnectPrisma } from './db';
+import { isDatabaseEnabled } from './db';
+import { initializeShutdownHandlers, getShutdownManager } from './shutdown';
 
 /**
  * Extended Express Application with custom properties
  */
 export interface AppWithCleanup extends Application {
     cleanupStreams?: (retentionMs?: number) => Promise<number>;
+    redisClient?: RedisClientType;
 }
 
 /**
@@ -63,6 +67,9 @@ export interface AppWithCleanup extends Application {
  */
 function createApp(): AppWithCleanup {
     const app: AppWithCleanup = express();
+
+    // Logging middleware
+    app.use(pinoHttp({ logger }));
 
     // Security headers
     app.use(helmet());
@@ -101,8 +108,12 @@ function createApp(): AppWithCleanup {
     app.use('/api/workouts', createWorkoutsRouter(redisClient));
     app.use('/api/users', createUsersRouter());
 
-    // Expose cleanup function
+    // Error handling middleware (must be last)
+    app.use(errorHandler);
+
+    // Expose cleanup function and redis client
     app.cleanupStreams = cleanupStreams;
+    app.redisClient = redisClient;
 
     return app;
 }
@@ -112,49 +123,28 @@ const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
     const app = createApp();
     const server = app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-        console.log(
+        logger.info(`Server running on http://localhost:${PORT}`);
+        logger.info(
             `Database: ${isDatabaseEnabled() ? 'enabled' : 'disabled (Redis-only mode)'}`
         );
 
         // Run cleanup every hour
         setInterval(() => {
-            console.log('Running scheduled stream cleanup...');
+            logger.info('Running scheduled stream cleanup...');
             app
                 .cleanupStreams?.()
                 .then((count) => {
-                    if (count > 0) console.log(`Scheduled cleanup removed ${count} streams`);
+                    if (count > 0) logger.info(`Scheduled cleanup removed ${count} streams`);
                 })
-                .catch((err) => console.error('Scheduled cleanup failed:', err));
+                .catch((err) => logger.error({ err }, 'Scheduled cleanup failed'));
         }, CLEANUP.INTERVAL_MS);
     });
 
-    // Graceful shutdown
-    const shutdown = async (signal: string): Promise<void> => {
-        console.log(`\n${signal} received. Starting graceful shutdown...`);
-
-        server.close(async () => {
-            console.log('HTTP server closed');
-
-            try {
-                await disconnectPrisma();
-                console.log('Database connection closed');
-            } catch (err) {
-                console.error('Error closing database connection:', err);
-            }
-
-            process.exit(0);
-        });
-
-        // Force exit after 10 seconds
-        setTimeout(() => {
-            console.error('Forced shutdown after timeout');
-            process.exit(1);
-        }, 10000);
-    };
-
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+    // Initialize graceful shutdown handlers
+    if (app.redisClient) {
+        initializeShutdownHandlers(server, app.redisClient);
+    }
 }
 
+export { getShutdownManager };
 export default createApp;

@@ -11,6 +11,8 @@ import { RedisClientType, StreamReadResult, StreamInfoResponse } from '../redis'
 import { validateStreamName, validateMessage, validateAuthor, sanitizeString } from '../validation';
 import { ensureString } from '../utils';
 import { CLEANUP } from '../config';
+import { logger } from '../logger';
+import { getShutdownManager } from '../shutdown';
 
 /**
  * Create streams router
@@ -202,7 +204,7 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                             };
                         }
                     } catch (err) {
-                        console.error(`Error processing key ${key}:`, err);
+                        logger.error({ err, key }, 'Error processing stream key');
                     }
                     return null;
                 }
@@ -222,6 +224,14 @@ export function createStreamsRouter(redisClient: RedisClientType): {
 
     // Listen to new messages on all streams (Server-Sent Events)
     router.get('/listenAll', async (req: Request, res: Response) => {
+        const shutdownManager = getShutdownManager();
+
+        // Check if shutdown is in progress
+        if (shutdownManager.isInShutdown()) {
+            res.status(503).json({ error: 'Server is shutting down' });
+            return;
+        }
+
         // Set headers for Server-Sent Events
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
@@ -233,13 +243,29 @@ export function createStreamsRouter(redisClient: RedisClientType): {
             `data: ${JSON.stringify({ type: 'connected', streamName: 'all' })}\n\n`
         );
 
-        console.log('Client connected to listenAll');
+        logger.debug('Client connected to listenAll');
+
+        // Create a dedicated client for blocking operations
+        const blockingClient = redisClient.duplicate();
+        await blockingClient.connect();
+
+        // Track resources for graceful shutdown
+        const clientTrackingId = shutdownManager.trackBlockingClient(
+            blockingClient,
+            'listenAll blocking client'
+        );
+        const sseTrackingId = shutdownManager.trackSSEResponse(res, 'listenAll SSE');
 
         // Map to track the last ID for each stream
         const streamCursors = new Map<string, string>();
 
         // Poll for new messages
         const poll = async (): Promise<void> => {
+            // Stop polling if shutdown is in progress
+            if (shutdownManager.isInShutdown()) {
+                return;
+            }
+
             try {
                 // Get cached stream list (refreshes periodically)
                 const activeStreams = await streamRegistry.refresh();
@@ -259,7 +285,7 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                 }
 
                 if (streamCursors.size === 0) {
-                    if (!res.destroyed) {
+                    if (!res.destroyed && !shutdownManager.isInShutdown()) {
                         setTimeout(poll, 1000);
                     }
                     return;
@@ -271,8 +297,8 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                     streams.push({ key, id });
                 }
 
-                // Read with block
-                const response = (await redisClient.xRead(streams, {
+                // Read with block using dedicated client
+                const response = (await blockingClient.xRead(streams, {
                     BLOCK: 2000,
                 })) as StreamReadResult[] | null;
 
@@ -294,12 +320,12 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                     }
                 }
 
-                if (!res.destroyed) {
+                if (!res.destroyed && !shutdownManager.isInShutdown()) {
                     setImmediate(poll);
                 }
             } catch (error) {
-                console.error('Error in listenAll poll:', error);
-                if (!res.destroyed) {
+                logger.error({ err: error }, 'Error in listenAll poll');
+                if (!res.destroyed && !shutdownManager.isInShutdown()) {
                     setTimeout(poll, 1000);
                 }
             }
@@ -307,8 +333,14 @@ export function createStreamsRouter(redisClient: RedisClientType): {
 
         poll();
 
-        req.on('close', () => {
-            console.log('Client disconnected from listenAll');
+        req.on('close', async () => {
+            logger.debug('Client disconnected from listenAll');
+            // Untrack resources
+            shutdownManager.untrack(clientTrackingId);
+            shutdownManager.untrack(sseTrackingId);
+            if (blockingClient.isOpen) {
+                await blockingClient.quit();
+            }
         });
     });
 
@@ -351,7 +383,14 @@ export function createStreamsRouter(redisClient: RedisClientType): {
 
     // Listen to new messages on a stream (Server-Sent Events)
     router.get('/:streamName/listen', async (req: Request, res: Response) => {
+        const shutdownManager = getShutdownManager();
         const { streamName } = req.params;
+
+        // Check if shutdown is in progress
+        if (shutdownManager.isInShutdown()) {
+            res.status(503).json({ error: 'Server is shutting down' });
+            return;
+        }
 
         // Validate stream name
         const validation = validateStreamName(streamName);
@@ -374,9 +413,28 @@ export function createStreamsRouter(redisClient: RedisClientType): {
 
         let lastId = Date.now().toString();
 
-        console.log(`Client connected to stream: ${sanitizedStreamName}`);
+        logger.debug({ streamName: sanitizedStreamName }, 'Client connected to stream');
+
+        // Create a dedicated client for blocking operations
+        const blockingClient = redisClient.duplicate();
+        await blockingClient.connect();
+
+        // Track resources for graceful shutdown
+        const clientTrackingId = shutdownManager.trackBlockingClient(
+            blockingClient,
+            `listen:${sanitizedStreamName} blocking client`
+        );
+        const sseTrackingId = shutdownManager.trackSSEResponse(
+            res,
+            `listen:${sanitizedStreamName} SSE`
+        );
 
         const poll = async (): Promise<void> => {
+            // Stop polling if shutdown is in progress
+            if (shutdownManager.isInShutdown()) {
+                return;
+            }
+
             try {
                 const exists = await redisClient.exists(sanitizedStreamName);
                 if (!exists) {
@@ -387,7 +445,8 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                     return;
                 }
 
-                const messages = (await redisClient.xRead(
+                // Use dedicated client for blocking read
+                const messages = (await blockingClient.xRead(
                     { key: sanitizedStreamName, id: lastId },
                     { BLOCK: 2000 }
                 )) as StreamReadResult[] | null;
@@ -406,11 +465,11 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                     }
                 }
 
-                if (!res.destroyed) {
+                if (!res.destroyed && !shutdownManager.isInShutdown()) {
                     setImmediate(poll);
                 }
             } catch (error) {
-                console.error('Error reading stream:', error);
+                logger.error({ err: error, streamName: sanitizedStreamName }, 'Error reading stream');
                 if (!res.destroyed) {
                     res.end();
                 }
@@ -419,8 +478,14 @@ export function createStreamsRouter(redisClient: RedisClientType): {
 
         poll();
 
-        req.on('close', () => {
-            console.log(`Client disconnected from stream: ${sanitizedStreamName}`);
+        req.on('close', async () => {
+            logger.debug({ streamName: sanitizedStreamName }, 'Client disconnected from stream');
+            // Untrack resources
+            shutdownManager.untrack(clientTrackingId);
+            shutdownManager.untrack(sseTrackingId);
+            if (blockingClient.isOpen) {
+                await blockingClient.quit();
+            }
         });
     });
 
@@ -464,7 +529,7 @@ export function createStreamsRouter(redisClient: RedisClientType): {
                     }
                 }
             } catch (err) {
-                console.error(`Error processing key ${key}:`, err);
+                logger.error({ err, key }, 'Error processing key during cleanup');
             }
         }
         return deletedCount;

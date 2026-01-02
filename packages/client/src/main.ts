@@ -27,6 +27,10 @@
  */
 
 import './main.css';
+
+// Register Web Components (must be imported before they're used in DOM)
+import './components/index.js';
+
 import { initTimerDisplay } from './ui/time.js';
 import { initDiscardButton, initExportButton, initMetricsToggle, initWorkoutSummaryModal } from './ui/menu.js';
 import { initMetricsDisplay } from './initMetricsDisplay.js';
@@ -43,6 +47,9 @@ import { initStreamingControls } from './initStreamingControls.js';
 import { initWorkoutHistory } from './ui/workoutHistory.js';
 import { initKeyboardNavigation } from './ui/accessibility.js';
 import { setupDarkModeToggle } from './ui/darkMode.js';
+import { initOnboarding } from './ui/onboarding.js';
+import { initLapButton } from './ui/lap.js';
+import { initWorkoutRecovery } from './ui/workoutRecovery.js';
 
 /**
  * Initialize application state
@@ -59,16 +66,16 @@ const streamManager = new StreamManager(measurementsState, timeState);
 
 // Initialize UI components
 initTimerDisplay(timeState);
-initMetricsDisplay({ connectionsState, measurementsState });
+const zoneState = initMetricsDisplay({ connectionsState, measurementsState });
 
 // Initialize Bluetooth connection buttons
 initConnectionButtons({ connectionsState, measurementsState });
 
 // Initialize menu controls
-initDiscardButton({ measurementsState, timeState });
-initExportButton(measurementsState);
+initDiscardButton({ measurementsState, timeState, zoneState });
+initExportButton(measurementsState, zoneState);
 initMetricsToggle();
-initWorkoutSummaryModal({ measurementsState, timeState });
+initWorkoutSummaryModal({ measurementsState, timeState, zoneState });
 
 // Initialize streaming features
 initStreamingControls(streamManager, timeState);
@@ -97,6 +104,21 @@ const darkModeToggle = document.getElementById('toggleDarkMode') as HTMLInputEle
 if (darkModeToggle) {
     setupDarkModeToggle(darkModeToggle);
 }
+
+// Initialize lap button
+initLapButton({ measurementsState, timeState });
+
+// Initialize onboarding (shows wizard for first-time users)
+initOnboarding();
+
+// Initialize workout recovery (check for interrupted workouts)
+initWorkoutRecovery(measurementsState, timeState).then((recovered) => {
+    if (recovered) {
+        console.log('Workout recovered from previous session');
+        // Update UI to reflect recovered data
+        document.dispatchEvent(new CustomEvent('workout-recovered'));
+    }
+});
 
 // Log initialization
 console.log('Bike Power Tracker initialized');

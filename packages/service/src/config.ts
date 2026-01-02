@@ -30,6 +30,9 @@ export const NODE_ENV = process.env.NODE_ENV || 'development';
 /** API key for authentication */
 export const API_KEY = process.env.API_KEY;
 
+/** Log level from environment or default */
+export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+
 /**
  * Validation constants for input sanitization
  */
@@ -51,7 +54,7 @@ export const RATE_LIMIT = {
     /** Window size in milliseconds */
     WINDOW_MS: 60 * 1000, // 1 minute
     /** Maximum requests per window */
-    MAX_REQUESTS: 100000, // TODO: Reduce to sensible value
+    MAX_REQUESTS: 1000,
 } as const;
 
 /**

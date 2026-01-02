@@ -41,6 +41,10 @@ tags:
     description: Message operations within streams
   - name: Real-time
     description: Server-Sent Events for real-time updates
+  - name: Workouts
+    description: Workout management and telemetry
+  - name: Users
+    description: User profile and statistics
 
 paths:
   /health:
@@ -535,6 +539,362 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  # ============================================
+  # Workout Endpoints
+  # ============================================
+
+  /api/workouts:
+    post:
+      tags:
+        - Workouts
+      summary: Create a new workout
+      description: |
+        Creates a new workout record linked to a Redis stream for real-time telemetry.
+        Requires database to be configured.
+      operationId: createWorkout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkoutRequest'
+            examples:
+              basic:
+                value:
+                  streamName: workout-stream-123
+              full:
+                value:
+                  streamName: workout-stream-123
+                  title: Morning Ride
+                  sport: cycling
+                  userId: 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '201':
+          description: Workout created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+        '400':
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    get:
+      tags:
+        - Workouts
+      summary: List workouts with pagination
+      description: |
+        Retrieves a paginated list of workouts with optional filtering.
+        Requires database to be configured.
+      operationId: listWorkouts
+      parameters:
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: status
+          in: query
+          description: Filter by workout status
+          schema:
+            $ref: '#/components/schemas/WorkoutStatus'
+      responses:
+        '200':
+          description: Paginated workout list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedWorkouts'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/workouts/{workoutId}:
+    get:
+      tags:
+        - Workouts
+      summary: Get a single workout
+      description: Retrieves workout details with optional telemetry data.
+      operationId: getWorkout
+      parameters:
+        - $ref: '#/components/parameters/WorkoutId'
+        - name: includeTelemetry
+          in: query
+          description: Include full telemetry data
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Workout details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      tags:
+        - Workouts
+      summary: Update workout metadata
+      description: Updates workout title, description, or sport type.
+      operationId: updateWorkout
+      parameters:
+        - $ref: '#/components/parameters/WorkoutId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkoutRequest'
+      responses:
+        '200':
+          description: Workout updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Workouts
+      summary: Delete a workout
+      description: Deletes a workout and its associated Redis stream.
+      operationId: deleteWorkout
+      parameters:
+        - $ref: '#/components/parameters/WorkoutId'
+      responses:
+        '200':
+          description: Workout deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Workout deleted successfully
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/workouts/{workoutId}/complete:
+    post:
+      tags:
+        - Workouts
+      summary: Complete a workout
+      description: |
+        Completes an active workout, calculates summary statistics from telemetry,
+        and optionally archives the data to the database.
+      operationId: completeWorkout
+      parameters:
+        - $ref: '#/components/parameters/WorkoutId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                archiveTelemetry:
+                  type: boolean
+                  description: Whether to archive telemetry data to database
+                  default: true
+      responses:
+        '200':
+          description: Workout completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  workout:
+                    $ref: '#/components/schemas/Workout'
+                  archivedMessages:
+                    type: integer
+                    description: Number of telemetry messages archived
+                    example: 1250
+        '400':
+          description: Workout is not active
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Workout not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/workouts/by-stream/{streamName}:
+    get:
+      tags:
+        - Workouts
+      summary: Get workout by stream name
+      description: Retrieves the active workout associated with a Redis stream.
+      operationId: getWorkoutByStream
+      parameters:
+        - $ref: '#/components/parameters/StreamName'
+      responses:
+        '200':
+          description: Workout details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workout'
+        '404':
+          description: Active workout not found for stream
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ============================================
+  # User Endpoints
+  # ============================================
+
+  /api/users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user profile
+      description: Retrieves public user profile information.
+      operationId: getUserProfile
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicUser'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/users/{userId}/stats:
+    get:
+      tags:
+        - Users
+      summary: Get user workout statistics
+      description: Retrieves aggregated workout statistics for a user.
+      operationId: getUserStats
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      responses:
+        '200':
+          description: User workout statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWorkoutStats'
+        '503':
+          description: Database not configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   parameters:
     StreamName:
@@ -547,7 +907,31 @@ components:
         example: chat-room-1
         pattern: ^[a-zA-Z0-9_-]+$
 
+    WorkoutId:
+      name: workoutId
+      in: path
+      required: true
+      description: The unique ID of the workout
+      schema:
+        type: string
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+
+    UserId:
+      name: userId
+      in: path
+      required: true
+      description: The unique ID of the user
+      schema:
+        type: string
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440000
+
   schemas:
+    # ============================================
+    # Stream Schemas
+    # ============================================
+
     StreamInfo:
       type: object
       description: Metadata about a Redis stream
@@ -657,6 +1041,262 @@ components:
           example: Stream name is required
       required:
         - error
+
+    # ============================================
+    # Workout Schemas
+    # ============================================
+
+    WorkoutStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - PAUSED
+        - COMPLETED
+        - ARCHIVED
+        - DELETED
+      description: Current status of the workout
+
+    CreateWorkoutRequest:
+      type: object
+      required:
+        - streamName
+      properties:
+        streamName:
+          type: string
+          description: Name of the Redis stream for real-time telemetry
+          example: workout-stream-123
+          pattern: ^[a-zA-Z0-9_-]+$
+        title:
+          type: string
+          description: Optional workout title
+          example: Morning Ride
+          maxLength: 255
+        sport:
+          type: string
+          description: Sport type
+          example: cycling
+          maxLength: 50
+        userId:
+          type: string
+          format: uuid
+          description: Optional user ID
+
+    UpdateWorkoutRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Workout title
+          maxLength: 255
+        description:
+          type: string
+          description: Workout description
+          maxLength: 2000
+        sport:
+          type: string
+          description: Sport type
+          maxLength: 50
+
+    WorkoutSummary:
+      type: object
+      description: Calculated workout statistics
+      properties:
+        duration:
+          type: integer
+          description: Duration in seconds
+          example: 3600
+        distance:
+          type: number
+          description: Distance in meters
+          example: 25000
+        avgPower:
+          type: number
+          description: Average power in watts
+          example: 185
+        maxPower:
+          type: number
+          description: Maximum power in watts
+          example: 450
+        normalizedPower:
+          type: number
+          description: Normalized power in watts
+          example: 195
+        avgHeartRate:
+          type: number
+          description: Average heart rate in BPM
+          example: 145
+        maxHeartRate:
+          type: number
+          description: Maximum heart rate in BPM
+          example: 175
+        avgCadence:
+          type: number
+          description: Average cadence in RPM
+          example: 85
+        totalEnergy:
+          type: number
+          description: Total energy in kilojoules
+          example: 665
+
+    Workout:
+      type: object
+      description: Workout record
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique workout ID
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+          description: User ID (if associated)
+        streamName:
+          type: string
+          nullable: true
+          description: Redis stream name (null after completion)
+        title:
+          type: string
+          nullable: true
+          description: Workout title
+        description:
+          type: string
+          nullable: true
+          description: Workout description
+        sport:
+          type: string
+          nullable: true
+          description: Sport type
+        startTime:
+          type: string
+          format: date-time
+          description: Workout start time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Workout end time
+        duration:
+          type: integer
+          nullable: true
+          description: Duration in seconds
+        status:
+          $ref: '#/components/schemas/WorkoutStatus'
+        summary:
+          $ref: '#/components/schemas/WorkoutSummary'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - status
+        - startTime
+        - createdAt
+        - updatedAt
+
+    PaginatedWorkouts:
+      type: object
+      properties:
+        workouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workout'
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            limit:
+              type: integer
+              example: 20
+            total:
+              type: integer
+              example: 100
+            totalPages:
+              type: integer
+              example: 5
+          required:
+            - page
+            - limit
+            - total
+            - totalPages
+      required:
+        - workouts
+        - pagination
+
+    # ============================================
+    # User Schemas
+    # ============================================
+
+    PublicUser:
+      type: object
+      description: Public user profile (excludes sensitive data)
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        displayName:
+          type: string
+          nullable: true
+        avatarUrl:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          nullable: true
+          description: Auth provider (e.g., 'google', 'github')
+        settings:
+          type: object
+          nullable: true
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+        lastLoginAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - email
+        - createdAt
+
+    UserWorkoutStats:
+      type: object
+      description: Aggregated workout statistics for a user
+      properties:
+        totalWorkouts:
+          type: integer
+          description: Total number of workouts
+          example: 150
+        completedWorkouts:
+          type: integer
+          description: Number of completed workouts
+          example: 145
+        totalDuration:
+          type: integer
+          description: Total workout time in seconds
+          example: 540000
+        totalDistance:
+          type: number
+          description: Total distance in meters
+          example: 3500000
+        avgPower:
+          type: number
+          description: Average power across all workouts
+          example: 175
+        recentWorkouts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Workout'
+          description: Last 5 workouts
 
   securitySchemes:
     ApiKeyHeader:

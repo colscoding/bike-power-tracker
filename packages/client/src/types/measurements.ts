@@ -13,12 +13,30 @@ export interface Measurement {
 }
 
 /**
+ * A lap marker in the workout
+ */
+export interface LapMarker {
+    /** Unix timestamp in milliseconds when lap was marked */
+    timestamp: number;
+    /** Lap number (1-based) */
+    number: number;
+    /** Optional elapsed time since workout start (in ms) */
+    elapsedMs?: number;
+}
+
+/**
+ * Alias for LapMarker used in storage
+ */
+export type LapData = LapMarker;
+
+/**
  * Collection of all workout measurements
  */
 export interface MeasurementsData {
     heartrate: Measurement[];
     power: Measurement[];
     cadence: Measurement[];
+    laps?: LapMarker[];
 }
 
 /**

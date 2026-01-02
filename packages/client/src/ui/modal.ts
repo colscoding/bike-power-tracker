@@ -8,6 +8,7 @@
  */
 
 import { announce } from './accessibility.js';
+import type { ZoneState, ZoneDistribution } from '../ZoneState.js';
 
 /**
  * Modal button configuration
@@ -260,6 +261,8 @@ export interface WorkoutSummary {
         max: number | null;
         count: number;
     };
+    powerZoneDistribution?: ZoneDistribution;
+    hrZoneDistribution?: ZoneDistribution;
 }
 
 /**
@@ -272,7 +275,8 @@ export function calculateWorkoutSummary(
         power: { value: number }[];
         heartrate: { value: number }[];
         cadence: { value: number }[];
-    }
+    },
+    zoneState?: ZoneState
 ): WorkoutSummary {
     const calcStats = (data: { value: number }[]) => {
         if (data.length === 0) {
@@ -287,7 +291,7 @@ export function calculateWorkoutSummary(
         };
     };
 
-    return {
+    const summary: WorkoutSummary = {
         duration: endTime - startTime,
         startTime,
         endTime,
@@ -295,6 +299,21 @@ export function calculateWorkoutSummary(
         heartrate: calcStats(measurements.heartrate),
         cadence: calcStats(measurements.cadence),
     };
+
+    // Add zone distributions if available
+    if (zoneState) {
+        const powerDist = zoneState.getPowerZoneDistribution();
+        const hrDist = zoneState.getHrZoneDistribution();
+
+        if (powerDist.totalTimeMs > 0) {
+            summary.powerZoneDistribution = powerDist;
+        }
+        if (hrDist.totalTimeMs > 0) {
+            summary.hrZoneDistribution = hrDist;
+        }
+    }
+
+    return summary;
 }
 
 /**
@@ -312,6 +331,69 @@ export function formatDurationLong(ms: number): string {
     if (seconds > 0 || parts.length === 0) parts.push(`${seconds}s`);
 
     return parts.join(' ');
+}
+
+/**
+ * Format seconds to MM:SS format
+ */
+function formatSecondsShort(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+/**
+ * Zone colors for the histogram
+ */
+const ZONE_COLORS: Record<number, string> = {
+    1: '#3b82f6', // Blue - Recovery
+    2: '#22c55e', // Green - Endurance
+    3: '#eab308', // Yellow - Tempo
+    4: '#f97316', // Orange - Threshold
+    5: '#ef4444', // Red - VO2max/Anaerobic
+    6: '#a855f7', // Purple - Anaerobic (power)
+    7: '#ec4899', // Pink - Neuromuscular (power)
+};
+
+/**
+ * Create zone distribution histogram chart
+ */
+function createZoneHistogram(distribution: ZoneDistribution, title: string): HTMLElement {
+    const container = document.createElement('div');
+    container.className = 'zone-distribution';
+
+    // Filter zones with time > 0
+    const activeZones = distribution.zones.filter(z => z.timeInZoneMs > 0);
+
+    if (activeZones.length === 0) {
+        return container; // Return empty if no zone data
+    }
+
+    const maxTime = Math.max(...distribution.zones.map(z => z.timeInZoneMs));
+
+    container.innerHTML = `
+        <h4 class="zone-distribution-title">${title}</h4>
+        <div class="zone-chart">
+            ${distribution.zones.map(zone => {
+        const percent = maxTime > 0 ? (zone.timeInZoneMs / maxTime) * 100 : 0;
+        const timeSeconds = Math.round(zone.timeInZoneMs / 1000);
+        const color = ZONE_COLORS[zone.zone] || '#888';
+        const timeStr = formatSecondsShort(timeSeconds);
+
+        return `
+                    <div class="zone-bar-row" title="${zone.name}: ${timeStr}">
+                        <span class="zone-bar-label">Z${zone.zone}</span>
+                        <div class="zone-bar-container">
+                            <div class="zone-bar" style="width: ${Math.max(percent, 2)}%; background-color: ${color};" aria-valuenow="${timeSeconds}" aria-label="${zone.name}"></div>
+                        </div>
+                        <span class="zone-bar-time">${timeStr}</span>
+                    </div>
+                `;
+    }).join('')}
+        </div>
+    `;
+
+    return container;
 }
 
 /**
@@ -362,6 +444,17 @@ export function createSummaryContent(summary: WorkoutSummary): HTMLElement {
             </span>
         </div>
     `;
+
+    // Add zone distribution charts if available
+    if (summary.powerZoneDistribution && summary.powerZoneDistribution.totalTimeMs > 0) {
+        const powerChart = createZoneHistogram(summary.powerZoneDistribution, '⚡ Power Zone Distribution');
+        container.appendChild(powerChart);
+    }
+
+    if (summary.hrZoneDistribution && summary.hrZoneDistribution.totalTimeMs > 0) {
+        const hrChart = createZoneHistogram(summary.hrZoneDistribution, '❤️ Heart Rate Zone Distribution');
+        container.appendChild(hrChart);
+    }
 
     return container;
 }

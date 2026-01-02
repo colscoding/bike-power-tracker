@@ -6,6 +6,7 @@
     "typecheck": "tsc --noEmit",
     "test": "NODE_ENV=test tsx --test src/*.test.ts src/**/*.test.ts",
     "test:watch": "NODE_ENV=test tsx --test --watch src/*.test.ts src/**/*.test.ts",
+    "test:fuzz": "NODE_ENV=test tsx --test src/bluetooth-fuzz.test.ts",
     "dev": "vite --host",
     "dev:fresh": "npm run clear-cache && vite --host",
     "start": "vite --host",
@@ -14,7 +15,9 @@
     "preview": "vite preview --host",
     "clear-cache": "echo 'To clear browser cache: Open DevTools > Application > Clear Storage > Clear site data'",
     "test:e2e": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js",
-    "test:e2e:ui": "NODE_ENV=test playwright test --ui --config=test-e2e/playwright.config.js"
+    "test:e2e:ui": "NODE_ENV=test playwright test --ui --config=test-e2e/playwright.config.js",
+    "test:visual": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js",
+    "test:visual:update": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js --update-snapshots"
   },
   "keywords": [
     "bike",

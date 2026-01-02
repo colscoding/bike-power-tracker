@@ -93,6 +93,8 @@ function handleKeydown(event: KeyboardEvent): void {
  * - Escape: Close modal/menu
  * - M: Toggle menu
  * - S: Open settings
+ * - H: Open workout history
+ * - L: Mark lap
  * - ?: Show keyboard shortcuts
  */
 export function initKeyboardNavigation(): void {
@@ -202,6 +204,18 @@ export function initKeyboardNavigation(): void {
             const exportBtn = document.getElementById('exportData');
             if (exportBtn) {
                 exportBtn.click();
+            }
+        },
+    });
+
+    // L - Mark lap
+    registerShortcut({
+        key: 'l',
+        description: 'Mark lap',
+        action: () => {
+            const lapBtn = document.getElementById('lapButton');
+            if (lapBtn) {
+                lapBtn.click();
             }
         },
     });

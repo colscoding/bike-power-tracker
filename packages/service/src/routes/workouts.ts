@@ -10,6 +10,7 @@ import { Router, Request, Response } from 'express';
 import { RedisClientType } from '../redis';
 import { isDatabaseEnabled } from '../db';
 import * as workoutService from '../db/workoutService';
+import { logger } from '../logger';
 
 /**
  * Create workouts router
@@ -57,7 +58,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             });
         } catch (error) {
             const err = error as Error;
-            console.error('Error creating workout:', err);
+            logger.error({ err, body: req.body }, 'Error creating workout');
             res.status(500).json({ error: err.message });
         }
     });
@@ -86,7 +87,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             res.json(result);
         } catch (error) {
             const err = error as Error;
-            console.error('Error listing workouts:', err);
+            logger.error({ err, query: req.query }, 'Error listing workouts');
             res.status(500).json({ error: err.message });
         }
     });
@@ -107,7 +108,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             res.json(workout);
         } catch (error) {
             const err = error as Error;
-            console.error('Error getting workout by stream:', err);
+            logger.error({ err, streamName: req.params.streamName }, 'Error getting workout by stream');
             res.status(500).json({ error: err.message });
         }
     });
@@ -129,7 +130,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             res.json(workout);
         } catch (error) {
             const err = error as Error;
-            console.error('Error getting workout:', err);
+            logger.error({ err, workoutId: req.params.workoutId }, 'Error getting workout');
             res.status(500).json({ error: err.message });
         }
     });
@@ -159,7 +160,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             if (err.code === 'P2025') {
                 return res.status(404).json({ error: 'Workout not found' });
             }
-            console.error('Error updating workout:', err);
+            logger.error({ err, workoutId: req.params.workoutId }, 'Error updating workout');
             res.status(500).json({ error: err.message });
         }
     });
@@ -220,7 +221,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
                         summary = workoutService.calculateSummary(telemetryData);
                     }
                 } catch (err) {
-                    console.error('Error reading stream for workout completion:', err);
+                    logger.error({ err, streamName: existingWorkout.streamName }, 'Error reading stream for workout completion');
                 }
             }
 
@@ -234,7 +235,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
                 try {
                     await redisClient.del(existingWorkout.streamName);
                 } catch (err) {
-                    console.error('Error deleting stream after completion:', err);
+                    logger.error({ err, streamName: existingWorkout.streamName }, 'Error deleting stream after completion');
                 }
             }
 
@@ -245,7 +246,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             });
         } catch (error) {
             const err = error as Error;
-            console.error('Error completing workout:', err);
+            logger.error({ err, workoutId: req.params.workoutId }, 'Error completing workout');
             res.status(500).json({ error: err.message });
         }
     });
@@ -264,7 +265,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
                 try {
                     await redisClient.del(workout.streamName);
                 } catch (err) {
-                    console.error('Error deleting stream:', err);
+                    logger.error({ err, streamName: workout.streamName }, 'Error deleting stream');
                 }
             }
 
@@ -279,7 +280,7 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
             if (err.code === 'P2025') {
                 return res.status(404).json({ error: 'Workout not found' });
             }
-            console.error('Error deleting workout:', err);
+            logger.error({ err, workoutId: req.params.workoutId }, 'Error deleting workout');
             res.status(500).json({ error: err.message });
         }
     });

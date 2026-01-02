@@ -8,15 +8,16 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { CORS_ORIGIN, NODE_ENV } from '../config';
+import { logger } from '../logger';
 
 /**
  * Log CORS configuration warnings
  */
 export function logCorsWarnings(): void {
     if (NODE_ENV === 'production' && CORS_ORIGIN === '*') {
-        console.warn(
-            '⚠️  WARNING: CORS_ORIGIN is set to "*" in production. ' +
-            'This is insecure. Set CORS_ORIGIN environment variable to your allowed origins.'
+        logger.warn(
+            'CORS_ORIGIN is set to "*" in production - this is insecure. ' +
+            'Set CORS_ORIGIN environment variable to your allowed origins.'
         );
     }
 }
