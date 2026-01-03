@@ -3,6 +3,8 @@
  * Handles theme switching and persistence for the app
  */
 
+import { announce } from './accessibility.js';
+
 const DARK_MODE_KEY = 'bpt-dark-mode';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
@@ -109,6 +111,7 @@ export function setupDarkModeToggle(toggleElement: HTMLInputElement): void {
         const newTheme = toggleElement.checked ? 'dark' : 'light';
         applyTheme(newTheme);
         saveThemePreference(newTheme);
+        announce(`Dark mode ${toggleElement.checked ? 'enabled' : 'disabled'}`);
     });
 
     // Listen for system preference changes (when using system theme)
@@ -120,6 +123,24 @@ export function setupDarkModeToggle(toggleElement: HTMLInputElement): void {
             const newTheme = e.matches ? 'dark' : 'light';
             applyTheme(newTheme);
             toggleElement.checked = e.matches;
+            announce(`Dark mode ${e.matches ? 'enabled' : 'disabled'}`);
+        }
+    });
+
+    // Listen for storage changes (sync across tabs)
+    window.addEventListener('storage', (e) => {
+        if (e.key === DARK_MODE_KEY) {
+            const newPreference = e.newValue as ThemePreference | null;
+            if (newPreference) {
+                const effectiveTheme = getEffectiveTheme(newPreference);
+                applyTheme(effectiveTheme);
+                toggleElement.checked = effectiveTheme === 'dark';
+            } else {
+                // If cleared, revert to system
+                const systemDark = systemPrefersDark();
+                applyTheme(systemDark ? 'dark' : 'light');
+                toggleElement.checked = systemDark;
+            }
         }
     });
 }

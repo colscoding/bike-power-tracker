@@ -30,7 +30,9 @@
             try {
                 var stored = localStorage.getItem('bpt-dark-mode');
                 var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (stored === 'dark' || (!stored && prefersDark)) {
+
+                // Check for explicit dark mode, or system preference (if stored is 'system' or not set)
+                if (stored === 'dark' || ((!stored || stored === 'system') && prefersDark)) {
                     document.documentElement.setAttribute('data-theme', 'dark');
                 }
 

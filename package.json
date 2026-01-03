@@ -12,7 +12,8 @@
         "test": "pnpm -r test",
         "test:client": "pnpm --filter client test",
         "test:integration": "pnpm --filter test-integration test",
-        "preview": "pnpm --filter client preview"
+        "preview": "pnpm --filter client preview",
+        "deploy": "./deploy.sh"
     },
     "keywords": [
         "bike",
