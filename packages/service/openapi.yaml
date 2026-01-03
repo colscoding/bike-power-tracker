@@ -1024,8 +1024,12 @@ components:
               description: Message payload
               additionalProperties: true
               example:
-                message: Hello!
-                author: Alice
+                power: 200
+                cadence: 90
+                heartrate: 145
+                speed: 30.5
+                distance: 1500
+                altitude: 120
                 timestamp: "1700001234567"
           required:
             - id
@@ -1105,10 +1109,6 @@ components:
           type: integer
           description: Duration in seconds
           example: 3600
-        distance:
-          type: number
-          description: Distance in meters
-          example: 25000
         avgPower:
           type: number
           description: Average power in watts
@@ -1133,6 +1133,22 @@ components:
           type: number
           description: Average cadence in RPM
           example: 85
+        avgSpeed:
+          type: number
+          description: Average speed in km/h
+          example: 25.5
+        maxSpeed:
+          type: number
+          description: Maximum speed in km/h
+          example: 45.0
+        totalDistance:
+          type: number
+          description: Total distance in meters
+          example: 25000
+        totalElevationGain:
+          type: number
+          description: Total elevation gain in meters
+          example: 500
         totalEnergy:
           type: number
           description: Total energy in kilojoules

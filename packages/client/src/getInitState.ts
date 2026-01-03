@@ -55,6 +55,18 @@ export const getInitState = (): AppState => {
                 isConnected: false,
                 disconnect: null,
             },
+            speed: {
+                isConnected: false,
+                disconnect: null,
+            },
+            distance: {
+                isConnected: false,
+                disconnect: null,
+            },
+            altitude: {
+                isConnected: false,
+                disconnect: null,
+            },
         },
         timeState: {
             running: false,

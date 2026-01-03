@@ -103,6 +103,9 @@ export interface WorkoutDataPayload {
     power?: number | null;
     cadence?: number | null;
     heartrate?: number | null;
+    speed?: number | null;
+    distance?: number | null;
+    altitude?: number | null;
     timestamp: number;
     elapsed: string;
 }

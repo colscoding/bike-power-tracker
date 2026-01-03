@@ -43,6 +43,9 @@ export const connectCadenceElem = getElement<HTMLButtonElement>('connectCadence'
 export const powerElement = getElement('power');
 export const heartrateElement = getElement('heartrate');
 export const cadenceElement = getElement('cadence');
+export const speedElement = getElement('speed');
+export const distanceElement = getElement('distance');
+export const altitudeElement = getElement('altitude');
 
 /**
  * Grouped elements by sensor type
@@ -51,6 +54,9 @@ export const elements: SensorElementsMap = {
     power: { display: powerElement, connect: connectPowerElem },
     heartrate: { display: heartrateElement, connect: connectHeartrateElem },
     cadence: { display: cadenceElement, connect: connectCadenceElem },
+    speed: { display: speedElement, connect: null },
+    distance: { display: distanceElement, connect: null },
+    altitude: { display: altitudeElement, connect: null },
 };
 
 /**

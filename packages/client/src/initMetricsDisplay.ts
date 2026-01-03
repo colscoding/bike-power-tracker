@@ -374,7 +374,7 @@ export const initMetricsDisplay = ({
         }
     };
 
-    const metricTypes: MeasurementType[] = ['power', 'heartrate', 'cadence'];
+    const metricTypes: MeasurementType[] = ['power', 'heartrate', 'cadence', 'speed', 'distance', 'altitude'];
 
     // Start the update loop
     setInterval(() => {

@@ -149,10 +149,7 @@
                     <button id="viewStreamsButton" role="menuitem" aria-label="View live streams">🌐 View
                         Streams</button>
                     <button id="settingsButton" role="menuitem" aria-label="Open settings">⚙️ Settings</button>
-                    <a href="https://github.com/colscoding/bike-power-tracker" target="_blank" rel="noopener noreferrer"
-                        style="display: block; text-decoration: none;" role="menuitem">
-                        <button style="width: 100%;" aria-label="Visit project homepage on GitHub">ℹ️ Homepage</button>
-                    </a>
+                    <button id="aboutButton" role="menuitem" aria-label="About this project">ℹ️ About</button>
                     <div class="menu-toggle-container" role="menuitem">
                         <span id="yourMetricsLabel">Your Metrics</span>
                         <label class="switch">
@@ -214,6 +211,18 @@
                         <dt id="heartrateLabel">Heart Rate</dt>
                         <dd id="heartrate" aria-labelledby="heartrateLabel" aria-live="polite"></dd>
                     </div>
+                    <div class="metric-group metric-group-speed">
+                        <dt id="speedLabel">Speed</dt>
+                        <dd id="speed" aria-labelledby="speedLabel" aria-live="polite"></dd>
+                    </div>
+                    <div class="metric-group metric-group-distance">
+                        <dt id="distanceLabel">Distance</dt>
+                        <dd id="distance" aria-labelledby="distanceLabel" aria-live="polite"></dd>
+                    </div>
+                    <div class="metric-group metric-group-altitude">
+                        <dt id="altitudeLabel">Altitude</dt>
+                        <dd id="altitude" aria-labelledby="altitudeLabel" aria-live="polite"></dd>
+                    </div>
                 </dl>
             </div>
             <div id="streamMetrics" class="metrics-section" aria-label="Stream metrics" style="display: none;">
@@ -236,6 +245,18 @@
                     <div class="metric-group metric-group-heartrate">
                         <dt id="streamHeartrateLabel">Heart Rate</dt>
                         <dd id="streamHeartrate" aria-labelledby="streamHeartrateLabel">--</dd>
+                    </div>
+                    <div class="metric-group metric-group-speed">
+                        <dt id="streamSpeedLabel">Speed</dt>
+                        <dd id="streamSpeed" aria-labelledby="streamSpeedLabel">--</dd>
+                    </div>
+                    <div class="metric-group metric-group-distance">
+                        <dt id="streamDistanceLabel">Distance</dt>
+                        <dd id="streamDistance" aria-labelledby="streamDistanceLabel">--</dd>
+                    </div>
+                    <div class="metric-group metric-group-altitude">
+                        <dt id="streamAltitudeLabel">Altitude</dt>
+                        <dd id="streamAltitude" aria-labelledby="streamAltitudeLabel">--</dd>
                     </div>
                     <div class="metric-group">
                         <dt id="streamElapsedLabel">⏱️ Elapsed</dt>
@@ -435,6 +456,37 @@
                 <div id="workoutDetailPanel" style="display: none;">
                     <!-- Workout detail will be injected here -->
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="stream-modal" role="dialog" aria-labelledby="aboutModalTitle" aria-modal="true"
+        style="display: none;">
+        <div class="stream-modal-content" style="max-width: 500px;">
+            <div class="stream-modal-header">
+                <h2 id="aboutModalTitle">ℹ️ About Bike Power Tracker</h2>
+                <button id="closeAboutModal" class="close-button" aria-label="Close about modal">&times;</button>
+            </div>
+            <div class="stream-modal-body" style="line-height: 1.6;">
+                <p><strong>Bike Power Tracker</strong> is a progressive web application for tracking cycling workouts
+                    using Bluetooth sensors (Power, Cadence, Heart Rate).</p>
+
+                <p>This project was <strong>vibecoded</strong> with AI assistance, designed to be simple,
+                    privacy-focused, and offline-capable.</p>
+
+                <h3 style="margin-top: 16px; margin-bottom: 8px;">Features:</h3>
+                <ul style="padding-left: 20px; margin-bottom: 16px;">
+                    <li>Real-time Bluetooth sensor connection</li>
+                    <li>Offline-first PWA architecture</li>
+                    <li>Live streaming to remote observers</li>
+                    <li>Data export (TCX, CSV, JSON, FIT)</li>
+                    <li>Dark mode & accessibility themes</li>
+                </ul>
+
+                <p style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
+                    Version 1.0.0
+                </p>
             </div>
         </div>
     </div>

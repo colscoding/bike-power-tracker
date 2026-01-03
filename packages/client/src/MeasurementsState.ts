@@ -22,6 +22,9 @@ const VALIDATION_LIMITS = {
     heartrate: { min: 0, max: 300 },
     power: { min: 0, max: 3000 },
     cadence: { min: 0, max: 300 },
+    speed: { min: 0, max: 150 }, // km/h
+    distance: { min: 0, max: 1000000 }, // meters
+    altitude: { min: -500, max: 9000 }, // meters
 } as const;
 
 /**
@@ -45,6 +48,9 @@ export class MeasurementsState implements MeasurementsData {
     heartrate: Measurement[] = [];
     power: Measurement[] = [];
     cadence: Measurement[] = [];
+    speed: Measurement[] = [];
+    distance: Measurement[] = [];
+    altitude: Measurement[] = [];
     laps: LapMarker[] = [];
 
     private _persistenceEnabled: boolean;
@@ -176,6 +182,45 @@ export class MeasurementsState implements MeasurementsData {
         this._notifyChange();
     }
 
+    addSpeed(entry: Measurement): void {
+        const { min, max } = VALIDATION_LIMITS.speed;
+        if (entry.value < min || entry.value >= max) {
+            console.warn(`Invalid speed value: ${entry.value}`);
+            return;
+        }
+        this.speed.push({
+            timestamp: entry.timestamp,
+            value: entry.value,
+        });
+        this._notifyChange();
+    }
+
+    addDistance(entry: Measurement): void {
+        const { min, max } = VALIDATION_LIMITS.distance;
+        if (entry.value < min || entry.value >= max) {
+            console.warn(`Invalid distance value: ${entry.value}`);
+            return;
+        }
+        this.distance.push({
+            timestamp: entry.timestamp,
+            value: entry.value,
+        });
+        this._notifyChange();
+    }
+
+    addAltitude(entry: Measurement): void {
+        const { min, max } = VALIDATION_LIMITS.altitude;
+        if (entry.value < min || entry.value >= max) {
+            console.warn(`Invalid altitude value: ${entry.value}`);
+            return;
+        }
+        this.altitude.push({
+            timestamp: entry.timestamp,
+            value: entry.value,
+        });
+        this._notifyChange();
+    }
+
     /**
      * Add a measurement of any type
      * 
@@ -194,6 +239,15 @@ export class MeasurementsState implements MeasurementsData {
             case 'cadence':
                 this.addCadence(entry);
                 break;
+            case 'speed':
+                this.addSpeed(entry);
+                break;
+            case 'distance':
+                this.addDistance(entry);
+                break;
+            case 'altitude':
+                this.addAltitude(entry);
+                break;
             default:
                 throw new Error(`Unknown measurement type: ${type}`);
         }
@@ -207,6 +261,9 @@ export class MeasurementsState implements MeasurementsData {
         this.heartrate = [];
         this.power = [];
         this.cadence = [];
+        this.speed = [];
+        this.distance = [];
+        this.altitude = [];
         this.laps = [];
         this._startTime = null;
 
@@ -251,6 +308,9 @@ export class MeasurementsState implements MeasurementsData {
             heartrate: [...this.heartrate],
             power: [...this.power],
             cadence: [...this.cadence],
+            speed: [...this.speed],
+            distance: [...this.distance],
+            altitude: [...this.altitude],
             laps: [...this.laps],
         };
     }
@@ -264,6 +324,9 @@ export class MeasurementsState implements MeasurementsData {
         this.heartrate = [...(data.heartrate || [])];
         this.power = [...(data.power || [])];
         this.cadence = [...(data.cadence || [])];
+        this.speed = [...(data.speed || [])];
+        this.distance = [...(data.distance || [])];
+        this.altitude = [...(data.altitude || [])];
         this.laps = [...(data.laps || [])];
         this._startTime = startTime;
 
@@ -299,6 +362,9 @@ export class MeasurementsState implements MeasurementsData {
             heartrate: this.heartrate.length,
             power: this.power.length,
             cadence: this.cadence.length,
+            speed: this.speed.length,
+            distance: this.distance.length,
+            altitude: this.altitude.length,
         };
     }
 }

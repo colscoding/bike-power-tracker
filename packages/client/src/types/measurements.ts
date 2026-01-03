@@ -36,13 +36,16 @@ export interface MeasurementsData {
     heartrate: Measurement[];
     power: Measurement[];
     cadence: Measurement[];
+    speed: Measurement[];
+    distance: Measurement[];
+    altitude: Measurement[];
     laps?: LapMarker[];
 }
 
 /**
  * Types of measurements that can be recorded
  */
-export type MeasurementType = 'heartrate' | 'power' | 'cadence';
+export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude';
 
 /**
  * Current sensor values (latest readings)
@@ -51,6 +54,9 @@ export interface CurrentMetrics {
     power: number | null;
     cadence: number | null;
     heartrate: number | null;
+    speed: number | null;
+    distance: number | null;
+    altitude: number | null;
 }
 
 /**
@@ -63,6 +69,10 @@ export interface WorkoutSummary {
     maxCadence?: number;
     avgHeartrate?: number;
     maxHeartrate?: number;
+    avgSpeed?: number;
+    maxSpeed?: number;
+    totalDistance?: number;
+    totalElevationGain?: number;
     totalDuration?: number;
     startTime?: number;
     endTime?: number;

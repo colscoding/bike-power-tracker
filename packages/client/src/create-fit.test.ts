@@ -13,6 +13,9 @@ describe('create-fit', () => {
                 power: [],
                 heartrate: [],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -37,6 +40,9 @@ describe('create-fit', () => {
                     { timestamp: baseTime + 1000, value: 92 },
                     { timestamp: baseTime + 2000, value: 94 },
                 ],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -51,6 +57,9 @@ describe('create-fit', () => {
                 power: [{ timestamp: baseTime, value: 200 }],
                 heartrate: [],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -75,6 +84,9 @@ describe('create-fit', () => {
                 ],
                 heartrate: [],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -92,6 +104,9 @@ describe('create-fit', () => {
                     { timestamp: baseTime + 1000, value: 140 },
                 ],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -109,6 +124,9 @@ describe('create-fit', () => {
                     { timestamp: baseTime, value: 85 },
                     { timestamp: baseTime + 1000, value: 90 },
                 ],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -125,6 +143,9 @@ describe('create-fit', () => {
                 ],
                 heartrate: [],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             const result = getFitData(measurements);
@@ -142,6 +163,9 @@ describe('create-fit', () => {
                     { timestamp: baseTime, value: 300 }, // Above uint8 max
                 ],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
             };
 
             // Should not throw, just cap the value

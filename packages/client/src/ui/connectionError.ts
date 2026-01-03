@@ -28,6 +28,9 @@ const sensorLabels: Record<MeasurementType, string> = {
     power: 'Power Meter',
     heartrate: 'Heart Rate Monitor',
     cadence: 'Cadence Sensor',
+    speed: 'Speed Sensor',
+    distance: 'Distance',
+    altitude: 'Altitude',
 };
 
 /**
@@ -37,6 +40,9 @@ const sensorIcons: Record<MeasurementType, string> = {
     power: '⚡',
     heartrate: '❤️',
     cadence: '🚴',
+    speed: '💨',
+    distance: '📏',
+    altitude: '🏔️',
 };
 
 /**

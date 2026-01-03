@@ -122,6 +122,9 @@ describe('workoutStorage', () => {
                 heartrate: [{ timestamp: 1000, value: 120 }],
                 power: [{ timestamp: 1000, value: 200 }],
                 cadence: [{ timestamp: 1000, value: 90 }],
+                speed: [],
+                distance: [],
+                altitude: [],
                 laps: []
             };
 
@@ -142,6 +145,9 @@ describe('workoutStorage', () => {
                 heartrate: [],
                 power: [{ timestamp: 1000, value: 200 }],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
                 laps: []
             };
 
@@ -161,6 +167,9 @@ describe('workoutStorage', () => {
                 heartrate: [],
                 power: [{ timestamp: Date.now(), value: 200 }],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
                 laps: []
             };
 
@@ -187,6 +196,9 @@ describe('workoutStorage', () => {
                 heartrate: [],
                 power: [{ timestamp: 1000, value: 100 }],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
                 laps: []
             };
 
@@ -194,6 +206,9 @@ describe('workoutStorage', () => {
                 heartrate: [],
                 power: [{ timestamp: 1000, value: 100 }, { timestamp: 2000, value: 200 }],
                 cadence: [],
+                speed: [],
+                distance: [],
+                altitude: [],
                 laps: []
             };
 

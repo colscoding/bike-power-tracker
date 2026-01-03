@@ -428,6 +428,10 @@ export function calculateSummary(
     const powerValues: number[] = [];
     const cadenceValues: number[] = [];
     const heartrateValues: number[] = [];
+    const speedValues: number[] = [];
+    const altitudeValues: number[] = [];
+    let maxDistance = 0;
+    let hasDistance = false;
 
     for (const point of telemetryData) {
         if (point.power !== undefined && point.power !== null) {
@@ -439,6 +443,17 @@ export function calculateSummary(
         if (point.heartrate !== undefined && point.heartrate !== null) {
             heartrateValues.push(Number(point.heartrate));
         }
+        if (point.speed !== undefined && point.speed !== null) {
+            speedValues.push(Number(point.speed));
+        }
+        if (point.altitude !== undefined && point.altitude !== null) {
+            altitudeValues.push(Number(point.altitude));
+        }
+        if (point.distance !== undefined && point.distance !== null) {
+            const d = Number(point.distance);
+            if (d > maxDistance) maxDistance = d;
+            hasDistance = true;
+        }
     }
 
     const avg = (arr: number[]): number | null =>
@@ -449,6 +464,17 @@ export function calculateSummary(
     const avgPowerVal = avg(powerValues);
     const avgCadenceVal = avg(cadenceValues);
     const avgHeartrateVal = avg(heartrateValues);
+    const avgSpeedVal = avg(speedValues);
+
+    let totalElevationGain = 0;
+    if (altitudeValues.length > 1) {
+        for (let i = 1; i < altitudeValues.length; i++) {
+            const diff = altitudeValues[i] - altitudeValues[i - 1];
+            if (diff > 0) {
+                totalElevationGain += diff;
+            }
+        }
+    }
 
     const summary: WorkoutSummary = {
         // Power metrics
@@ -463,6 +489,14 @@ export function calculateSummary(
         // Heart rate metrics
         avgHeartrate: avgHeartrateVal !== null ? Math.round(avgHeartrateVal) : null,
         maxHeartrate: max(heartrateValues),
+
+        // Speed metrics
+        avgSpeed: avgSpeedVal !== null ? Number(avgSpeedVal.toFixed(2)) : null,
+        maxSpeed: max(speedValues),
+
+        // Distance & Elevation
+        totalDistance: hasDistance ? maxDistance : null,
+        totalElevationGain: altitudeValues.length > 0 ? Math.round(totalElevationGain) : null,
 
         // Energy
         totalEnergy: calculateTotalEnergy(powerValues), // kJ

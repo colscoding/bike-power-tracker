@@ -12,6 +12,11 @@ export interface TelemetryPoint {
     power?: number | null;
     cadence?: number | null;
     heartrate?: number | null;
+    speed?: number | null;
+    distance?: number | null;
+    position_lat?: number | null;
+    position_long?: number | null;
+    altitude?: number | null;
     elapsed?: string;
     dataType?: string;
 }
@@ -27,6 +32,10 @@ export interface WorkoutSummary {
     maxCadence: number | null;
     avgHeartrate: number | null;
     maxHeartrate: number | null;
+    avgSpeed: number | null;
+    maxSpeed: number | null;
+    totalDistance: number | null;
+    totalElevationGain: number | null;
     totalEnergy: number | null;
     sampleCount: number;
 }

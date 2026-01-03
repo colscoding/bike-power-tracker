@@ -36,6 +36,9 @@ interface SentIndex {
     power: number;
     cadence: number;
     heartrate: number;
+    speed: number;
+    distance: number;
+    altitude: number;
 }
 
 /**
@@ -63,6 +66,9 @@ export class StreamManager {
         power: 0,
         cadence: 0,
         heartrate: 0,
+        speed: 0,
+        distance: 0,
+        altitude: 0,
     };
 
     constructor(measurementsState: MeasurementsState, timeState: WorkoutTimeState) {
@@ -137,7 +143,7 @@ export class StreamManager {
 
         // We don't delete the stream here so that data persists for a while (handled by server cleanup)
         this.streamName = null;
-        this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0 };
+        this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0, speed: 0, distance: 0, altitude: 0 };
     }
 
     /**
@@ -180,9 +186,12 @@ export class StreamManager {
         const power = this._getLatestValue('power');
         const cadence = this._getLatestValue('cadence');
         const heartrate = this._getLatestValue('heartrate');
+        const speed = this._getLatestValue('speed');
+        const distance = this._getLatestValue('distance');
+        const altitude = this._getLatestValue('altitude');
 
         // Only send if we have at least one measurement
-        if (power === null && cadence === null && heartrate === null) {
+        if (power === null && cadence === null && heartrate === null && speed === null && distance === null && altitude === null) {
             return;
         }
 
@@ -196,6 +205,9 @@ export class StreamManager {
             power,
             cadence,
             heartrate,
+            speed,
+            distance,
+            altitude,
             timestamp: Date.now(),
             elapsed: getTimestring(elapsedMs),
         };

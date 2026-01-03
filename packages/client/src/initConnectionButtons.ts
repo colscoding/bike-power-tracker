@@ -11,7 +11,7 @@ import { connectHeartRate } from './connect-heartrate.js';
 import { connectPower } from './connect-power.js';
 import { elements } from './elements.js';
 import type { MeasurementsState } from './MeasurementsState.js';
-import type { MeasurementType } from './types/measurements.js';
+import type { MeasurementType, Measurement } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
 import type { SensorConnection, ConnectionStatus } from './types/bluetooth.js';
 import { showNotification } from './ui/notifications.js';
@@ -21,7 +21,9 @@ import { showConnectionError, showReconnectionFailed } from './ui/connectionErro
  * Sensor type to connect function mapping
  */
 type ConnectFunctions = {
-    [K in MeasurementType]: () => Promise<SensorConnection>;
+    power: () => Promise<SensorConnection>;
+    heartrate: () => Promise<SensorConnection>;
+    cadence: () => Promise<SensorConnection>;
 };
 
 /**
@@ -39,6 +41,9 @@ const emojis: Record<MeasurementType, string> = {
     power: '⚡',
     heartrate: '❤️',
     cadence: '🚴',
+    speed: '💨',
+    distance: '📏',
+    altitude: '🏔️',
 };
 
 /**
@@ -109,6 +114,7 @@ export const initConnectionButtons = ({
      */
     const disconnectFn = (key: MeasurementType): void => {
         const connectionState = connectionsState[key];
+        if (!connectionState) return;
 
         if (typeof connectionState.disconnect === 'function') {
             connectionState.disconnect();
@@ -139,8 +145,10 @@ export const initConnectionButtons = ({
                 updateButtonText(key, 'reconnecting');
                 break;
             case 'failed':
-                connectionsState[key].isConnected = false;
-                connectionsState[key].disconnect = null;
+                if (connectionsState[key]) {
+                    connectionsState[key]!.isConnected = false;
+                    connectionsState[key]!.disconnect = null;
+                }
                 updateButtonText(key, 'disconnected');
                 // Show reconnection failed dialog with retry option
                 showReconnectionFailed(key, () => connectFn(key));
@@ -156,13 +164,18 @@ export const initConnectionButtons = ({
      */
     const connectFn = async (key: MeasurementType): Promise<void> => {
         try {
-            const connection = await connectFns[key]();
+            if (!(key in connectFns)) return;
+
+            const connection = await connectFns[key as keyof ConnectFunctions]();
             const { disconnect, addListener, deviceName, onStatusChange } = connection;
 
-            connectionsState[key].disconnect = disconnect;
-            connectionsState[key].isConnected = true;
+            const state = connectionsState[key as keyof ConnectionsState];
+            if (state) {
+                state.disconnect = disconnect;
+                state.isConnected = true;
+            }
 
-            addListener((entry) => {
+            addListener((entry: Measurement) => {
                 measurementsState.add(key, entry);
             });
 
@@ -193,7 +206,8 @@ export const initConnectionButtons = ({
 
         if (connectElem) {
             connectElem.addEventListener('click', async () => {
-                if (connectionsState[key].isConnected) {
+                const state = connectionsState[key];
+                if (state && state.isConnected) {
                     disconnectFn(key);
                 } else {
                     await connectFn(key);

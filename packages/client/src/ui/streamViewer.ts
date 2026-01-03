@@ -16,6 +16,9 @@ interface WorkoutMetrics {
     power?: number | null;
     cadence?: number | null;
     heartrate?: number | null;
+    speed?: number | null;
+    distance?: number | null;
+    altitude?: number | null;
     elapsed?: string;
     dataType?: string;
 }
@@ -537,6 +540,9 @@ export class StreamViewer {
         const powerEl = document.getElementById('streamPower');
         const cadenceEl = document.getElementById('streamCadence');
         const heartrateEl = document.getElementById('streamHeartrate');
+        const speedEl = document.getElementById('streamSpeed');
+        const distanceEl = document.getElementById('streamDistance');
+        const altitudeEl = document.getElementById('streamAltitude');
         const elapsedEl = document.getElementById('streamElapsed');
 
         if (powerEl && data.power !== null && data.power !== undefined) {
@@ -547,6 +553,15 @@ export class StreamViewer {
         }
         if (heartrateEl && data.heartrate !== null && data.heartrate !== undefined) {
             heartrateEl.textContent = String(data.heartrate);
+        }
+        if (speedEl && data.speed !== null && data.speed !== undefined) {
+            speedEl.textContent = String(data.speed);
+        }
+        if (distanceEl && data.distance !== null && data.distance !== undefined) {
+            distanceEl.textContent = String(data.distance);
+        }
+        if (altitudeEl && data.altitude !== null && data.altitude !== undefined) {
+            altitudeEl.textContent = String(data.altitude);
         }
         if (elapsedEl && data.elapsed) {
             elapsedEl.textContent = data.elapsed;
@@ -578,6 +593,9 @@ export class StreamViewer {
             'streamPower',
             'streamCadence',
             'streamHeartrate',
+            'streamSpeed',
+            'streamDistance',
+            'streamAltitude',
             'streamElapsed',
         ];
 

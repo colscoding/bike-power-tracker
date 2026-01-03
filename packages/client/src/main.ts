@@ -40,6 +40,7 @@ import { handleWakeLock } from './ui/wakeLock.js';
 import { registerServiceWorker } from './ui/serviceWorker.js';
 import { initInstallPrompt } from './ui/installPrompt.js';
 import { initSettings } from './ui/settings.js';
+import { initAboutModal } from './ui/about.js';
 import { exposeVariablesDuringTest } from './exposeVariablesDuringTest.js';
 import { StreamManager } from './streamManager.js';
 import { initStreamViewer } from './ui/streamViewer.js';
@@ -89,6 +90,9 @@ handleWakeLock();
 
 // Initialize settings
 initSettings();
+
+// Initialize about modal
+initAboutModal();
 
 // Register service worker
 registerServiceWorker();

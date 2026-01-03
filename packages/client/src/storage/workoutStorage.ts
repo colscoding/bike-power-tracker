@@ -35,6 +35,9 @@ export interface ActiveWorkoutRecord {
     heartrate: Measurement[];
     power: Measurement[];
     cadence: Measurement[];
+    speed: Measurement[];
+    distance: Measurement[];
+    altitude: Measurement[];
     laps: LapMarker[];
 }
 
@@ -93,6 +96,9 @@ export async function saveActiveWorkout(
             heartrate: measurements.heartrate,
             power: measurements.power,
             cadence: measurements.cadence,
+            speed: measurements.speed,
+            distance: measurements.distance,
+            altitude: measurements.altitude,
             laps: measurements.laps ?? [],
         };
 

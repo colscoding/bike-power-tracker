@@ -26,12 +26,15 @@ export interface ConnectionsState {
     power: SensorConnectionState;
     cadence: SensorConnectionState;
     heartrate: SensorConnectionState;
+    speed?: SensorConnectionState;
+    distance?: SensorConnectionState;
+    altitude?: SensorConnectionState;
 }
 
 /**
  * Bluetooth sensor types
  */
-export type SensorType = 'power' | 'cadence' | 'heartrate';
+export type SensorType = 'power' | 'cadence' | 'heartrate' | 'speed' | 'distance' | 'altitude';
 
 /**
  * Bluetooth connection result
