@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { VALIDATION } from './config';
+import { VALIDATION } from './config.js';
 
 // ============================================
 // Common Schemas

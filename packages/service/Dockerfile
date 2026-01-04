@@ -9,8 +9,11 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
+RUN ls -la
+
 # Install ALL dependencies (need devDependencies for build)
-RUN npm ci
+RUN npm -v
+RUN rm package-lock.json && npm install
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -51,7 +54,8 @@ COPY prisma ./prisma/
 
 # Install production dependencies only
 # Using --ignore-scripts to skip postinstall, we'll run prisma generate separately
-RUN npm ci --only=production --ignore-scripts && \
+RUN rm package-lock.json && \
+    npm install --only=production --ignore-scripts && \
     npx prisma generate && \
     npm cache clean --force && \
     rm -rf /root/.npm /tmp/*

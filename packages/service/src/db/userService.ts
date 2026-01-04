@@ -7,7 +7,7 @@
  * @module userService
  */
 
-import { getPrismaClient, isDatabaseEnabled } from './index';
+import { getPrismaClient, isDatabaseEnabled } from './index.js';
 import * as crypto from 'crypto';
 import type {
     User,

@@ -8,7 +8,7 @@
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { ZodSchema, ZodError } from 'zod';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 
 /**
  * Validation targets - what part of the request to validate

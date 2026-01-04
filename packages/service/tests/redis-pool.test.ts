@@ -559,6 +559,6 @@ describe('Connection Pool withConnection Pattern', () => {
 });
 
 // Helper to measure test pool
-class TestRedisConnectionPool {
-    // ... (same as above, included for type reference)
-}
+// class TestRedisConnectionPool {
+//    // ... (same as above, included for type reference)
+// }

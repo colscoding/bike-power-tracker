@@ -7,7 +7,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import type { ConnectionTestResult } from '../types/db';
+import type { ConnectionTestResult } from '../types/db.js';
 
 /** Singleton Prisma client instance */
 let prisma: PrismaClient | null = null;

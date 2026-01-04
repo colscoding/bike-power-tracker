@@ -6,7 +6,7 @@
  * @module types
  */
 
-export * from './workout';
-export * from './user';
-export * from './stream';
-export * from './db';
+export * from './workout.js';
+export * from './user.js';
+export * from './stream.js';
+export * from './db.js';

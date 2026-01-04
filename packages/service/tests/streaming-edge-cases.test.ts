@@ -13,6 +13,7 @@ import * as redis from 'redis';
 import http from 'node:http';
 
 import createApp from '../src/server.ts';
+import { API_KEY } from '../src/config.ts';
 
 /**
  * Helper to parse SSE data from response
@@ -59,37 +60,42 @@ function createSSEConnection(
         const port = address.port;
         let closed = false;
 
-        const req = http.get(`http://localhost:${port}${path}`, (res) => {
-            const close = () => {
-                if (!closed) {
+        const req = http.get(
+            `http://localhost:${port}${path}`,
+            {
+                headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+            },
+            (res) => {
+                const close = () => {
+                    if (!closed) {
+                        closed = true;
+                        res.destroy();
+                    }
+                };
+
+                res.on('data', (chunk: Buffer) => {
+                    const parsed = parseSSEData(chunk.toString());
+                    events.push(...parsed);
+
+                    // Resolve once we get the connection event
+                    if (events.length === 1 && events[0].type === 'connected') {
+                        resolve({ events, response: res, close });
+                    }
+
+                    // Stop if we've collected enough events
+                    if (events.length >= maxEvents) {
+                        close();
+                    }
+                });
+
+                res.on('error', (err) => {
+                    if (!closed) reject(err);
+                });
+
+                res.on('end', () => {
                     closed = true;
-                    res.destroy();
-                }
-            };
-
-            res.on('data', (chunk: Buffer) => {
-                const parsed = parseSSEData(chunk.toString());
-                events.push(...parsed);
-
-                // Resolve once we get the connection event
-                if (events.length === 1 && events[0].type === 'connected') {
-                    resolve({ events, response: res, close });
-                }
-
-                // Stop if we've collected enough events
-                if (events.length >= maxEvents) {
-                    close();
-                }
+                });
             });
-
-            res.on('error', (err) => {
-                if (!closed) reject(err);
-            });
-
-            res.on('end', () => {
-                closed = true;
-            });
-        });
 
         req.on('error', (err) => {
             if (!closed) reject(err);
@@ -125,6 +131,9 @@ describe('Streaming Edge Cases', function () {
         }) as redis.RedisClientType;
 
         await redisClient.connect();
+    });
+
+    beforeEach(function () {
         app = createApp();
     });
 
@@ -142,10 +151,14 @@ describe('Streaming Edge Cases', function () {
         await redisClient.quit();
     });
 
-    afterEach(function () {
+    afterEach(async function () {
         // Ensure server is closed after each test
         if (server && server.listening) {
-            server.close();
+            await new Promise<void>((resolve) => server.close(() => resolve()));
+        }
+        // Close app redis client
+        if (app && app.redisClient) {
+            await app.redisClient.quit();
         }
     });
 
@@ -157,6 +170,7 @@ describe('Streaming Edge Cases', function () {
                 // First create the stream
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -168,24 +182,29 @@ describe('Streaming Edge Cases', function () {
 
                 const port = address.port;
 
-                http.get(`http://localhost:${port}/api/streams/${streamName}/listen`, (res) => {
-                    try {
-                        assert.strictEqual(res.statusCode, 200);
-                        assert.ok(res.headers['content-type']?.includes('text/event-stream'));
-                        assert.strictEqual(res.headers['cache-control'], 'no-cache');
-                        assert.strictEqual(res.headers['connection'], 'keep-alive');
-                        res.destroy();
-                        server.close();
-                        done();
-                    } catch (err) {
-                        res.destroy();
+                http.get(
+                    `http://localhost:${port}/api/streams/${streamName}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
+                    (res) => {
+                        try {
+                            assert.strictEqual(res.statusCode, 200);
+                            assert.ok(res.headers['content-type']?.includes('text/event-stream'));
+                            assert.strictEqual(res.headers['cache-control'], 'no-cache');
+                            assert.strictEqual(res.headers['connection'], 'keep-alive');
+                            res.destroy();
+                            server.close();
+                            done();
+                        } catch (err) {
+                            res.destroy();
+                            server.close();
+                            done(err);
+                        }
+                    }).on('error', (err) => {
                         server.close();
                         done(err);
-                    }
-                }).on('error', (err) => {
-                    server.close();
-                    done(err);
-                });
+                    });
             });
         });
 
@@ -195,6 +214,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -224,6 +244,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -262,6 +283,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -280,7 +302,10 @@ describe('Streaming Edge Cases', function () {
                     await new Promise((resolve) => setTimeout(resolve, 500));
 
                     // Server should still be functional
-                    const response = await request(app).get('/api/streams').expect(200);
+                    const response = await request(app)
+                        .get('/api/streams')
+                        .set('X-API-Key', API_KEY || '')
+                        .expect(200);
 
                     assert.ok('streams' in response.body);
                     server.close();
@@ -301,6 +326,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -316,6 +342,9 @@ describe('Streaming Edge Cases', function () {
 
                 const req = http.get(
                     `http://localhost:${port}/api/streams/${streamName}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
                     (res) => {
                         res.on('data', async (chunk: Buffer) => {
                             const parsed = parseSSEData(chunk.toString());
@@ -330,6 +359,7 @@ describe('Streaming Edge Cases', function () {
                                 // Delete the stream
                                 await request(app)
                                     .delete(`/api/streams/${streamName}`)
+                                    .set('X-API-Key', API_KEY || '')
                                     .expect(200);
                             }
 
@@ -379,6 +409,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -394,6 +425,9 @@ describe('Streaming Edge Cases', function () {
 
                 const req = http.get(
                     `http://localhost:${port}/api/streams/${streamName}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
                     (res) => {
                         res.on('data', async (chunk: Buffer) => {
                             const parsed = parseSSEData(chunk.toString());
@@ -403,6 +437,7 @@ describe('Streaming Edge Cases', function () {
                             if (events.length === 1 && events[0].type === 'connected') {
                                 await request(app)
                                     .post(`/api/streams/${streamName}/messages`)
+                                    .set('X-API-Key', API_KEY || '')
                                     .send({
                                         message: 'test-message-during-listen',
                                         author: 'test',
@@ -455,6 +490,7 @@ describe('Streaming Edge Cases', function () {
             server = app.listen(0, async () => {
                 await request(app)
                     .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
                     .send({ streamName })
                     .expect(200);
 
@@ -470,6 +506,9 @@ describe('Streaming Edge Cases', function () {
 
                 const req = http.get(
                     `http://localhost:${port}/api/streams/${streamName}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
                     (res) => {
                         res.on('data', async (chunk: Buffer) => {
                             const parsed = parseSSEData(chunk.toString());
@@ -485,6 +524,7 @@ describe('Streaming Edge Cases', function () {
                                     promises.push(
                                         request(app)
                                             .post(`/api/streams/${streamName}/messages`)
+                                            .set('X-API-Key', API_KEY || '')
                                             .send({
                                                 message: `burst-message-${i}`,
                                                 author: 'burst-test',
@@ -548,8 +588,8 @@ describe('Streaming Edge Cases', function () {
 
             server = app.listen(0, async () => {
                 // Create two streams
-                await request(app).post('/api/streams/create').send({ streamName: stream1 }).expect(200);
-                await request(app).post('/api/streams/create').send({ streamName: stream2 }).expect(200);
+                await request(app).post('/api/streams/create').set('X-API-Key', API_KEY || '').send({ streamName: stream1 }).expect(200);
+                await request(app).post('/api/streams/create').set('X-API-Key', API_KEY || '').send({ streamName: stream2 }).expect(200);
 
                 const address = server.address();
                 if (!address || typeof address === 'string') {
@@ -561,20 +601,34 @@ describe('Streaming Edge Cases', function () {
                 const events: Array<{ type: string; stream?: string }> = [];
                 let messagesFromBothStreams = false;
 
-                const req = http.get(`http://localhost:${port}/api/streams/listenAll`, (res) => {
+                const req = http.get(`http://localhost:${port}/api/streams/listenAll`, {
+                    headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                }, (res) => {
+                    if (res.statusCode !== 200) {
+                        console.error(`listenAll returned status ${res.statusCode}`);
+                        res.destroy();
+                        server.close();
+                        done(new Error(`listenAll returned status ${res.statusCode}`));
+                        return;
+                    }
                     res.on('data', async (chunk: Buffer) => {
                         const parsed = parseSSEData(chunk.toString());
                         events.push(...parsed);
 
                         // After connection, send messages to both streams
                         if (events.length === 1 && events[0].type === 'connected') {
+                            // Wait for server to start listening (avoid race condition where xRead hasn't started yet)
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+
                             await request(app)
                                 .post(`/api/streams/${stream1}/messages`)
+                                .set('X-API-Key', API_KEY || '')
                                 .send({ message: 'msg-from-stream-1', author: 'test' })
                                 .expect(200);
 
                             await request(app)
                                 .post(`/api/streams/${stream2}/messages`)
+                                .set('X-API-Key', API_KEY || '')
                                 .send({ message: 'msg-from-stream-2', author: 'test' })
                                 .expect(200);
                         }
@@ -634,6 +688,9 @@ describe('Streaming Edge Cases', function () {
 
                 http.get(
                     `http://localhost:${port}/api/streams/${encodeURIComponent(invalidStreamName)}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
                     (res) => {
                         try {
                             assert.strictEqual(res.statusCode, 400);
@@ -660,7 +717,11 @@ describe('Streaming Edge Cases', function () {
 
             server = app.listen(0);
 
-            await request(app).post('/api/streams/create').send({ streamName }).expect(200);
+            await request(app)
+                .post('/api/streams/create')
+                .set('X-API-Key', API_KEY || '')
+                .send({ streamName })
+                .expect(200);
 
             // First connection
             const conn1 = await createSSEConnection(server, `/api/streams/${streamName}/listen`);
@@ -682,16 +743,22 @@ describe('Streaming Edge Cases', function () {
             const streamName = `${testPrefix}-reconnect-msgs`;
 
             server = app.listen(0, async () => {
-                await request(app).post('/api/streams/create').send({ streamName }).expect(200);
+                await request(app)
+                    .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
+                    .send({ streamName })
+                    .expect(200);
 
                 // First connection - send some messages
                 await request(app)
                     .post(`/api/streams/${streamName}/messages`)
+                    .set('X-API-Key', API_KEY || '')
                     .send({ message: 'before-reconnect-1', author: 'test' })
                     .expect(200);
 
                 await request(app)
                     .post(`/api/streams/${streamName}/messages`)
+                    .set('X-API-Key', API_KEY || '')
                     .send({ message: 'before-reconnect-2', author: 'test' })
                     .expect(200);
 
@@ -708,6 +775,9 @@ describe('Streaming Edge Cases', function () {
 
                 const req = http.get(
                     `http://localhost:${port}/api/streams/${streamName}/listen`,
+                    {
+                        headers: API_KEY ? { 'X-API-Key': API_KEY } : {},
+                    },
                     (res) => {
                         res.on('data', async (chunk: Buffer) => {
                             const parsed = parseSSEData(chunk.toString());
@@ -717,6 +787,7 @@ describe('Streaming Edge Cases', function () {
                             if (events.length === 1 && events[0].type === 'connected') {
                                 await request(app)
                                     .post(`/api/streams/${streamName}/messages`)
+                                    .set('X-API-Key', API_KEY || '')
                                     .send({ message: 'after-reconnect', author: 'test' })
                                     .expect(200);
                             }
@@ -765,7 +836,11 @@ describe('Streaming Edge Cases', function () {
             const streamName = `${testPrefix}-idle`;
 
             server = app.listen(0, async () => {
-                await request(app).post('/api/streams/create').send({ streamName }).expect(200);
+                await request(app)
+                    .post('/api/streams/create')
+                    .set('X-API-Key', API_KEY || '')
+                    .send({ streamName })
+                    .expect(200);
 
                 const { events, response, close } = await createSSEConnection(
                     server,
@@ -785,6 +860,7 @@ describe('Streaming Edge Cases', function () {
                     // Should still be able to receive messages
                     await request(app)
                         .post(`/api/streams/${streamName}/messages`)
+                        .set('X-API-Key', API_KEY || '')
                         .send({ message: 'after-idle', author: 'test' })
                         .expect(200);
 
@@ -820,7 +896,11 @@ describe('Streaming Edge Cases', function () {
                 throw new Error('Server not started');
             }
 
-            await request(app).post('/api/streams/create').send({ streamName }).expect(200);
+            await request(app)
+                .post('/api/streams/create')
+                .set('X-API-Key', API_KEY || '')
+                .send({ streamName })
+                .expect(200);
 
             // Connect
             const conn1 = await createSSEConnection(server1, `/api/streams/${streamName}/listen`);

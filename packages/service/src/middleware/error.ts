@@ -8,8 +8,8 @@
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { ZodError } from 'zod';
-import { logger } from '../logger';
-import { AppError, ValidationError } from '../errors';
+import { logger } from '../logger.js';
+import { AppError, ValidationError } from '../errors.js';
 
 /**
  * Error response format

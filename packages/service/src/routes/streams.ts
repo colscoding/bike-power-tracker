@@ -7,12 +7,12 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { RedisClientType, StreamReadResult, StreamInfoResponse } from '../redis';
-import { validateStreamName, validateMessage, validateAuthor, sanitizeString } from '../validation';
-import { ensureString } from '../utils';
-import { CLEANUP } from '../config';
-import { logger } from '../logger';
-import { getShutdownManager } from '../shutdown';
+import { RedisClientType, StreamReadResult, StreamInfoResponse } from '../redis.js';
+import { validateStreamName, validateMessage, validateAuthor, sanitizeString } from '../validation.js';
+import { ensureString } from '../utils.js';
+import { CLEANUP } from '../config.js';
+import { logger } from '../logger.js';
+import { getShutdownManager } from '../shutdown.js';
 
 /**
  * Create streams router

@@ -8,9 +8,9 @@
  */
 
 import { Server } from 'http';
-import { logger } from './logger';
-import { disconnectPrisma } from './db';
-import { shutdownPool, RedisClientType } from './redis';
+import { logger } from './logger.js';
+import { disconnectPrisma } from './db/index.js';
+import { shutdownPool, RedisClientType } from './redis.js';
 
 /**
  * Shutdown configuration

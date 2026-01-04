@@ -7,8 +7,8 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { CORS_ORIGIN, NODE_ENV } from '../config';
-import { logger } from '../logger';
+import { CORS_ORIGIN, NODE_ENV } from '../config.js';
+import { logger } from '../logger.js';
 
 /**
  * Log CORS configuration warnings

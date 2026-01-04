@@ -29,18 +29,18 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import pinoHttp from 'pino-http';
 
-import { PORT, RATE_LIMIT, CLEANUP } from './config';
-import { createRedisClient, RedisClientType } from './redis';
-import { logger } from './logger';
-import { createAuthMiddleware, corsMiddleware, logCorsWarnings, errorHandler } from './middleware';
+import { PORT, RATE_LIMIT, CLEANUP } from './config.js';
+import { createRedisClient, RedisClientType } from './redis.js';
+import { logger } from './logger.js';
+import { createAuthMiddleware, corsMiddleware, logCorsWarnings, errorHandler } from './middleware/index.js';
 import {
     createHealthRouter,
     createStreamsRouter,
     createWorkoutsRouter,
     createUsersRouter,
-} from './routes';
-import { isDatabaseEnabled } from './db';
-import { initializeShutdownHandlers, getShutdownManager } from './shutdown';
+} from './routes/index.js';
+import { isDatabaseEnabled } from './db/index.js';
+import { initializeShutdownHandlers, getShutdownManager } from './shutdown.js';
 
 /**
  * Extended Express Application with custom properties
@@ -75,13 +75,29 @@ function createApp(): AppWithCleanup {
     app.use(helmet());
 
     // Rate limiting
-    const limiter = rateLimit({
+    const generalLimiter = rateLimit({
         windowMs: RATE_LIMIT.WINDOW_MS,
-        limit: RATE_LIMIT.MAX_REQUESTS,
+        limit: RATE_LIMIT.GENERAL_LIMIT,
+        standardHeaders: true,
+        legacyHeaders: false,
+        skip: (req) => req.path.includes('/listen'),
+    });
+    app.use(generalLimiter);
+
+    const sseLimiter = rateLimit({
+        windowMs: RATE_LIMIT.WINDOW_MS,
+        limit: RATE_LIMIT.SSE_LIMIT,
         standardHeaders: true,
         legacyHeaders: false,
     });
-    app.use(limiter);
+
+    // Apply SSE limiter only to listen endpoints
+    app.use((req, res, next) => {
+        if (req.path.includes('/listen')) {
+            return sseLimiter(req, res, next);
+        }
+        next();
+    });
 
     // Create and connect Redis client
     const redisClient = createRedisClient();

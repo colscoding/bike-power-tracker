@@ -7,7 +7,7 @@
  */
 
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { logger } from '../logger';
+import { logger } from '../logger.js';
 
 /**
  * Creates authentication middleware

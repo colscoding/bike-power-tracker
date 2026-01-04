@@ -7,7 +7,7 @@
  * @module workoutService
  */
 
-import { getPrismaClient, isDatabaseEnabled } from './index';
+import { getPrismaClient, isDatabaseEnabled } from './index.js';
 import type {
     Workout,
     WorkoutSummary,

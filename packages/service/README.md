@@ -86,12 +86,20 @@ The service runs on `http://localhost:3000`.
 
 ### Docker Compose (Recommended)
 
-```bash
-# Development mode (with hot reload)
-docker-compose up
+The service includes Docker Compose configurations for both production and development.
 
-# Production mode (with Nginx)
-docker-compose -f docker-compose.prod.yml up -d
+```bash
+# Start Production Service (standalone)
+# This starts the service and redis on port 3000
+docker compose up -d
+
+# Start Development Service (with hot reload)
+# This starts the service in watch mode on port 3001
+docker compose --profile dev up
+
+# Start Full Production Stack (with Nginx)
+# This starts service, redis, and nginx on port 80
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ## API Reference

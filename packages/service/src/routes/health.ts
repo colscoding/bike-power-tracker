@@ -7,8 +7,8 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { RedisClientType } from '../redis';
-import { isDatabaseEnabled, testConnection } from '../db';
+import { RedisClientType } from '../redis.js';
+import { isDatabaseEnabled, testConnection } from '../db/index.js';
 
 /**
  * Health check response type

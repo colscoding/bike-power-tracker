@@ -1,9 +1,8 @@
 # Dependencies
 node_modules
-npm - debug.log
-package - lock.json
+npm-debug.log
 
-# Build outputs(rebuilt in container)
+# Build outputs (rebuilt in container)
 dist
 
 # Docker files(prevent recursive copy)

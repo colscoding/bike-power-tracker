@@ -53,7 +53,11 @@ export const VALIDATION = {
 export const RATE_LIMIT = {
     /** Window size in milliseconds */
     WINDOW_MS: 60 * 1000, // 1 minute
-    /** Maximum requests per window */
+    /** General API rate limit (requests per window) */
+    GENERAL_LIMIT: 100,
+    /** SSE endpoint rate limit (requests per window) */
+    SSE_LIMIT: 1000,
+    /** Legacy single limit (for backward compatibility if needed) */
     MAX_REQUESTS: 1000,
 } as const;
 

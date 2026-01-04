@@ -6,7 +6,7 @@
  * @module routes
  */
 
-export { createHealthRouter } from './health';
-export { createStreamsRouter } from './streams';
-export { createWorkoutsRouter } from './workouts';
-export { createUsersRouter } from './users';
+export { createHealthRouter } from './health.js';
+export { createStreamsRouter } from './streams.js';
+export { createWorkoutsRouter } from './workouts.js';
+export { createUsersRouter } from './users.js';

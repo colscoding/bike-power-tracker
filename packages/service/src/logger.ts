@@ -7,7 +7,7 @@
  */
 
 import pino from 'pino';
-import { NODE_ENV, LOG_LEVEL } from './config';
+import { NODE_ENV, LOG_LEVEL } from './config.js';
 
 /** Whether running in development mode */
 const isDevelopment = NODE_ENV === 'development';

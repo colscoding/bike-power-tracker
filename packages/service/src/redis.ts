@@ -7,8 +7,8 @@
  */
 
 import * as redis from 'redis';
-import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } from './config';
-import { logger } from './logger';
+import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD } from './config.js';
+import { logger } from './logger.js';
 
 /**
  * Redis stream entry type

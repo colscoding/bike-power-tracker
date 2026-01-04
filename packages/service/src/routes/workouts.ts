@@ -7,10 +7,10 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { RedisClientType } from '../redis';
-import { isDatabaseEnabled } from '../db';
-import * as workoutService from '../db/workoutService';
-import { logger } from '../logger';
+import { RedisClientType } from '../redis.js';
+import { isDatabaseEnabled } from '../db/index.js';
+import * as workoutService from '../db/workoutService.js';
+import { logger } from '../logger.js';
 
 /**
  * Create workouts router

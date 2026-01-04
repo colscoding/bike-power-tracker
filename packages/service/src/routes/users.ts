@@ -7,10 +7,10 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { isDatabaseEnabled } from '../db';
-import * as userService from '../db/userService';
-import * as workoutService from '../db/workoutService';
-import { logger } from '../logger';
+import { isDatabaseEnabled } from '../db/index.js';
+import * as userService from '../db/userService.js';
+import * as workoutService from '../db/workoutService.js';
+import { logger } from '../logger.js';
 
 /**
  * Create users router
