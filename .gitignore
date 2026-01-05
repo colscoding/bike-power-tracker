@@ -45,3 +45,5 @@ dev-dist
 
 # config
 home-server-ip.txt
+credentials.json
+config.yml

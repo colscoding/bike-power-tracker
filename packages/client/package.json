@@ -17,7 +17,11 @@
     "test:e2e": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js",
     "test:e2e:ui": "NODE_ENV=test playwright test --ui --config=test-e2e/playwright.config.js",
     "test:visual": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js",
-    "test:visual:update": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js --update-snapshots"
+    "test:visual:update": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js --update-snapshots",
+    "cap:sync": "npx cap sync",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "build:mobile": "npm run build && npx cap sync"
   },
   "keywords": [
     "bike",
@@ -43,5 +47,12 @@
     "vite": "^7.2.2",
     "vite-plugin-pwa": "^1.1.0",
     "workbox-window": "^7.4.0"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "^7.3.0",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0"
   }
 }

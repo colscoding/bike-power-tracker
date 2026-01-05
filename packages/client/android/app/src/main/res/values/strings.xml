@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bike Power Tracker</string>
+    <string name="title_activity_main">Bike Power Tracker</string>
+    <string name="package_name">com.bikepowertracker.app</string>
+    <string name="custom_url_scheme">com.bikepowertracker.app</string>
+</resources>

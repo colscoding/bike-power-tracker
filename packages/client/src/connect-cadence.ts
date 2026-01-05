@@ -6,8 +6,9 @@
  * @module connect-cadence
  */
 
-import type { SensorConnection, MeasurementListener, ConnectionStatusListener, ConnectionStatus } from './types/bluetooth.js';
+import type { SensorConnection, MeasurementListener } from './types/bluetooth.js';
 import type { Measurement } from './types/measurements.js';
+import { BluetoothFactory } from './services/bluetooth/factory.js';
 
 /** Maximum reconnection attempts before giving up */
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -39,181 +40,10 @@ export const connectCadenceMock = async (): Promise<SensorConnection> => {
 };
 
 /**
- * Connects to a Bluetooth cadence sensor.
- * 
- * Uses the Web Bluetooth API to connect to devices supporting the
- * Cycling Speed and Cadence Service (UUID: 0x1816).
- * 
- * Calculates RPM from crank revolution data using the difference
- * between consecutive measurements.
- * Supports auto-reconnect on disconnection.
- * 
- * @returns Promise resolving to a sensor connection
- * @throws Error if Bluetooth is not available or user cancels pairing
- */
-export const connectCadenceBluetooth = async (): Promise<SensorConnection> => {
-    const listeners: MeasurementListener[] = [];
-    const statusListeners: ConnectionStatusListener[] = [];
-    let isManualDisconnect = false;
-    let reconnectAttempts = 0;
-    let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
-    let lastCrankRevs: number | null = null;
-    let lastCrankTime: number | null = null;
-
-    // Request Bluetooth device with cycling speed and cadence service
-    const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ['cycling_speed_and_cadence'] }],
-        optionalServices: ['cycling_speed_and_cadence'],
-    });
-
-    if (!device.gatt) {
-        throw new Error('GATT server not available');
-    }
-
-    const deviceName = device.name || 'Cadence Sensor';
-
-    /**
-     * Notify status listeners of connection status change
-     */
-    const notifyStatus = (status: ConnectionStatus) => {
-        statusListeners.forEach(listener => listener(status));
-    };
-
-    /**
-     * Handle characteristic value changes
-     */
-    const handleCharacteristicChange = (event: Event) => {
-        const target = event.target as BluetoothRemoteGATTCharacteristic;
-        const value = target.value;
-        if (!value) return;
-
-        const flags = value.getUint8(0);
-
-        // Check if crank revolution data is present (bit 1 of flags)
-        if (flags & 0x02) {
-            // Crank revolution data format:
-            // - Cumulative Crank Revolutions (uint16, bytes 1-2 or 5-6 depending on wheel data)
-            // - Last Crank Event Time (uint16, bytes 3-4 or 7-8, units: 1/1024 seconds)
-
-            let offset = 1; // Start after flags byte
-
-            // If wheel revolution data is present (bit 0), skip it (6 bytes: 4 for revs + 2 for time)
-            if (flags & 0x01) {
-                offset = 7;
-            }
-
-            const crankRevs = value.getUint16(offset, true);
-            const crankTime = value.getUint16(offset + 2, true); // Units: 1/1024 seconds
-
-            // Calculate RPM from delta between measurements
-            if (lastCrankRevs !== null && lastCrankTime !== null) {
-                let revDelta = crankRevs - lastCrankRevs;
-                let timeDelta = crankTime - lastCrankTime;
-
-                // Handle rollover (uint16 max is 65535)
-                if (revDelta < 0) revDelta += 65536;
-                if (timeDelta < 0) timeDelta += 65536;
-
-                // Calculate RPM: (revolutions / time_in_seconds) * 60
-                // Time is in 1/1024 seconds, so convert to seconds
-                if (timeDelta > 0) {
-                    const timeInSeconds = timeDelta / 1024;
-                    const rpm = Math.round((revDelta / timeInSeconds) * 60);
-
-                    // Sanity check for reasonable cadence values
-                    if (rpm >= 0 && rpm < 300) {
-                        const entry: Measurement = { timestamp: Date.now(), value: rpm };
-                        listeners.forEach(listener => listener(entry));
-                    }
-                }
-            }
-
-            lastCrankRevs = crankRevs;
-            lastCrankTime = crankTime;
-        }
-    };
-
-    /**
-     * Connect to the device and set up notifications
-     */
-    const connect = async (): Promise<void> => {
-        if (!device.gatt) return;
-
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService('cycling_speed_and_cadence');
-        characteristic = await service.getCharacteristic('csc_measurement');
-
-        await characteristic.startNotifications();
-        characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicChange);
-
-        reconnectAttempts = 0;
-        notifyStatus('connected');
-    };
-
-    /**
-     * Attempt to reconnect with exponential backoff
-     */
-    const attemptReconnect = async (): Promise<void> => {
-        if (isManualDisconnect || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-                console.error('Cadence sensor: Max reconnection attempts reached');
-                notifyStatus('failed');
-            }
-            return;
-        }
-
-        reconnectAttempts++;
-        const delay = RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
-        console.log(`Cadence sensor: Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
-        notifyStatus('reconnecting');
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        try {
-            await connect();
-            console.log('Cadence sensor: Reconnected successfully');
-        } catch (error) {
-            console.error('Cadence sensor: Reconnection failed:', error);
-            attemptReconnect();
-        }
-    };
-
-    // Handle disconnection events
-    device.addEventListener('gattserverdisconnected', () => {
-        if (!isManualDisconnect) {
-            console.log('Cadence sensor: Connection lost, attempting to reconnect...');
-            notifyStatus('disconnected');
-            attemptReconnect();
-        }
-    });
-
-    // Initial connection
-    await connect();
-
-    return {
-        disconnect: () => {
-            isManualDisconnect = true;
-            if (characteristic) {
-                characteristic.removeEventListener('characteristicvaluechanged', handleCharacteristicChange);
-                characteristic.stopNotifications().catch(() => { });
-            }
-            device.gatt?.disconnect();
-        },
-        addListener: (callback: MeasurementListener) => {
-            listeners.push(callback);
-        },
-        deviceName,
-        onStatusChange: (callback: ConnectionStatusListener) => {
-            statusListeners.push(callback);
-        },
-    };
-};
-
-/**
  * Connect to a cadence sensor.
  * 
  * In development/test mode, uses a mock connection.
- * In production, uses Bluetooth.
+ * In production, uses Bluetooth via the Factory (Web or Native).
  * 
  * @returns Promise resolving to a sensor connection
  */
@@ -221,5 +51,5 @@ export const connectCadence = async (): Promise<SensorConnection> => {
     if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
         return connectCadenceMock();
     }
-    return connectCadenceBluetooth();
+    return BluetoothFactory.connectCadence();
 };

@@ -257,7 +257,7 @@ ingress:
 cloudflared tunnel route dns bike-tracker bike-api.yourdomain.com
 
 # Verify
-cloudflared tunnel route dns bike-tracker bike.yourdomain.com
+cloudflared tunnel route dns bike-tracker bike-api.yourdomain.com
 ```
 
 ### Dashboard Method: Configure in UI

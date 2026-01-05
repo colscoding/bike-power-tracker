@@ -180,26 +180,23 @@ Create `docker-compose.home.yml`:
 version: '3.8'
 
 services:
+  # Redis service
   redis:
     image: redis:7-alpine
     container_name: bike_tracker_redis
-    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes --maxmemory 100mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
     volumes:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 30s
+      interval: 10s
       timeout: 3s
       retries: 5
     networks:
       - backend
-    restart: unless-stopped
-    # Resource limits for home server
-    deploy:
-      resources:
-        limits:
-          memory: 128M
+    restart: always
 
+  # Node.js application
   app:
     build:
       context: .
@@ -218,11 +215,7 @@ services:
         condition: service_healthy
     networks:
       - backend
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
+    restart: always
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
@@ -230,18 +223,33 @@ services:
       retries: 3
       start_period: 10s
 
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: bike_tracker_nginx
-    ports:
-      - "8080:80"  # Use 8080 to avoid conflicts with other services
+    # Ports removed as Cloudflare Tunnel handles ingress
+    # ports:
+    #   - "80:80"
     volumes:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
     networks:
       - backend
+    restart: always
+
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: bike_tracker_tunnel
     restart: unless-stopped
+    command: tunnel run
+    volumes:
+      - ./cloudflared:/etc/cloudflared:ro
+    networks:
+      - backend
+    depends_on:
+      - nginx
     deploy:
       resources:
         limits:
@@ -254,6 +262,30 @@ networks:
   backend:
 ```
 
+### Step 3b: Configure Cloudflare Tunnel
+
+If you included the `cloudflared` service above, you need to provide the configuration and credentials.
+
+1.  **Create the directory:**
+    ```bash
+    mkdir -p cloudflared
+    ```
+
+2.  **Add your credentials:**
+    Place your `credentials.json` (obtained via `cloudflared tunnel create`) into the `cloudflared/` directory.
+
+3.  **Create the configuration file:**
+    Create `cloudflared/config.yml`:
+    ```yaml
+    tunnel: YOUR_TUNNEL_ID
+    credentials-file: /etc/cloudflared/credentials.json
+
+    ingress:
+      - hostname: bike-api.yourdomain.com
+        service: http://nginx:80
+      - service: http_status:404
+    ```
+
 ### Step 4: Start the Services
 
 ```bash
@@ -265,18 +297,20 @@ docker compose -f docker-compose.home.yml ps
 
 # View logs
 docker compose -f docker-compose.home.yml logs -f
+
+# Stop services
+docker compose -f docker-compose.home.yml down
 ```
 
 ### Step 5: Verify Deployment
 
 ```bash
-# Health check
-curl http://localhost:8080/health
-# Expected: {"status":"ok"}
+# Health check (Public URL)
+curl https://bike-api.cols.se/health
+# Expected: {"status":"ok",...}
 
-# API test
-curl http://localhost:8080/api/streams
-# Expected: {"streams":[]}
+# Check logs
+docker compose -f docker-compose.home.yml logs -f
 ```
 
 ---
