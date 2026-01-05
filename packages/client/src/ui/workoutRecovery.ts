@@ -235,7 +235,7 @@ export async function initWorkoutRecovery(
                     speed: workout.speed,
                     distance: workout.distance,
                     altitude: workout.altitude,
-                    laps: workout.laps,
+                    laps: workout.laps, gps: workout.gps || [],
                 },
                 workout.startTime
             );

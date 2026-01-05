@@ -16,6 +16,11 @@ export interface MergedDataPoint {
     heartrate: number | null;
     cadence: number | null;
     power: number | null;
+    speed: number | null;
+    distance: number | null;
+    altitude: number | null;
+    lat: number | null;
+    lon: number | null;
 }
 
 /**
@@ -90,7 +95,19 @@ export const getValuesAtTimestamps = (
  * // Returns: [{ timestamp: 1000, heartrate: 120, cadence: 80, power: 200 }]
  */
 export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoint[] => {
-    const sources = [measurements.heartrate, measurements.cadence, measurements.power];
+    // Convert GPS points to measurements for interpolation
+    const latMeasurements: Measurement[] = measurements.gps.map(p => ({ timestamp: p.timestamp, value: p.lat }));
+    const lonMeasurements: Measurement[] = measurements.gps.map(p => ({ timestamp: p.timestamp, value: p.lon }));
+
+    const sources = [
+        measurements.heartrate,
+        measurements.cadence,
+        measurements.power,
+        measurements.speed,
+        measurements.distance,
+        measurements.altitude,
+        latMeasurements
+    ];
     const hasData = sources.some(data => data.length > 0);
 
     if (!hasData) {
@@ -118,6 +135,11 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
     const syncedHR = getValuesAtTimestamps(measurements.heartrate, timestamps);
     const syncedCadence = getValuesAtTimestamps(measurements.cadence, timestamps);
     const syncedPower = getValuesAtTimestamps(measurements.power, timestamps);
+    const syncedSpeed = getValuesAtTimestamps(measurements.speed, timestamps);
+    const syncedDistance = getValuesAtTimestamps(measurements.distance, timestamps);
+    const syncedAltitude = getValuesAtTimestamps(measurements.altitude, timestamps);
+    const syncedLat = getValuesAtTimestamps(latMeasurements, timestamps);
+    const syncedLon = getValuesAtTimestamps(lonMeasurements, timestamps);
 
     // Combine into data points
     const dataPoints: MergedDataPoint[] = [];
@@ -128,6 +150,11 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
             heartrate: syncedHR[i],
             cadence: syncedCadence[i],
             power: syncedPower[i],
+            speed: syncedSpeed[i],
+            distance: syncedDistance[i],
+            altitude: syncedAltitude[i],
+            lat: syncedLat[i],
+            lon: syncedLon[i],
         });
     }
 

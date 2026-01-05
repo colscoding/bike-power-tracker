@@ -9,9 +9,10 @@
 import { connectCadence } from './connect-cadence.js';
 import { connectHeartRate } from './connect-heartrate.js';
 import { connectPower } from './connect-power.js';
+import { connectGps } from './connect-gps.js';
 import { elements } from './elements.js';
 import type { MeasurementsState } from './MeasurementsState.js';
-import type { MeasurementType, Measurement } from './types/measurements.js';
+import type { MeasurementType, Measurement, GpsPoint } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
 import type { SensorConnection, ConnectionStatus } from './types/bluetooth.js';
 import { showNotification } from './ui/notifications.js';
@@ -44,6 +45,7 @@ const emojis: Record<MeasurementType, string> = {
     speed: '💨',
     distance: '📏',
     altitude: '🏔️',
+    gps: '📍',
 };
 
 /**
@@ -215,4 +217,65 @@ export const initConnectionButtons = ({
             });
         }
     });
+
+    // GPS Handling
+    const connectGpsElem = elements.gps?.connect;
+    if (connectGpsElem) {
+        connectGpsElem.addEventListener('click', async () => {
+            const state = connectionsState.gps;
+            if (state && state.isConnected) {
+                // Disconnect
+                if (typeof state.disconnect === 'function') {
+                    state.disconnect();
+                    state.disconnect = null;
+                    state.isConnected = false;
+                    updateButtonText('gps', 'disconnected');
+
+                    // Reset display
+                    if (elements.speed.display) elements.speed.display.textContent = '--';
+                    if (elements.distance.display) elements.distance.display.textContent = '--';
+                    if (elements.altitude.display) elements.altitude.display.textContent = '--';
+
+                    if (connectionsState.speed) connectionsState.speed.isConnected = false;
+                    if (connectionsState.distance) connectionsState.distance.isConnected = false;
+                    if (connectionsState.altitude) connectionsState.altitude.isConnected = false;
+                }
+            } else {
+                // Connect
+                try {
+                    updateButtonText('gps', 'reconnecting'); // Show connecting state
+
+                    const connection = await connectGps((point: GpsPoint) => {
+                        measurementsState.addGps(point);
+
+                        // Also update speed, distance, altitude if available
+                        if (point.speed !== null) {
+                            measurementsState.addSpeed({ timestamp: point.timestamp, value: point.speed * 3.6 }); // m/s to km/h
+                        }
+                        if (point.altitude !== null) {
+                            measurementsState.addAltitude({ timestamp: point.timestamp, value: point.altitude });
+                        }
+                    });
+
+                    if (connectionsState.gps) {
+                        connectionsState.gps.disconnect = connection.stop;
+                        connectionsState.gps.isConnected = true;
+                    }
+
+                    // Also mark speed, distance, altitude as connected
+                    if (connectionsState.speed) connectionsState.speed.isConnected = true;
+                    if (connectionsState.distance) connectionsState.distance.isConnected = true;
+                    if (connectionsState.altitude) connectionsState.altitude.isConnected = true;
+
+                    updateButtonText('gps', 'connected', connection.deviceName);
+                    showNotification(`Connected to ${connection.deviceName || 'GPS'}`, 'success');
+
+                } catch (error) {
+                    console.error('GPS Connection failed', error);
+                    showNotification('Failed to connect to GPS', 'error');
+                    updateButtonText('gps', 'disconnected');
+                }
+            }
+        });
+    }
 };

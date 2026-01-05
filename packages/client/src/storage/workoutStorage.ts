@@ -7,7 +7,7 @@
  * @module storage/workoutStorage
  */
 
-import type { MeasurementsData, Measurement, LapMarker } from '../types/measurements.js';
+import type { MeasurementsData, Measurement, LapMarker, GpsPoint } from '../types/measurements.js';
 
 const DB_NAME = 'BikeTrackerDB';
 const DB_VERSION = 1;
@@ -38,6 +38,7 @@ export interface ActiveWorkoutRecord {
     speed: Measurement[];
     distance: Measurement[];
     altitude: Measurement[];
+    gps: GpsPoint[];
     laps: LapMarker[];
 }
 
@@ -99,6 +100,7 @@ export async function saveActiveWorkout(
             speed: measurements.speed,
             distance: measurements.distance,
             altitude: measurements.altitude,
+            gps: measurements.gps,
             laps: measurements.laps ?? [],
         };
 

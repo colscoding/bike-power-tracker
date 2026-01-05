@@ -10,11 +10,6 @@ import type { SensorConnection, MeasurementListener } from './types/bluetooth.js
 import type { Measurement } from './types/measurements.js';
 import { BluetoothFactory } from './services/bluetooth/factory.js';
 
-/** Maximum reconnection attempts before giving up */
-const MAX_RECONNECT_ATTEMPTS = 5;
-/** Base delay between reconnection attempts (ms) */
-const RECONNECT_BASE_DELAY = 1000;
-
 /**
  * Creates a mock heart rate connection for development/testing.
  * Generates random heart rate values between 120-200 bpm every second.

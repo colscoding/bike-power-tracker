@@ -1,4 +1,4 @@
-import { BleClient, numberToUUID } from '@capacitor-community/bluetooth-le';
+import { BleClient } from '@capacitor-community/bluetooth-le';
 import type { SensorConnection, MeasurementListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
 import type { Measurement } from '../../types/measurements.js';
 

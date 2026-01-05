@@ -39,6 +39,7 @@ function getElement<T extends HTMLElement = HTMLElement>(id: string): T | null {
 export const connectPowerElem = getElement<HTMLButtonElement>('connectPower');
 export const connectHeartrateElem = getElement<HTMLButtonElement>('connectHeartrate');
 export const connectCadenceElem = getElement<HTMLButtonElement>('connectCadence');
+export const connectGpsElem = getElement<HTMLButtonElement>('connectGps');
 
 export const powerElement = getElement('power');
 export const heartrateElement = getElement('heartrate');
@@ -54,6 +55,7 @@ export const elements: SensorElementsMap = {
     power: { display: powerElement, connect: connectPowerElem },
     heartrate: { display: heartrateElement, connect: connectHeartrateElem },
     cadence: { display: cadenceElement, connect: connectCadenceElem },
+    gps: { display: null, connect: connectGpsElem },
     speed: { display: speedElement, connect: null },
     distance: { display: distanceElement, connect: null },
     altitude: { display: altitudeElement, connect: null },

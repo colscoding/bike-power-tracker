@@ -125,7 +125,7 @@ describe('workoutStorage', () => {
                 speed: [],
                 distance: [],
                 altitude: [],
-                laps: []
+                laps: [], gps: []
             };
 
             await saveActiveWorkout(measurements, 1000);
@@ -148,7 +148,7 @@ describe('workoutStorage', () => {
                 speed: [],
                 distance: [],
                 altitude: [],
-                laps: []
+                laps: [], gps: []
             };
 
             await saveActiveWorkout(measurements, 1000);
@@ -170,7 +170,7 @@ describe('workoutStorage', () => {
                 speed: [],
                 distance: [],
                 altitude: [],
-                laps: []
+                laps: [], gps: []
             };
 
             await saveActiveWorkout(measurements, Date.now() - 3600000); // 1 hour ago
@@ -199,7 +199,7 @@ describe('workoutStorage', () => {
                 speed: [],
                 distance: [],
                 altitude: [],
-                laps: []
+                laps: [], gps: []
             };
 
             const measurements2 = {
@@ -209,7 +209,7 @@ describe('workoutStorage', () => {
                 speed: [],
                 distance: [],
                 altitude: [],
-                laps: []
+                laps: [], gps: []
             };
 
             // Call throttled save multiple times

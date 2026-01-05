@@ -10,11 +10,6 @@ import type { SensorConnection, MeasurementListener } from './types/bluetooth.js
 import type { Measurement } from './types/measurements.js';
 import { BluetoothFactory } from './services/bluetooth/factory.js';
 
-/** Maximum reconnection attempts before giving up */
-const MAX_RECONNECT_ATTEMPTS = 5;
-/** Base delay between reconnection attempts (ms) */
-const RECONNECT_BASE_DELAY = 1000;
-
 /**
  * Creates a mock cadence connection for development/testing.
  * Generates random cadence values between 70-110 rpm every second.

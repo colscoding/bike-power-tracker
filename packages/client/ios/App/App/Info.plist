@@ -51,5 +51,15 @@
 		<string>This app uses Bluetooth to connect to your bike power meter.</string>
 		<key>NSBluetoothPeripheralUsageDescription</key>
 		<string>This app uses Bluetooth to connect to your bike power meter.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>This app tracks your location to calculate speed and distance during your ride.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>This app tracks your location to calculate speed and distance during your ride.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>This app tracks your location to calculate speed and distance during your ride.</string>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>location</string>
+		</array>
 	</dict>
 </plist>

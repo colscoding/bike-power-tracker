@@ -31,7 +31,7 @@ export const getCsvString = (measurements: MeasurementsData): string => {
     }
 
     // CSV header
-    const header = 'timestamp,power,cadence,heartrate';
+    const header = 'timestamp,power,cadence,heartrate,speed,distance,altitude,lat,lon';
 
     // Convert each data point to CSV row
     const rows = dataPoints.map((point: MergedDataPoint) => {
@@ -39,7 +39,13 @@ export const getCsvString = (measurements: MeasurementsData): string => {
         const power = point.power !== null ? Math.round(point.power) : '';
         const cadence = point.cadence !== null ? Math.round(point.cadence) : '';
         const heartrate = point.heartrate !== null ? Math.round(point.heartrate) : '';
-        return `${timestamp},${power},${cadence},${heartrate}`;
+        const speed = point.speed !== null ? point.speed.toFixed(1) : '';
+        const distance = point.distance !== null ? Math.round(point.distance) : '';
+        const altitude = point.altitude !== null ? Math.round(point.altitude) : '';
+        const lat = point.lat !== null ? point.lat.toFixed(6) : '';
+        const lon = point.lon !== null ? point.lon.toFixed(6) : '';
+
+        return `${timestamp},${power},${cadence},${heartrate},${speed},${distance},${altitude},${lat},${lon}`;
     });
 
     return [header, ...rows].join('\n');

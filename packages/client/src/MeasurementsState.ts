@@ -7,7 +7,7 @@
  * @module MeasurementsState
  */
 
-import type { Measurement, MeasurementsData, MeasurementType, LapMarker } from './types/measurements.js';
+import type { Measurement, MeasurementsData, MeasurementType, LapMarker, GpsPoint } from './types/measurements.js';
 import {
     throttledSave,
     flushPendingSave,
@@ -26,6 +26,24 @@ const VALIDATION_LIMITS = {
     distance: { min: 0, max: 1000000 }, // meters
     altitude: { min: -500, max: 9000 }, // meters
 } as const;
+
+/**
+ * Calculate distance between two coordinates in meters (Haversine formula)
+ */
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+}
 
 /**
  * Callback type for state change notifications
@@ -51,6 +69,7 @@ export class MeasurementsState implements MeasurementsData {
     speed: Measurement[] = [];
     distance: Measurement[] = [];
     altitude: Measurement[] = [];
+    gps: GpsPoint[] = [];
     laps: LapMarker[] = [];
 
     private _persistenceEnabled: boolean;
@@ -221,6 +240,32 @@ export class MeasurementsState implements MeasurementsData {
         this._notifyChange();
     }
 
+    addGps(point: GpsPoint): void {
+        // Calculate distance if we have a previous point
+        if (this.gps.length > 0) {
+            const lastPoint = this.gps[this.gps.length - 1];
+            const dist = calculateDistance(lastPoint.lat, lastPoint.lon, point.lat, point.lon);
+
+            let currentTotalDistance = 0;
+            if (this.distance.length > 0) {
+                currentTotalDistance = this.distance[this.distance.length - 1].value;
+            }
+
+            this.addDistance({
+                timestamp: point.timestamp,
+                value: currentTotalDistance + dist
+            });
+        } else if (this.distance.length === 0) {
+            this.addDistance({
+                timestamp: point.timestamp,
+                value: 0
+            });
+        }
+
+        this.gps.push(point);
+        this._notifyChange();
+    }
+
     /**
      * Add a measurement of any type
      * 
@@ -311,6 +356,7 @@ export class MeasurementsState implements MeasurementsData {
             speed: [...this.speed],
             distance: [...this.distance],
             altitude: [...this.altitude],
+            gps: [...this.gps],
             laps: [...this.laps],
         };
     }
@@ -365,6 +411,7 @@ export class MeasurementsState implements MeasurementsData {
             speed: this.speed.length,
             distance: this.distance.length,
             altitude: this.altitude.length,
+            gps: this.gps.length,
         };
     }
 }

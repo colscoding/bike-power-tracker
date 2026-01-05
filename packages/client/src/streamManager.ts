@@ -219,7 +219,7 @@ export class StreamManager {
      * Get the latest value for a measurement type
      * @private
      */
-    private _getLatestValue(type: MeasurementType): number | null {
+    private _getLatestValue(type: Exclude<MeasurementType, 'gps'>): number | null {
         const measurements = this.measurementsState[type];
         if (!measurements || measurements.length === 0) {
             return null;

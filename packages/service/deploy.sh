@@ -19,6 +19,9 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Global variable for docker compose command
+DOCKER_COMPOSE_CMD=""
+
 # Check prerequisites
 check_prerequisites() {
     log_info "Checking prerequisites..."
@@ -28,8 +31,13 @@ check_prerequisites() {
         exit 1
     fi
     
-    if ! docker compose version &> /dev/null; then
-        log_error "Docker Compose is not available. Please install Docker Compose."
+    # Check for docker compose (plugin vs standalone)
+    if docker compose version &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker compose"
+    elif command -v docker-compose &> /dev/null; then
+        DOCKER_COMPOSE_CMD="docker-compose"
+    else
+        log_error "Docker Compose is not available. Please install 'docker-compose-plugin' or 'docker-compose'."
         exit 1
     fi
     
@@ -38,7 +46,7 @@ check_prerequisites() {
         exit 1
     fi
     
-    log_info "Prerequisites check passed."
+    log_info "Prerequisites check passed. Using: $DOCKER_COMPOSE_CMD"
 }
 
 # Generate secure random string
@@ -46,8 +54,8 @@ generate_secret() {
     if command -v openssl &> /dev/null; then
         openssl rand -hex 32
     else
-        # Fallback to /dev/urandom
-        head -c 32 /dev/urandom | xxd -p | tr -d '\n'
+        # Fallback using od (more common than xxd on minimal distros)
+        head -c 32 /dev/urandom | od -A n -t x1 | tr -d ' \n'
     fi
 }
 
@@ -109,20 +117,20 @@ deploy() {
     
     # Pull latest base images
     log_info "Pulling latest base images..."
-    docker compose -f docker-compose.prod.yml pull redis nginx || true
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml pull redis nginx || true
     
     # Build and start containers
     log_info "Starting containers..."
-    docker compose -f docker-compose.prod.yml up -d $build_flag
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d $build_flag
     
     # Wait for services to be healthy
     log_info "Waiting for services to be healthy..."
     sleep 5
     
     # Health check
-    if ! docker compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if ! $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps | grep -q "Up"; then
         log_error "Some containers failed to start. Check logs with:"
-        echo "  docker compose -f docker-compose.prod.yml logs"
+        echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs"
         exit 1
     fi
 }
@@ -132,15 +140,19 @@ verify() {
     log_info "Verifying deployment..."
     
     # Check container status
-    docker compose -f docker-compose.prod.yml ps
+    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
     
     # Test health endpoint
     sleep 2
-    if curl -sf http://localhost/health > /dev/null 2>&1; then
-        log_info "Health check passed!"
+    if command -v curl &> /dev/null; then
+        if curl -sf http://localhost/health > /dev/null 2>&1; then
+            log_info "Health check passed!"
+        else
+            log_warn "Health check failed. Service may still be starting..."
+            log_warn "Try: curl http://localhost/health"
+        fi
     else
-        log_warn "Health check failed. Service may still be starting..."
-        log_warn "Try: curl http://localhost/health"
+        log_warn "Skipping health check (curl not found)."
     fi
 }
 
@@ -160,7 +172,10 @@ main() {
     echo "Service is running at: http://localhost (port 80)"
     echo ""
     echo "Useful commands:"
-    echo "  View logs:      docker compose -f docker-compose.prod.yml logs -f"
+    echo "  View logs:      $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f"
+    echo "  Stop service:   $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml down"
+    echo "  Restart:        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml restart"
+    echo "  View status:    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps"
     echo "  Stop service:   docker compose -f docker-compose.prod.yml down"
     echo "  Restart:        docker compose -f docker-compose.prod.yml restart"
     echo "  View status:    docker compose -f docker-compose.prod.yml ps"

@@ -299,6 +299,8 @@ export const initMetricsDisplay = ({
      * Update the display for a single metric type
      */
     const updateMetricDisplay = (key: MeasurementType): void => {
+        if (key === 'gps') return;
+
         const element = elements[key]?.display;
         const connectionState = connectionsState[key];
 

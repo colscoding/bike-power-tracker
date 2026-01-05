@@ -15,7 +15,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -42,7 +42,7 @@ describe('create-fit', () => {
                 ],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -59,7 +59,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -86,7 +86,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -106,7 +106,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -126,7 +126,7 @@ describe('create-fit', () => {
                 ],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -145,7 +145,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             const result = getFitData(measurements);
@@ -165,7 +165,7 @@ describe('create-fit', () => {
                 cadence: [],
                 speed: [],
                 distance: [],
-                altitude: [],
+                altitude: [], gps: [],
             };
 
             // Should not throw, just cap the value

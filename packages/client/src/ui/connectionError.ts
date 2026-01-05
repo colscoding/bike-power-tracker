@@ -31,6 +31,7 @@ const sensorLabels: Record<MeasurementType, string> = {
     speed: 'Speed Sensor',
     distance: 'Distance',
     altitude: 'Altitude',
+    gps: 'GPS',
 };
 
 /**
@@ -43,6 +44,7 @@ const sensorIcons: Record<MeasurementType, string> = {
     speed: '💨',
     distance: '📏',
     altitude: '🏔️',
+    gps: '📍',
 };
 
 /**

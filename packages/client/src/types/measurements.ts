@@ -13,6 +13,19 @@ export interface Measurement {
 }
 
 /**
+ * GPS data point
+ */
+export interface GpsPoint {
+    timestamp: number;
+    lat: number;
+    lon: number;
+    accuracy: number;
+    altitude: number | null;
+    speed: number | null; // m/s
+    heading: number | null;
+}
+
+/**
  * A lap marker in the workout
  */
 export interface LapMarker {
@@ -39,13 +52,14 @@ export interface MeasurementsData {
     speed: Measurement[];
     distance: Measurement[];
     altitude: Measurement[];
+    gps: GpsPoint[];
     laps?: LapMarker[];
 }
 
 /**
  * Types of measurements that can be recorded
  */
-export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude';
+export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude' | 'gps';
 
 /**
  * Current sensor values (latest readings)

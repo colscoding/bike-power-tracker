@@ -49,6 +49,7 @@
     "workbox-window": "^7.4.0"
   },
   "dependencies": {
+    "@capacitor-community/background-geolocation": "^1.2.26",
     "@capacitor-community/bluetooth-le": "^7.3.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",

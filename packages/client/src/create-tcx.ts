@@ -43,6 +43,26 @@ const getTcxTrackpoint = (point: MergedDataPoint): string => {
     const timestamp = new Date(point.timestamp).toISOString();
 
     // Order matters in TCX schema: Time, Position, Altitude, Distance, HeartRate, Cadence, Extensions
+
+    let position = '';
+    if (point.lat !== null && point.lon !== null) {
+        position = `
+        <Position>
+            <LatitudeDegrees>${point.lat}</LatitudeDegrees>
+            <LongitudeDegrees>${point.lon}</LongitudeDegrees>
+        </Position>`;
+    }
+
+    let altitude = '';
+    if (point.altitude !== null) {
+        altitude = `<AltitudeMeters>${point.altitude}</AltitudeMeters>`;
+    }
+
+    let distance = '';
+    if (point.distance !== null) {
+        distance = `<DistanceMeters>${point.distance}</DistanceMeters>`;
+    }
+
     const parts: string[] = [];
 
     if (point.heartrate !== null) {
@@ -60,6 +80,9 @@ const getTcxTrackpoint = (point: MergedDataPoint): string => {
     return `
 <Trackpoint>
     <Time>${timestamp}</Time>
+    ${position}
+    ${altitude}
+    ${distance}
     ${parts.join('\n')}
 </Trackpoint>
     `.trim();
