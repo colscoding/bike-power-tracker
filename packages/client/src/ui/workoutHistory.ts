@@ -11,12 +11,23 @@ import {
   listWorkouts,
   getWorkout,
   deleteWorkout,
+  createWorkout,
+  completeWorkout,
   formatDuration,
   formatDate,
   type Workout,
   type ListWorkoutsResponse,
   type ListWorkoutsOptions,
 } from '../api/workoutClient.js';
+import {
+  getCompletedWorkouts,
+  markWorkoutSynced,
+  isIndexedDBSupported,
+  type StoredWorkout
+} from '../storage/workoutStorage.js';
+import { getFtpHistory, type FtpHistoryEntry } from '../api/userClient.js';
+import { calculateWorkoutSummary } from './modal.js';
+import { announce } from './accessibility.js';
 
 /** Current pagination page */
 let currentPage = 1;
@@ -33,6 +44,7 @@ let filterEndDate = '';
 /* View State */
 let currentView: 'list' | 'calendar' | 'analytics' = 'list';
 let calendarDate = new Date(); // Points to current month
+let dataSource: 'cloud' | 'local' = 'cloud';
 
 /**
  * Workout summary data from API
@@ -69,12 +81,10 @@ function getSummary(workout: Workout): WorkoutSummary {
 }
 
 /**
- * Initialize the workout history feature
+ * Initialize the workout history feature logic
+ * NOTE: This should be called after the History View is mounted to DOM.
  */
-export function initWorkoutHistory(): void {
-  const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
-  const modal = document.getElementById('workoutHistoryModal') as HTMLDivElement | null;
-  const closeBtn = document.getElementById('closeWorkoutHistoryModal');
+export function initHistoryLogic(): void {
   const prevBtn = document.getElementById('historyPrevPage') as HTMLButtonElement | null;
   const nextBtn = document.getElementById('historyNextPage') as HTMLButtonElement | null;
   const refreshBtn = document.getElementById('historyRefresh');
@@ -95,38 +105,17 @@ export function initWorkoutHistory(): void {
   const prevMonthBtn = document.getElementById('calendarPrevMonth');
   const nextMonthBtn = document.getElementById('calendarNextMonth');
 
-  if (!historyButton || !modal) {
-    console.warn('Workout history elements not found');
-    return;
+  // Source Toggle
+  const sourceCloudBtn = document.getElementById('sourceCloudBtn');
+  const sourceLocalBtn = document.getElementById('sourceLocalBtn');
+
+  if (sourceCloudBtn && sourceLocalBtn) {
+    sourceCloudBtn.addEventListener('click', () => setSource('cloud'));
+    sourceLocalBtn.addEventListener('click', () => setSource('local'));
   }
 
   // Check if database is available on load
   checkDatabaseAvailability();
-
-  // Open modal
-  historyButton.addEventListener('click', async () => {
-    modal.style.display = 'flex';
-    // Reset to today
-    calendarDate = new Date();
-    if (currentView === 'list') {
-      currentPage = 1;
-      await loadWorkouts();
-    } else {
-      await loadCalendar();
-    }
-  });
-
-  // Close modal
-  closeBtn?.addEventListener('click', () => {
-    modal.style.display = 'none';
-  });
-
-  // Close on outside click
-  modal.addEventListener('click', (e: MouseEvent) => {
-    if (e.target === modal) {
-      modal.style.display = 'none';
-    }
-  });
 
   // Toggle Views
   const setView = (view: 'list' | 'calendar' | 'analytics') => {
@@ -223,13 +212,6 @@ export function initWorkoutHistory(): void {
   refreshBtn?.addEventListener('click', async () => {
     await loadWorkouts();
   });
-
-  // Close on Escape key
-  document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && modal.style.display === 'flex') {
-      modal.style.display = 'none';
-    }
-  });
 }
 
 /**
@@ -237,22 +219,51 @@ export function initWorkoutHistory(): void {
  */
 async function checkDatabaseAvailability(): Promise<void> {
   const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
+  const hasIndexedDB = isIndexedDBSupported();
 
   try {
     dbAvailable = await isDatabaseAvailable();
-    if (historyButton) {
-      historyButton.disabled = !dbAvailable;
-      historyButton.title = dbAvailable
-        ? 'View workout history'
-        : 'Database not configured';
-    }
   } catch {
     dbAvailable = false;
-    if (historyButton) {
-      historyButton.disabled = true;
-      historyButton.title = 'Database not available';
-    }
   }
+
+  // Default to local if cloud is unavailable
+  if (!dbAvailable && hasIndexedDB) {
+    dataSource = 'local';
+    updateSourceToggle();
+  }
+
+  if (historyButton) {
+    historyButton.disabled = !(dbAvailable || hasIndexedDB);
+    historyButton.title = (dbAvailable || hasIndexedDB)
+      ? 'View workout history'
+      : 'History not available';
+  }
+}
+
+/**
+ * Convert locally stored workout to Workout interface
+ */
+function storedToWorkout(stored: StoredWorkout): Workout & { _synced?: boolean } {
+  const summary = calculateWorkoutSummary(
+    stored.startTime,
+    stored.lastUpdated,
+    stored.measurements
+  );
+
+  return {
+    id: stored.id,
+    title: 'Local Workout',
+    sport: 'cycling',
+    startTime: new Date(stored.startTime).toISOString(),
+    endTime: new Date(stored.lastUpdated).toISOString(),
+    duration: Math.round((stored.lastUpdated - stored.startTime) / 1000),
+    status: 'COMPLETED', // API status enum
+    summary: JSON.stringify(summary),
+    createdAt: new Date(stored.startTime).toISOString(),
+    updatedAt: new Date(stored.lastUpdated).toISOString(),
+    _synced: stored.synced
+  };
 }
 
 /**
@@ -270,23 +281,43 @@ async function loadWorkouts(): Promise<void> {
   listContainer.innerHTML = '<div class="workout-loading">Loading workouts...</div>';
 
   try {
-    const options: ListWorkoutsOptions = {
-      page: currentPage,
-      limit: 10
-    };
+    let workouts: (Workout & { _synced?: boolean })[] = [];
 
-    if (filterType) options.sport = filterType;
-    if (filterStartDate) options.startDate = new Date(filterStartDate);
-    if (filterEndDate) options.endDate = new Date(filterEndDate);
+    if (dataSource === 'local') {
+      const stored = await getCompletedWorkouts();
+      // TODO: Apply filters locally if needed
+      stored.sort((a, b) => b.startTime - a.startTime);
 
-    const result: ListWorkoutsResponse = await listWorkouts(options);
-    const { workouts, pagination } = result;
+      const total = stored.length;
+      totalPages = Math.ceil(total / 10) || 1;
+      const start = (currentPage - 1) * 10;
+      const pageItems = stored.slice(start, start + 10);
 
-    totalPages = pagination.totalPages;
+      workouts = pageItems.map(storedToWorkout);
 
-    // Update pagination info
-    if (pageInfo) {
-      pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} total)`;
+      if (pageInfo) {
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages} (${total} local)`;
+      }
+    } else {
+      const options: ListWorkoutsOptions = {
+        page: currentPage,
+        limit: 10
+      };
+
+      if (filterType) options.sport = filterType;
+      if (filterStartDate) options.startDate = new Date(filterStartDate);
+      if (filterEndDate) options.endDate = new Date(filterEndDate);
+
+      const result: ListWorkoutsResponse = await listWorkouts(options);
+      workouts = result.workouts;
+      const { pagination } = result;
+
+      totalPages = pagination.totalPages;
+
+      // Update pagination info
+      if (pageInfo) {
+        pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} total)`;
+      }
     }
 
     // Update pagination buttons
@@ -322,6 +353,12 @@ async function loadWorkouts(): Promise<void> {
         e.stopPropagation();
         confirmDeleteWorkout(workoutId);
       });
+
+      // Sync
+      card.querySelector('.workout-sync-btn')?.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        syncWorkout(workoutId);
+      });
     });
   } catch (error) {
     console.error('Failed to load workouts:', error);
@@ -336,11 +373,91 @@ async function loadWorkouts(): Promise<void> {
 }
 
 /**
+ * Switch data source and reload
+ */
+function setSource(s: 'cloud' | 'local'): void {
+  if (dataSource === s) return;
+  dataSource = s;
+  updateSourceToggle();
+  currentPage = 1;
+  loadWorkouts();
+}
+
+/**
+ * Update toggle UI
+ */
+function updateSourceToggle(): void {
+  const cloudBtn = document.getElementById('sourceCloudBtn');
+  const localBtn = document.getElementById('sourceLocalBtn');
+
+  if (cloudBtn && localBtn) {
+    if (dataSource === 'cloud') {
+      cloudBtn.classList.add('active');
+      cloudBtn.setAttribute('aria-pressed', 'true');
+      cloudBtn.style.background = 'var(--color-bg-active)';
+
+      localBtn.classList.remove('active');
+      localBtn.setAttribute('aria-pressed', 'false');
+      localBtn.style.background = 'transparent';
+    } else {
+      localBtn.classList.add('active');
+      localBtn.setAttribute('aria-pressed', 'true');
+      localBtn.style.background = 'var(--color-bg-active)';
+
+      cloudBtn.classList.remove('active');
+      cloudBtn.setAttribute('aria-pressed', 'false');
+      cloudBtn.style.background = 'transparent';
+    }
+  }
+}
+
+/**
+ * Sync a local workout to server
+ */
+async function syncWorkout(localId: string): Promise<void> {
+  const workouts = await getCompletedWorkouts();
+  const local = workouts.find(w => w.id === localId);
+  if (!local) return;
+
+  try {
+    announce('Syncing workout...', 'polite');
+
+    // 1. Create Workout on server
+    const createRes = await createWorkout({
+      streamName: `sync-${localId}`,
+      title: `Synced: ${formatDate(new Date(local.startTime))}`,
+      sport: 'cycling'
+    });
+
+    if (createRes.success && createRes.workout) {
+      // 2. Mark as complete (updates status to COMPLETED)
+      const completeRes = await completeWorkout(createRes.workout.id, false);
+
+      if (completeRes.success) {
+        await markWorkoutSynced(localId);
+        announce('Workout synced successfully', 'assertive');
+        await loadWorkouts();
+      } else {
+        throw new Error('Failed to complete workout on server');
+      }
+    }
+  } catch (e) {
+    console.error('Sync failed', e);
+    announce('Sync failed', 'assertive');
+  }
+}
+
+/**
  * Render a workout card
  */
-function renderWorkoutCard(workout: Workout): string {
+function renderWorkoutCard(workout: Workout & { _synced?: boolean }): string {
   const statusClass = workout.status.toLowerCase();
   const summary = getSummary(workout);
+
+  const isUnsynced = workout._synced === false;
+  const syncBtn = isUnsynced
+    ? `<button class="workout-sync-btn" title="Upload to server">☁️ Sync</button>`
+    : (workout._synced === true ? `<span title="Synced" style="margin-right:8px;">✅</span>` : '');
 
   return `
     <div class="workout-card" data-workout-id="${workout.id}">
@@ -361,6 +478,7 @@ function renderWorkoutCard(workout: Workout): string {
         </div>
       </div>
       <div class="workout-card-actions">
+        ${syncBtn}
         <button class="workout-view-btn" title="View details">👁️ View</button>
         <button class="workout-delete-btn" title="Delete workout">🗑️</button>
       </div>
@@ -760,7 +878,17 @@ async function loadAnalytics(): Promise<void> {
     const result = await listWorkouts(options);
     const workouts = result.workouts;
 
-    renderAnalytics(workouts);
+    // Fetch FTP History if we have a user ID
+    let ftpHistory: FtpHistoryEntry[] = [];
+    if (workouts.length > 0 && workouts[0].userId) {
+      try {
+        ftpHistory = await getFtpHistory(workouts[0].userId);
+      } catch (e) {
+        console.warn('Failed to load FTP history', e);
+      }
+    }
+
+    renderAnalytics(workouts, ftpHistory);
   } catch (error) {
     console.error('Failed to load analytics:', error);
     if (prList) prList.innerHTML = '<div style="color: var(--color-error); text-align: center;">Failed to load data</div>';
@@ -770,11 +898,13 @@ async function loadAnalytics(): Promise<void> {
 /**
  * Render all analytics charts and stats
  */
-function renderAnalytics(workouts: Workout[]): void {
+function renderAnalytics(workouts: Workout[], ftpHistory: FtpHistoryEntry[] = []): void {
   renderPersonalRecords(workouts);
   renderTrainingLoad(workouts);
   renderPowerCurve(workouts);
   renderFitnessTrend(workouts);
+  renderFtpHistory(ftpHistory);
+  renderPrHistory(workouts);
 }
 
 /**
@@ -1069,4 +1199,213 @@ function renderFitnessTrend(workouts: Workout[]): void {
     `;
 
   container.innerHTML = svg;
+}
+
+/**
+ * Render FTP History Chart
+ */
+function renderFtpHistory(history: FtpHistoryEntry[]): void {
+  const container = document.getElementById('ftpHistoryChart');
+  if (!container) return;
+
+  if (history.length === 0) {
+    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color: var(--color-text-secondary);">No FTP history available</div>';
+    return;
+  }
+
+  // Sort by date ascending
+  const sorted = [...history].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  // Chart Dimensions
+  const width = container.clientWidth || 600;
+  const height = 200;
+  const pad = { top: 20, right: 30, bottom: 30, left: 40 };
+  const chartW = width - pad.left - pad.right;
+  const chartH = height - pad.top - pad.bottom;
+
+  // Scales
+  const maxFtp = Math.max(...sorted.map(h => h.ftp)) * 1.1;
+  const minFtp = Math.max(0, Math.min(...sorted.map(h => h.ftp)) * 0.9);
+  const ftpRange = maxFtp - minFtp || 100; // avoid div by zero
+
+  const startDate = new Date(sorted[0].createdAt);
+  const endDate = new Date();
+  const timeSpan = endDate.getTime() - startDate.getTime();
+
+  const getX = (dateStr: string | Date) => {
+    const d = new Date(dateStr);
+    return pad.left + ((d.getTime() - startDate.getTime()) / timeSpan) * chartW;
+  };
+  const getY = (val: number) => pad.top + chartH - ((val - minFtp) / ftpRange) * chartH;
+
+  // Generate Path
+  let d = '';
+  if (sorted.length > 0) {
+    d = `M ${getX(sorted[0].createdAt)},${getY(sorted[0].ftp)}`;
+    for (let i = 1; i < sorted.length; i++) {
+      const currX = getX(sorted[i].createdAt);
+      const prevY = getY(sorted[i - 1].ftp);
+      const currY = getY(sorted[i].ftp);
+
+      // Step line: Horizontal then Vertical
+      d += ` L ${currX},${prevY} L ${currX},${currY}`;
+    }
+    // Extend to now
+    d += ` L ${width - pad.right},${getY(sorted[sorted.length - 1].ftp)}`;
+  }
+
+  // SVG Content
+  const svg = `
+        <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <!-- Grid Lines -->
+            <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="var(--color-border)" stroke-width="1" />
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="var(--color-border)" stroke-width="1" />
+            
+            <!-- FTP Line -->
+            <path d="${d}" fill="none" stroke="var(--color-accent)" stroke-width="2" />
+            
+            <!-- Points -->
+            ${sorted.map(h => `
+                <circle cx="${getX(h.createdAt)}" cy="${getY(h.ftp)}" r="4" fill="var(--card-bg)" stroke="var(--color-accent)" stroke-width="2">
+                    <title>${h.ftp} W (${formatDate(h.createdAt)})</title>
+                </circle>
+                <text x="${getX(h.createdAt)}" y="${getY(h.ftp) - 10}" text-anchor="middle" font-size="10" fill="var(--color-text-primary)">${h.ftp}</text>
+            `).join('')}
+
+            <!-- Axis Labels (simplified) -->
+            <text x="${pad.left}" y="${height - 10}" font-size="10" fill="var(--color-text-secondary)">${formatDate(startDate)}</text>
+            <text x="${width - pad.right}" y="${height - 10}" text-anchor="end" font-size="10" fill="var(--color-text-secondary)">Today</text>
+        </svg>
+    `;
+
+  container.innerHTML = svg;
+}
+
+/**
+ * Render PR History (Chronological improvements)
+ */
+function renderPrHistory(workouts: Workout[]): void {
+  const container = document.getElementById('prHistoryList');
+  if (!container) return;
+
+  // Sort strictly chronological
+  const sorted = [...workouts].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  interface RecordEvent {
+    date: string;
+    metric: string;
+    value: string;
+    improvement: string;
+    workoutId: string;
+  }
+
+  const events: RecordEvent[] = [];
+
+  // State to track maxes
+  let maxPower = 0;
+  let maxHr = 0;
+  const powerCurveBests: Record<number, number> = {};
+
+  sorted.forEach(w => {
+    const summary = getSummary(w);
+    const dateStr = formatDate(w.startTime);
+
+    // Power (1s)
+    if (summary.maxPower && summary.maxPower > maxPower) {
+      if (maxPower > 0) {
+        const diff = summary.maxPower - maxPower;
+        events.push({
+          date: dateStr,
+          metric: 'Max Power',
+          value: `${summary.maxPower} W`,
+          improvement: `+${diff} W`,
+          workoutId: w.id
+        });
+      } else {
+        events.push({ date: dateStr, metric: 'Max Power', value: `${summary.maxPower} W`, improvement: 'New!', workoutId: w.id });
+      }
+      maxPower = summary.maxPower;
+    }
+
+    // HR
+    if (summary.maxHeartrate && summary.maxHeartrate > maxHr) {
+      if (maxHr > 0) {
+        const diff = summary.maxHeartrate - maxHr;
+        events.push({
+          date: dateStr,
+          metric: 'Max Heart Rate',
+          value: `${summary.maxHeartrate} bpm`,
+          improvement: `+${diff} bpm`,
+          workoutId: w.id
+        });
+      } else {
+        events.push({ date: dateStr, metric: 'Max Heart Rate', value: `${summary.maxHeartrate} bpm`, improvement: 'New!', workoutId: w.id });
+      }
+      maxHr = summary.maxHeartrate;
+    }
+
+    // Power Curve - Notable durations (1m, 5m, 20m)
+    if (summary.powerCurve) {
+      const notable = [60, 300, 1200];
+      const labels: Record<number, string> = { 60: '1m Power', 300: '5m Power', 1200: '20m Power' };
+      summary.powerCurve.forEach((p: { duration: number, watts: number }) => {
+        if (notable.includes(p.duration)) {
+          const current = powerCurveBests[p.duration] || 0;
+          if (p.watts > current) {
+            if (current > 0) {
+              events.push({
+                date: dateStr,
+                metric: labels[p.duration],
+                value: `${p.watts} W`,
+                improvement: `+${p.watts - current} W`,
+                workoutId: w.id
+              });
+            } else {
+              events.push({ date: dateStr, metric: labels[p.duration], value: `${p.watts} W`, improvement: 'New!', workoutId: w.id });
+            }
+            powerCurveBests[p.duration] = p.watts;
+          }
+        }
+      });
+    }
+  });
+
+  if (events.length === 0) {
+    container.innerHTML = '<div style="text-align: center; color: var(--color-text-secondary); padding: 20px;">No records found</div>';
+    return;
+  }
+
+  // Sort events reverse chronological (newest first)
+  const reversedEvents = events.reverse();
+
+  container.innerHTML = reversedEvents.map(e => `
+        <div class="pr-history-row" data-id="${e.workoutId}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid var(--color-border); cursor: pointer;">
+            <div style="flex: 1;">
+                <div style="font-weight: 500;">${e.metric}</div>
+                <div style="font-size: 0.8em; color: var(--color-text-secondary);">${e.date}</div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: bold; color: var(--color-accent);">${e.value}</div>
+                <div style="font-size: 0.8em; color: var(--color-success);">${e.improvement}</div>
+            </div>
+        </div>
+    `).join('');
+
+  container.querySelectorAll('.pr-history-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = (row as HTMLElement).dataset.id;
+      if (id) viewWorkoutDetails(id);
+    });
+  });
+}
+// Exported helper for the View
+export async function refreshHistoryView(): Promise<void> {
+  // Reset to today if needed, or just refresh current view
+  if (currentView === 'list') {
+    await loadWorkouts();
+  } else if (currentView === 'calendar') {
+    await loadCalendar();
+  } else if (currentView === 'analytics') {
+    await loadAnalytics();
+  }
 }

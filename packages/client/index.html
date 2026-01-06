@@ -143,13 +143,20 @@
                     <button id="exportData" role="menuitem" aria-label="Export workout data">💾 Export Data</button>
                     <button id="discardButton" role="menuitem" aria-label="Discard workout data">🗑️ Discard
                         Data</button>
+                    <!-- Replaced by Nav Bar
+                    <button id="workoutsButton" role="menuitem" aria-label="Structured Workouts">🏋️ Workouts</button>
+                    -->
+                    <!-- Replaced by Nav Bar
                     <button id="workoutHistoryButton" role="menuitem" aria-label="View workout history">📊 Workout
                         History</button>
+                    -->
                     <button id="startStreamButton" role="menuitem" aria-label="Start live streaming">📡 Start
                         Streaming</button>
                     <button id="viewStreamsButton" role="menuitem" aria-label="View live streams">🌐 View
                         Streams</button>
+                    <!-- Replaced by Nav Bar
                     <button id="settingsButton" role="menuitem" aria-label="Open settings">⚙️ Settings</button>
+                    -->
                     <button id="aboutButton" role="menuitem" aria-label="About this project">ℹ️ About</button>
                     <div class="menu-toggle-container" role="menuitem">
                         <span id="yourMetricsLabel">Your Metrics</span>
@@ -178,385 +185,415 @@
     </header>
     <main role="main">
         <div id="mainContent">
-            <div id="yourMetrics" class="metrics-section" aria-label="Your workout metrics">
-                <div id="yourMetricsToolbar" class="section-header">
-                    <div id="topBarControls">
-                        <h1 id="time" aria-live="off" aria-label="Elapsed time"></h1>
-                        <div id="workoutControls" class="workout-controls" role="group" aria-label="Workout controls">
-                            <button id="startButton" class="workout-btn workout-btn-start"
-                                aria-label="Start workout">▶️</button>
-                            <button id="pauseButton" class="workout-btn workout-btn-pause" aria-label="Pause workout"
-                                style="display: none;">⏸️</button>
-                            <button id="resumeButton" class="workout-btn workout-btn-resume" aria-label="Resume workout"
-                                style="display: none;">▶️</button>
-                            <button id="lapButton" class="workout-btn workout-btn-lap" aria-label="Mark lap"
-                                style="display: none;" title="Mark Lap (L)">🏁</button>
-                            <button id="stopButton" class="workout-btn workout-btn-stop"
-                                aria-label="Stop and save workout" style="display: none;">⏹️</button>
+            <div id="page-dashboard" class="page-view">
+                <div id="yourMetrics" class="metrics-section" aria-label="Your workout metrics">
+                    <div id="yourMetricsToolbar" class="section-header">
+                        <div id="topBarControls">
+                            <h1 id="time" aria-live="off" aria-label="Elapsed time"></h1>
+                            <div id="workoutControls" class="workout-controls" role="group"
+                                aria-label="Workout controls">
+                                <button id="startButton" class="workout-btn workout-btn-start"
+                                    aria-label="Start workout">▶️</button>
+                                <button id="pauseButton" class="workout-btn workout-btn-pause"
+                                    aria-label="Pause workout" style="display: none;">⏸️</button>
+                                <button id="resumeButton" class="workout-btn workout-btn-resume"
+                                    aria-label="Resume workout" style="display: none;">▶️</button>
+                                <button id="lapButton" class="workout-btn workout-btn-lap" aria-label="Mark lap"
+                                    style="display: none;" title="Mark Lap (L)">🏁</button>
+                                <button id="stopButton" class="workout-btn workout-btn-stop"
+                                    aria-label="Stop and save workout" style="display: none;">⏹️</button>
+                            </div>
+                        </div>
+                        <div id="lapCounter" class="lap-counter" style="display: none;" aria-live="polite">
+                            <span id="lapCountLabel">Laps: </span><span id="lapCount">0</span>
                         </div>
                     </div>
-                    <div id="lapCounter" class="lap-counter" style="display: none;" aria-live="polite">
-                        <span id="lapCountLabel">Laps: </span><span id="lapCount">0</span>
-                    </div>
+                    <dl id="metricsTable" aria-label="Live workout metrics">
+                        <div class="metric-group metric-group-power">
+                            <dt id="powerLabel">Power</dt>
+                            <dd id="power" aria-labelledby="powerLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-cadence">
+                            <dt id="cadenceLabel">Cadence</dt>
+                            <dd id="cadence" aria-labelledby="cadenceLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-heartrate">
+                            <dt id="heartrateLabel">Heart Rate</dt>
+                            <dd id="heartrate" aria-labelledby="heartrateLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-speed">
+                            <dt id="speedLabel">Speed</dt>
+                            <dd id="speed" aria-labelledby="speedLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-distance">
+                            <dt id="distanceLabel">Distance</dt>
+                            <dd id="distance" aria-labelledby="distanceLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-altitude">
+                            <dt id="altitudeLabel">Altitude</dt>
+                            <dd id="altitude" aria-labelledby="altitudeLabel" aria-live="polite"></dd>
+                        </div>
+                    </dl>
                 </div>
-                <dl id="metricsTable" aria-label="Live workout metrics">
-                    <div class="metric-group metric-group-power">
-                        <dt id="powerLabel">Power</dt>
-                        <dd id="power" aria-labelledby="powerLabel" aria-live="polite"></dd>
+                <div id="streamMetrics" class="metrics-section" aria-label="Stream metrics" style="display: none;">
+                    <div class="section-header">
+                        <div class="stream-title-with-status">
+                            <h2 class="section-title" id="streamTitle">Stream</h2>
+                            <span id="streamStatus" class="status-badge" role="status" aria-live="polite"></span>
+                        </div>
+                        <button id="closeStreamView" class="close-stream-btn" aria-label="Close stream view">✖</button>
                     </div>
-                    <div class="metric-group metric-group-cadence">
-                        <dt id="cadenceLabel">Cadence</dt>
-                        <dd id="cadence" aria-labelledby="cadenceLabel" aria-live="polite"></dd>
-                    </div>
-                    <div class="metric-group metric-group-heartrate">
-                        <dt id="heartrateLabel">Heart Rate</dt>
-                        <dd id="heartrate" aria-labelledby="heartrateLabel" aria-live="polite"></dd>
-                    </div>
-                    <div class="metric-group metric-group-speed">
-                        <dt id="speedLabel">Speed</dt>
-                        <dd id="speed" aria-labelledby="speedLabel" aria-live="polite"></dd>
-                    </div>
-                    <div class="metric-group metric-group-distance">
-                        <dt id="distanceLabel">Distance</dt>
-                        <dd id="distance" aria-labelledby="distanceLabel" aria-live="polite"></dd>
-                    </div>
-                    <div class="metric-group metric-group-altitude">
-                        <dt id="altitudeLabel">Altitude</dt>
-                        <dd id="altitude" aria-labelledby="altitudeLabel" aria-live="polite"></dd>
-                    </div>
-                </dl>
-            </div>
-            <div id="streamMetrics" class="metrics-section" aria-label="Stream metrics" style="display: none;">
-                <div class="section-header">
-                    <div class="stream-title-with-status">
-                        <h2 class="section-title" id="streamTitle">Stream</h2>
-                        <span id="streamStatus" class="status-badge" role="status" aria-live="polite"></span>
-                    </div>
-                    <button id="closeStreamView" class="close-stream-btn" aria-label="Close stream view">✖</button>
+                    <dl id="streamMetricsTable" aria-label="Stream workout metrics">
+                        <div class="metric-group metric-group-power">
+                            <dt id="streamPowerLabel">Power</dt>
+                            <dd id="streamPower" aria-labelledby="streamPowerLabel">--</dd>
+                        </div>
+                        <div class="metric-group metric-group-cadence">
+                            <dt id="streamCadenceLabel">Cadence</dt>
+                            <dd id="streamCadence" aria-labelledby="streamCadenceLabel">--</dd>
+                        </div>
+                        <div class="metric-group metric-group-heartrate">
+                            <dt id="streamHeartrateLabel">Heart Rate</dt>
+                            <dd id="streamHeartrate" aria-labelledby="streamHeartrateLabel">--</dd>
+                        </div>
+                        <div class="metric-group metric-group-speed">
+                            <dt id="streamSpeedLabel">Speed</dt>
+                            <dd id="streamSpeed" aria-labelledby="streamSpeedLabel">--</dd>
+                        </div>
+                        <div class="metric-group metric-group-distance">
+                            <dt id="streamDistanceLabel">Distance</dt>
+                            <dd id="streamDistance" aria-labelledby="streamDistanceLabel">--</dd>
+                        </div>
+                        <div class="metric-group metric-group-altitude">
+                            <dt id="streamAltitudeLabel">Altitude</dt>
+                            <dd id="streamAltitude" aria-labelledby="streamAltitudeLabel">--</dd>
+                        </div>
+                        <div class="metric-group">
+                            <dt id="streamElapsedLabel">⏱️ Elapsed</dt>
+                            <dd id="streamElapsed" aria-labelledby="streamElapsedLabel">--</dd>
+                        </div>
+                    </dl>
+                    <div id="streamLastUpdate" class="last-update-inline" role="status" aria-live="polite">Waiting for
+                        data...</div>
                 </div>
-                <dl id="streamMetricsTable" aria-label="Stream workout metrics">
-                    <div class="metric-group metric-group-power">
-                        <dt id="streamPowerLabel">Power</dt>
-                        <dd id="streamPower" aria-labelledby="streamPowerLabel">--</dd>
-                    </div>
-                    <div class="metric-group metric-group-cadence">
-                        <dt id="streamCadenceLabel">Cadence</dt>
-                        <dd id="streamCadence" aria-labelledby="streamCadenceLabel">--</dd>
-                    </div>
-                    <div class="metric-group metric-group-heartrate">
-                        <dt id="streamHeartrateLabel">Heart Rate</dt>
-                        <dd id="streamHeartrate" aria-labelledby="streamHeartrateLabel">--</dd>
-                    </div>
-                    <div class="metric-group metric-group-speed">
-                        <dt id="streamSpeedLabel">Speed</dt>
-                        <dd id="streamSpeed" aria-labelledby="streamSpeedLabel">--</dd>
-                    </div>
-                    <div class="metric-group metric-group-distance">
-                        <dt id="streamDistanceLabel">Distance</dt>
-                        <dd id="streamDistance" aria-labelledby="streamDistanceLabel">--</dd>
-                    </div>
-                    <div class="metric-group metric-group-altitude">
-                        <dt id="streamAltitudeLabel">Altitude</dt>
-                        <dd id="streamAltitude" aria-labelledby="streamAltitudeLabel">--</dd>
-                    </div>
-                    <div class="metric-group">
-                        <dt id="streamElapsedLabel">⏱️ Elapsed</dt>
-                        <dd id="streamElapsed" aria-labelledby="streamElapsedLabel">--</dd>
-                    </div>
-                </dl>
-                <div id="streamLastUpdate" class="last-update-inline" role="status" aria-live="polite">Waiting for
-                    data...</div>
-            </div>
-            <div id="allStreamsMetrics" class="metrics-section" aria-label="All active streams" style="display: none;">
-                <div class="section-header">
-                    <h2 class="section-title">All Streams</h2>
-                    <div class="viewer-status">
-                        <span id="allStreamsStatus" class="status-badge connecting" role="status"
-                            aria-live="polite">Connecting...</span>
-                        <button id="toggleViewBtn" class="view-toggle-btn" aria-label="Toggle compact view"
-                            title="Toggle compact view">📋</button>
-                        <button id="closeAllStreamsView" class="close-stream-btn"
-                            aria-label="Close all streams view">✖</button>
-                    </div>
-                </div>
-                <div id="allStreamsGrid" class="streams-grid" role="list" aria-label="Stream cards">
-                    <!-- Stream cards will be injected here -->
-                </div>
-                <div id="allStreamsList" class="streams-compact-list" role="list" aria-label="Stream list"
+                <div id="allStreamsMetrics" class="metrics-section" aria-label="All active streams"
                     style="display: none;">
-                    <!-- Compact stream rows will be injected here -->
+                    <div class="section-header">
+                        <h2 class="section-title">All Streams</h2>
+                        <div class="viewer-status">
+                            <span id="allStreamsStatus" class="status-badge connecting" role="status"
+                                aria-live="polite">Connecting...</span>
+                            <button id="toggleViewBtn" class="view-toggle-btn" aria-label="Toggle compact view"
+                                title="Toggle compact view">📋</button>
+                            <button id="closeAllStreamsView" class="close-stream-btn"
+                                aria-label="Close all streams view">✖</button>
+                        </div>
+                    </div>
+                    <div id="allStreamsGrid" class="streams-grid" role="list" aria-label="Stream cards">
+                        <!-- Stream cards will be injected here -->
+                    </div>
+                    <div id="allStreamsList" class="streams-compact-list" role="list" aria-label="Stream list"
+                        style="display: none;">
+                        <!-- Compact stream rows will be injected here -->
+                    </div>
                 </div>
-            </div>
+            </div> <!-- End of page-dashboard -->
+
+            <div id="page-history" class="page-view" style="display: none;"></div>
+            <div id="page-workouts" class="page-view" style="display: none;"></div>
+            <div id="page-settings" class="page-view" style="display: none;"></div>
         </div>
     </main>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="stream-modal" role="dialog" aria-labelledby="settingsModalTitle" aria-modal="true"
-        style="display: none;">
-        <div class="stream-modal-content" style="max-width: 450px; max-height: 90vh;">
-            <div class="stream-modal-header">
-                <h2 id="settingsModalTitle">⚙️ Settings</h2>
-                <button id="closeSettingsModal" class="close-button" aria-label="Close settings">&times;</button>
-            </div>
-            <div class="stream-modal-body" style="overflow-y: auto;">
-                <!-- Display Settings Section -->
-                <fieldset class="settings-fieldset"
-                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <legend style="font-weight: 600; padding: 0 8px;">📊 Dashboard Display</legend>
-                    <p style="margin-bottom: 12px; color: #666; font-size: 14px;">Select metrics to show:</p>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingPower" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">⚡ Power</span>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingCadence" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">🚴 Cadence</span>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingHeartrate" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">❤️ Heart Rate</span>
-                        </label>
-                    </div>
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #d0d7de;">
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingPower3s" style="width: 20px; height: 20px;">
-                            <div>
-                                <span style="font-size: 16px;">Show 3-second average power</span>
-                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Smooths power display for
-                                    easier reading</p>
-                            </div>
-                        </label>
-                    </div>
-                </fieldset>
-
-                <!-- Accessibility Settings Section -->
-                <fieldset class="settings-fieldset"
-                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <legend style="font-weight: 600; padding: 0 8px;">♿ Accessibility</legend>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingHighContrast" style="width: 20px; height: 20px;">
-                            <div>
-                                <span style="font-size: 16px;">🔳 High Contrast Mode</span>
-                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Enhanced visibility for
-                                    visual impairments</p>
-                            </div>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingColorblindPatterns" style="width: 20px; height: 20px;">
-                            <div>
-                                <span style="font-size: 16px;">🎨 Colorblind-friendly Patterns</span>
-                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Use patterns instead of
-                                    colors for zones</p>
-                            </div>
-                        </label>
-                    </div>
-                </fieldset>
-
-                <!-- Voice Feedback Settings Section -->
-                <fieldset class="settings-fieldset"
-                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <legend style="font-weight: 600; padding: 0 8px;">🔊 Voice Feedback</legend>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingVoiceEnabled" style="width: 20px; height: 20px;">
-                            <div>
-                                <span style="font-size: 16px;">Enable Voice Feedback</span>
-                                <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Text-to-speech announcements
-                                </p>
-                            </div>
-                        </label>
-                        <div style="margin-left: 30px; display: flex; flex-direction: column; gap: 8px;">
-                            <label class="settings-option"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="settingVoiceLaps" checked style="width: 18px; height: 18px;">
-                                <span style="font-size: 14px;">Announce Laps</span>
-                            </label>
-                            <label class="settings-option"
-                                style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                                <input type="checkbox" id="settingVoiceZones" checked
-                                    style="width: 18px; height: 18px;">
-                                <span style="font-size: 14px;">Announce Zone Changes</span>
-                            </label>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <!-- Export Settings Section -->
-                <fieldset class="settings-fieldset"
-                    style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-                    <legend style="font-weight: 600; padding: 0 8px;">💾 Export Formats</legend>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingExportTcx" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">TCX</span>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingExportCsv" checked style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">CSV</span>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingExportJson" style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">JSON</span>
-                        </label>
-                        <label class="settings-option"
-                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                            <input type="checkbox" id="settingExportFit" style="width: 20px; height: 20px;">
-                            <span style="font-size: 16px;">FIT (Garmin)</span>
-                        </label>
-                    </div>
-                </fieldset>
-
-                <div style="display: flex; justify-content: flex-end;">
-                    <button id="saveSettings"
-                        style="padding: 8px 16px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Save</button>
+    <!-- Settings Template -->
+    <template id="settingsTemplate">
+        <div class="page-header"
+            style="padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="settingsTitle">⚙️ Settings</h2>
+        </div>
+        <div class="page-content" style="padding: 16px; overflow-y: auto; flex: 1;">
+            <!-- Display Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">📊 Dashboard Display</legend>
+                <p style="margin-bottom: 12px; color: #666; font-size: 14px;">Select metrics to show:</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingPower" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">⚡ Power</span>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingCadence" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">🚴 Cadence</span>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingHeartrate" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">❤️ Heart Rate</span>
+                    </label>
                 </div>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #d0d7de;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingPower3s" style="width: 20px; height: 20px;">
+                        <div>
+                            <span style="font-size: 16px;">Show 3-second average power</span>
+                            <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Smooths power display for
+                                easier reading</p>
+                        </div>
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- Accessibility Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">♿ Accessibility</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingHighContrast" style="width: 20px; height: 20px;">
+                        <div>
+                            <span style="font-size: 16px;">🔳 High Contrast Mode</span>
+                            <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Enhanced visibility for
+                                visual impairments</p>
+                        </div>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingColorblindPatterns" style="width: 20px; height: 20px;">
+                        <div>
+                            <span style="font-size: 16px;">🎨 Colorblind-friendly Patterns</span>
+                            <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Use patterns instead of
+                                colors for zones</p>
+                        </div>
+                    </label>
+                </div>
+            </fieldset>
+
+            <!-- Voice Feedback Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">🔊 Voice Feedback</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingVoiceEnabled" style="width: 20px; height: 20px;">
+                        <div>
+                            <span style="font-size: 16px;">Enable Voice Feedback</span>
+                            <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Text-to-speech announcements
+                            </p>
+                        </div>
+                    </label>
+                    <div style="margin-left: 30px; display: flex; flex-direction: column; gap: 8px;">
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingVoiceLaps" checked style="width: 18px; height: 18px;">
+                            <span style="font-size: 14px;">Announce Laps</span>
+                        </label>
+                        <label class="settings-option"
+                            style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                            <input type="checkbox" id="settingVoiceZones" checked style="width: 18px; height: 18px;">
+                            <span style="font-size: 14px;">Announce Zone Changes</span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Export Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">💾 Export Formats</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportTcx" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">TCX</span>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportCsv" checked style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">CSV</span>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportJson" style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">JSON</span>
+                    </label>
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingExportFit" style="width: 20px; height: 20px;">
+                        <span style="font-size: 16px;">FIT (Garmin)</span>
+                    </label>
+                </div>
+            </fieldset>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+                <button id="saveSettings"
+                    style="padding: 10px 20px; border: none; background: #2196F3; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">Save
+                    Settings</button>
             </div>
         </div>
-    </div>
+    </template>
 
-    <!-- Workout History Modal -->
-    <div id="workoutHistoryModal" class="stream-modal" role="dialog" aria-labelledby="workoutHistoryTitle"
-        aria-modal="true" style="display: none;">
-        <div class="stream-modal-content" style="max-width: 600px; max-height: 80vh;">
-            <div class="stream-modal-header">
-                <h2 id="workoutHistoryTitle">📊 Workout History</h2>
-                <button id="closeWorkoutHistoryModal" class="close-button"
-                    aria-label="Close workout history">&times;</button>
+    <!-- Workout History Container - Content moved straight to #page-history dynamically -->
+    <!-- The content is preserved here for reference, but should be moved to the View's init(). 
+         However, for this refactor, we will rely on the View relocating this DOM content 
+         or rebuilding it. To make the transition easier, we will effectively 'hide' it 
+         from the Modal structure but keep the template for the View to use.
+    -->
+    <template id="workoutHistoryTemplate">
+        <div class="page-header"
+            style="padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="workoutHistoryTitle">📊 Workout History</h2>
+        </div>
+        <div class="page-content" style="padding: 16px; overflow-y: auto; flex: 1;">
+            <!-- List Panel -->
+            <div id="workoutListPanel">
+                <div class="workout-filters"
+                    style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                    <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
+                        <label for="workoutTypeFilter" class="sr-only">Type</label>
+                        <select id="workoutTypeFilter"
+                            style="padding: 6px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                            <option value="">All Types</option>
+                            <option value="cycling">Cycling</option>
+                            <option value="indoor_cycling">Indoor Cycling</option>
+                            <option value="running">Running</option>
+                        </select>
+                    </div>
+                    <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
+                        <label for="workoutDateStart" class="sr-only">Start Date</label>
+                        <input type="date" id="workoutDateStart"
+                            style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                        <span aria-hidden="true">-</span>
+                        <label for="workoutDateEnd" class="sr-only">End Date</label>
+                        <input type="date" id="workoutDateEnd"
+                            style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                    </div>
+                    <div style="flex-grow: 1;"></div>
+                    <div class="source-toggle"
+                        style="display: flex; border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden; margin-right: 8px;">
+                        <button id="sourceCloudBtn" class="source-btn active" aria-pressed="true"
+                            style="padding: 6px 12px; border: none; background: var(--color-bg-active); color: var(--color-text-primary); cursor: pointer;">Cloud</button>
+                        <button id="sourceLocalBtn" class="source-btn" aria-pressed="false"
+                            style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;">Local</button>
+                    </div>
+                    <div class="view-toggle"
+                        style="display: flex; border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden;">
+                        <button id="viewListBtn" class="view-btn active" aria-pressed="true"
+                            style="padding: 6px 12px; border: none; background: var(--color-bg-active); color: var(--color-text-primary); cursor: pointer;">List</button>
+                        <button id="viewCalendarBtn" class="view-btn" aria-pressed="false"
+                            style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;">📅</button>
+                        <button id="viewAnalyticsBtn" class="view-btn" aria-pressed="false"
+                            style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;"
+                            title="Analytics">📈</button>
+                    </div>
+                </div>
+
+                <div id="workoutListView">
+                    <div class="workout-controls" role="toolbar" aria-label="Workout history controls">
+                        <button id="historyRefresh" class="workout-control-btn" aria-label="Refresh workout list"
+                            title="Refresh">🔄</button>
+                        <nav class="workout-pagination" aria-label="Workout history pagination">
+                            <button id="historyPrevPage" class="workout-control-btn" aria-label="Previous page"
+                                disabled>◀</button>
+                            <span id="historyPageInfo" aria-live="polite">Page 1 of 1</span>
+                            <button id="historyNextPage" class="workout-control-btn" aria-label="Next page"
+                                disabled>▶</button>
+                        </nav>
+                    </div>
+                    <div id="workoutList" class="workout-list" role="list" aria-label="Workout entries">
+                        <!-- Workout cards will be injected here -->
+                    </div>
+                </div>
+
+                <div id="workoutCalendarView" style="display: none;">
+                    <div class="calendar-controls"
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <button id="calendarPrevMonth" class="workout-control-btn"
+                            aria-label="Previous month">◀</button>
+                        <h3 id="calendarMonthLabel" style="margin: 0;">January 2026</h3>
+                        <button id="calendarNextMonth" class="workout-control-btn" aria-label="Next month">▶</button>
+                    </div>
+                    <div id="workoutCalendarGrid" class="calendar-grid"
+                        style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                        <!-- Calendar will be generated -->
+                    </div>
+                </div>
+
+                <div id="workoutAnalyticsView" style="display: none;">
+                    <h3 class="section-title">📊 Analytics & Records</h3>
+
+                    <div class="analytics-grid"
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 8px;">
+                        <!-- Personal Records Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
+                            <h4>🏅 Personal Records</h4>
+                            <div id="prList" style="margin-top: 12px;">
+                                <div style="padding: 12px; text-align: center; color: var(--color-text-secondary);">
+                                    Loading records...</div>
+                            </div>
+                        </div>
+
+                        <!-- Weekly Load Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
+                            <h4>🏋️ Training Load (Last 4 Weeks)</h4>
+                            <div id="trainingLoadChart"
+                                style="height: 150px; margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-around; gap: 4px;">
+                                <!-- Bars will be injected -->
+                            </div>
+                        </div>
+
+                        <!-- Power Curve Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                            <h4>⚡ Power Curve (All Time Bests)</h4>
+                            <div id="powerCurveChart" style="height: 200px; margin-top: 12px; position: relative;">
+                                <!-- SVG Chart will be injected -->
+                            </div>
+                        </div>
+
+                        <!-- Fitness Trend Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                            <h4>📈 Fitness Trend (CTL / ATL)</h4>
+                            <div id="fitnessTrendChart" style="height: 250px; margin-top: 12px; position: relative;">
+                                <!-- SVG Chart will be injected -->
+                            </div>
+                        </div>
+
+                        <!-- FTP History Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                            <h4>📊 FTP History</h4>
+                            <div id="ftpHistoryChart" style="height: 200px; margin-top: 12px; position: relative;">
+                                <!-- SVG Chart will be injected -->
+                            </div>
+                        </div>
+
+                        <!-- PR History Card -->
+                        <div class="card"
+                            style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                            <h4>🏅 PR History (Chronological)</h4>
+                            <div id="prHistoryList" style="margin-top: 12px; max-height: 300px; overflow-y: auto;">
+                                <div style="text-align: center; color: var(--color-text-secondary);">Loading...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="stream-modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
-                <!-- List Panel -->
-                <div id="workoutListPanel">
-                    <div class="workout-filters"
-                        style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
-                        <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
-                            <label for="workoutTypeFilter" class="sr-only">Type</label>
-                            <select id="workoutTypeFilter"
-                                style="padding: 6px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
-                                <option value="">All Types</option>
-                                <option value="cycling">Cycling</option>
-                                <option value="indoor_cycling">Indoor Cycling</option>
-                                <option value="running">Running</option>
-                            </select>
-                        </div>
-                        <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
-                            <label for="workoutDateStart" class="sr-only">Start Date</label>
-                            <input type="date" id="workoutDateStart"
-                                style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
-                            <span aria-hidden="true">-</span>
-                            <label for="workoutDateEnd" class="sr-only">End Date</label>
-                            <input type="date" id="workoutDateEnd"
-                                style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
-                        </div>
-                        <div style="flex-grow: 1;"></div>
-                        <div class="view-toggle"
-                            style="display: flex; border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden;">
-                            <button id="viewListBtn" class="view-btn active" aria-pressed="true"
-                                style="padding: 6px 12px; border: none; background: var(--color-bg-active); color: var(--color-text-primary); cursor: pointer;">List</button>
-                            <button id="viewCalendarBtn" class="view-btn" aria-pressed="false"
-                                style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;">📅</button>
-                            <button id="viewAnalyticsBtn" class="view-btn" aria-pressed="false"
-                                style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;"
-                                title="Analytics">📈</button>
-                        </div>
-                    </div>
-
-                    <div id="workoutListView">
-                        <div class="workout-controls" role="toolbar" aria-label="Workout history controls">
-                            <button id="historyRefresh" class="workout-control-btn" aria-label="Refresh workout list"
-                                title="Refresh">🔄</button>
-                            <nav class="workout-pagination" aria-label="Workout history pagination">
-                                <button id="historyPrevPage" class="workout-control-btn" aria-label="Previous page"
-                                    disabled>◀</button>
-                                <span id="historyPageInfo" aria-live="polite">Page 1 of 1</span>
-                                <button id="historyNextPage" class="workout-control-btn" aria-label="Next page"
-                                    disabled>▶</button>
-                            </nav>
-                        </div>
-                        <div id="workoutList" class="workout-list" role="list" aria-label="Workout entries">
-                            <!-- Workout cards will be injected here -->
-                        </div>
-                    </div>
-
-                    <div id="workoutCalendarView" style="display: none;">
-                        <div class="calendar-controls"
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <button id="calendarPrevMonth" class="workout-control-btn"
-                                aria-label="Previous month">◀</button>
-                            <h3 id="calendarMonthLabel" style="margin: 0;">January 2026</h3>
-                            <button id="calendarNextMonth" class="workout-control-btn"
-                                aria-label="Next month">▶</button>
-                        </div>
-                        <div id="workoutCalendarGrid" class="calendar-grid"
-                            style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
-                            <!-- Calendar will be generated -->
-                        </div>
-                    </div>
-
-                    <div id="workoutAnalyticsView" style="display: none;">
-                        <h3 class="section-title">📊 Analytics & Records</h3>
-
-                        <div class="analytics-grid"
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 8px;">
-                            <!-- Personal Records Card -->
-                            <div class="card"
-                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
-                                <h4>🏅 Personal Records</h4>
-                                <div id="prList" style="margin-top: 12px;">
-                                    <div style="padding: 12px; text-align: center; color: var(--color-text-secondary);">
-                                        Loading records...</div>
-                                </div>
-                            </div>
-
-                            <!-- Weekly Load Card -->
-                            <div class="card"
-                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
-                                <h4>🏋️ Training Load (Last 4 Weeks)</h4>
-                                <div id="trainingLoadChart"
-                                    style="height: 150px; margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-around; gap: 4px;">
-                                    <!-- Bars will be injected -->
-                                </div>
-                            </div>
-
-                            <!-- Power Curve Card -->
-                            <div class="card"
-                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
-                                <h4>⚡ Power Curve (All Time Bests)</h4>
-                                <div id="powerCurveChart" style="height: 200px; margin-top: 12px; position: relative;">
-                                    <!-- SVG Chart will be injected -->
-                                </div>
-                            </div>
-
-                            <!-- Fitness Trend Card -->
-                            <div class="card"
-                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
-                                <h4>📈 Fitness Trend (CTL / ATL)</h4>
-                                <div id="fitnessTrendChart"
-                                    style="height: 250px; margin-top: 12px; position: relative;">
-                                    <!-- SVG Chart will be injected -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Detail Panel (hidden by default) -->
-                <div id="workoutDetailPanel" style="display: none;">
-                    <!-- Workout detail will be injected here -->
-                </div>
+            <!-- Detail Panel (hidden by default) -->
+            <div id="workoutDetailPanel" style="display: none;">
+                <!-- Workout detail will be injected here -->
             </div>
         </div>
-    </div>
+    </template>
 
     <!-- About Modal -->
     <div id="aboutModal" class="stream-modal" role="dialog" aria-labelledby="aboutModalTitle" aria-modal="true"
@@ -585,6 +622,148 @@
                 <p style="margin-top: 20px; font-size: 12px; color: #666; text-align: center;">
                     Version 1.0.0
                 </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Selection Container - Moved to #page-workouts dynamically -->
+    <template id="workoutSelectionTemplate">
+        <div class="page-header"
+            style="padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="workoutModalTitle">🏋️ Structured Workouts</h2>
+        </div>
+        <div class="page-content" style="padding: 16px; overflow-y: auto; flex: 1;">
+            <div style="padding: 0 0 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <input type="file" id="importWorkoutInput" accept=".json" style="display: none;">
+                    <button id="importWorkoutBtn" class="secondary-btn" style="padding: 8px 12px; font-size: 0.9rem;">📥
+                        Import</button>
+                </div>
+                <button id="createWorkoutBtn" class="action-btn" style="padding: 8px 16px; font-size: 0.9rem;">+ Create
+                    Custom</button>
+            </div>
+            <div class="stream-modal-body" style="overflow-y: visible;">
+                <div id="workoutList" class="workout-list" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Workouts injected here -->
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Workout Builder Modal -->
+    <div id="workoutBuilderModal" class="stream-modal" role="dialog" aria-labelledby="workoutBuilderTitle"
+        aria-modal="true" style="display: none;">
+        <div class="stream-modal-content"
+            style="max-width: 600px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="stream-modal-header">
+                <h2 id="workoutBuilderTitle">🛠️ Create Workout</h2>
+                <button id="closeBuilderModal" class="close-button" aria-label="Close builder">&times;</button>
+            </div>
+            <div class="stream-modal-body" style="overflow-y: auto; padding-bottom: 2rem;">
+                <div class="form-group">
+                    <label for="wbName">Workout Name</label>
+                    <input type="text" id="wbName" placeholder="e.g. 4x4 Intervals">
+                </div>
+                <div class="form-group">
+                    <label for="wbDesc">Description</label>
+                    <textarea id="wbDesc" rows="2" placeholder="Describe the workout..."></textarea>
+                </div>
+
+                <h3>Steps</h3>
+                <div id="wbStepsList" class="wb-steps-list"
+                    style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem;">
+                    <!-- Steps injected here -->
+                    <div class="wb-step-empty"
+                        style="text-align: center; color: var(--color-text-secondary); padding: 1rem; border: 1px dashed var(--color-border);">
+                        No steps added yet.
+                    </div>
+                </div>
+
+                <div class="wb-add-step-form"
+                    style="background: var(--card-bg); padding: 12px; border: 1px solid var(--color-border); border-radius: 8px;">
+                    <h4 style="margin-top: 0; margin-bottom: 12px;">Add Step</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div class="form-group">
+                            <label for="wbStepType">Type</label>
+                            <select id="wbStepType">
+                                <option value="warmup">Warmup</option>
+                                <option value="active">Active</option>
+                                <option value="rest">Rest</option>
+                                <option value="cooldown">Cooldown</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wbStepDuration">Duration (sec)</label>
+                            <input type="number" id="wbStepDuration" value="60" min="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="wbTargetType">Target Type</label>
+                            <select id="wbTargetType">
+                                <option value="power">Power (W)</option>
+                                <option value="percent_ftp">% FTP</option>
+                                <option value="open">Open (No target)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="wbTargetValue">Target Value</label>
+                            <input type="number" id="wbTargetValue" value="200">
+                        </div>
+                    </div>
+                    <button id="wbAddStepRef" type="button" class="action-btn" style="width: 100%; margin-top: 8px;">Add
+                        Step</button>
+                </div>
+
+                <div class="wb-actions" style="margin-top: 2rem; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button id="wbCancel" class="secondary-btn">Cancel</button>
+                    <button id="wbSave" class="primary-btn">💾 Save Workout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workout Player Overlay -->
+    <div id="workoutPlayerOverlay" class="workout-overlay" role="complementary" aria-label="Workout Player"
+        style="display: none;">
+        <div class="workout-player-header">
+            <h3 id="wpWorkoutName" style="margin: 0; font-size: 1rem;">Workout Name</h3>
+            <div style="display: flex; gap: 8px;">
+                <button id="wpMinimize" aria-label="Minimize player"
+                    style="background:none;border:none;color:white;cursor:pointer;">_</button>
+                <button id="wpClose" aria-label="Stop workout"
+                    style="background:none;border:none;color:white;cursor:pointer;">×</button>
+            </div>
+        </div>
+        <div class="workout-player-body">
+            <div class="wp-main-row"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="wp-step-info">
+                    <div id="wpStepDescription" class="wp-desc" style="font-weight: bold; font-size: 1.2rem;">Warmup
+                    </div>
+                    <div class="wp-timer" style="font-family: monospace; font-size: 1.5rem;">
+                        <span id="wpStepTime">00:00</span> / <span id="wpStepDuration">10:00</span>
+                    </div>
+                </div>
+                <div class="wp-target" style="text-align: right;">
+                    <div class="wp-target-val" style="font-size: 2.5rem; font-weight: bold; line-height: 1;">
+                        <span id="wpTargetPower">--</span><span class="unit" style="font-size: 1rem;">W</span>
+                    </div>
+                    <div class="wp-target-label" style="font-size: 0.8rem; text-transform: uppercase;">Target</div>
+                </div>
+            </div>
+
+            <div class="wp-next" style="font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 8px;">
+                <span>Next:</span> <span id="wpNextStep">Interval 1 (200W)</span>
+            </div>
+
+            <div class="wp-controls">
+                <button id="wpSkip" class="wp-btn"
+                    style="width: 100%; padding: 8px; background: rgba(255,255,255,0.2); border: none; color: white; border-radius: 4px; cursor: pointer;">Skip
+                    Step ⏭️</button>
+            </div>
+        </div>
+        <div class="wp-progress-bar" style="height: 4px; background: rgba(0,0,0,0.3); margin-top: 8px;">
+            <div id="wpProgress"
+                style="width: 0%; height: 100%; background: var(--color-accent, #2196F3); transition: width 1s linear;">
             </div>
         </div>
     </div>

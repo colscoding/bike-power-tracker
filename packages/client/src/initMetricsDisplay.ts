@@ -304,9 +304,13 @@ export const initMetricsDisplay = ({
         const element = elements[key]?.display;
         const connectionState = connectionsState[key];
 
+        // console.log(`Debug ${key}:`, { element: !!element, connected: connectionState?.isConnected });
+
         if (!element || !connectionState) {
             return;
         }
+
+        const container = element.closest('.metric-group') as HTMLElement;
 
         // Show empty value if not connected
         if (!connectionState.isConnected) {
@@ -315,7 +319,14 @@ export const initMetricsDisplay = ({
             if (key === 'power' || key === 'heartrate') {
                 applyZoneColorToMetric(element, null, key);
             }
+            if (container) {
+                container.style.display = 'none';
+            }
             return;
+        }
+
+        if (container && container.style.display === 'none') {
+            container.style.display = '';
         }
 
         const arr = measurementsState[key];
@@ -327,6 +338,7 @@ export const initMetricsDisplay = ({
         }
 
         const latestMeasurement = arr[arr.length - 1];
+        // console.log(`Debug ${key} measurement:`, latestMeasurement);
 
         // Validate measurement data
         if (

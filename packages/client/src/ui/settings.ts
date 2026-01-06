@@ -63,19 +63,9 @@ export function getSettings(): AppSettings {
 }
 
 /**
- * Initialize the settings modal and controls.
- * 
- * Sets up:
- * - Settings button to open modal
- * - Settings checkboxes for metrics visibility
- * - Settings checkboxes for accessibility options
- * - Settings checkboxes for export formats
- * - Save and close functionality
+ * Initialize the Settings UI logic
  */
-export function initSettings(): void {
-    const settingsButton = document.getElementById('settingsButton');
-    const settingsModal = document.getElementById('settingsModal');
-    const closeSettingsModal = document.getElementById('closeSettingsModal');
+export function initSettingsLogic(): void {
     const saveSettingsButton = document.getElementById('saveSettings');
 
     // Dashboard display settings
@@ -98,66 +88,6 @@ export function initSettings(): void {
     const settingExportCsv = document.getElementById('settingExportCsv') as HTMLInputElement | null;
     const settingExportJson = document.getElementById('settingExportJson') as HTMLInputElement | null;
     const settingExportFit = document.getElementById('settingExportFit') as HTMLInputElement | null;
-
-    if (!settingsButton || !settingsModal) {
-        console.warn('Settings elements not found in DOM');
-        return;
-    }
-
-    /**
-     * Load settings from localStorage
-     */
-    const loadSettings = (): void => {
-        const settings = getSettings();
-
-        // Dashboard display settings
-        if (settingPower) settingPower.checked = settings.power;
-        if (settingCadence) settingCadence.checked = settings.cadence;
-        if (settingHeartrate) settingHeartrate.checked = settings.heartrate;
-        if (settingPower3s) settingPower3s.checked = settings.power3s;
-
-        // Accessibility settings
-        if (settingHighContrast) settingHighContrast.checked = settings.highContrast;
-        if (settingColorblindPatterns) settingColorblindPatterns.checked = settings.colorblindPatterns;
-
-        // Voice Feedback settings
-        if (settingVoiceEnabled) settingVoiceEnabled.checked = settings.voiceEnabled;
-        if (settingVoiceLaps) settingVoiceLaps.checked = settings.voiceLaps;
-        if (settingVoiceZones) settingVoiceZones.checked = settings.voiceZones;
-
-        // Export format settings
-        if (settingExportTcx) settingExportTcx.checked = settings.exportTcx;
-        if (settingExportCsv) settingExportCsv.checked = settings.exportCsv;
-        if (settingExportJson) settingExportJson.checked = settings.exportJson;
-        if (settingExportFit) settingExportFit.checked = settings.exportFit;
-
-        applySettings(settings);
-    };
-
-    /**
-     * Save settings to localStorage
-     */
-    const saveSettings = (): void => {
-        const settings: AppSettings = {
-            power: settingPower?.checked ?? defaultSettings.power,
-            cadence: settingCadence?.checked ?? defaultSettings.cadence,
-            heartrate: settingHeartrate?.checked ?? defaultSettings.heartrate,
-            power3s: settingPower3s?.checked ?? defaultSettings.power3s,
-            highContrast: settingHighContrast?.checked ?? defaultSettings.highContrast,
-            colorblindPatterns: settingColorblindPatterns?.checked ?? defaultSettings.colorblindPatterns,
-            voiceEnabled: settingVoiceEnabled?.checked ?? defaultSettings.voiceEnabled,
-            voiceLaps: settingVoiceLaps?.checked ?? defaultSettings.voiceLaps,
-            voiceZones: settingVoiceZones?.checked ?? defaultSettings.voiceZones,
-            exportTcx: settingExportTcx?.checked ?? defaultSettings.exportTcx,
-            exportCsv: settingExportCsv?.checked ?? defaultSettings.exportCsv,
-            exportJson: settingExportJson?.checked ?? defaultSettings.exportJson,
-            exportFit: settingExportFit?.checked ?? defaultSettings.exportFit,
-        };
-
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-        applySettings(settings);
-        closeModal();
-    };
 
     /**
      * Apply settings to the UI
@@ -201,35 +131,60 @@ export function initSettings(): void {
     };
 
     /**
-     * Open the settings modal
+     * Save settings to localStorage
      */
-    const openModal = (): void => {
-        settingsModal.style.display = 'flex';
-        // Close the main menu details element
-        const details = document.querySelector('header details');
-        if (details) {
-            details.removeAttribute('open');
-        }
+    const saveSettings = (): void => {
+        const settings: AppSettings = {
+            power: settingPower?.checked ?? defaultSettings.power,
+            cadence: settingCadence?.checked ?? defaultSettings.cadence,
+            heartrate: settingHeartrate?.checked ?? defaultSettings.heartrate,
+            power3s: settingPower3s?.checked ?? defaultSettings.power3s,
+            highContrast: settingHighContrast?.checked ?? defaultSettings.highContrast,
+            colorblindPatterns: settingColorblindPatterns?.checked ?? defaultSettings.colorblindPatterns,
+            voiceEnabled: settingVoiceEnabled?.checked ?? defaultSettings.voiceEnabled,
+            voiceLaps: settingVoiceLaps?.checked ?? defaultSettings.voiceLaps,
+            voiceZones: settingVoiceZones?.checked ?? defaultSettings.voiceZones,
+            exportTcx: settingExportTcx?.checked ?? defaultSettings.exportTcx,
+            exportCsv: settingExportCsv?.checked ?? defaultSettings.exportCsv,
+            exportJson: settingExportJson?.checked ?? defaultSettings.exportJson,
+            exportFit: settingExportFit?.checked ?? defaultSettings.exportFit,
+        };
+
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        applySettings(settings);
     };
 
     /**
-     * Close the settings modal
+     * Load settings from localStorage
      */
-    const closeModal = (): void => {
-        settingsModal.style.display = 'none';
+    const loadSettings = (): void => {
+        const settings = getSettings();
+
+        // Dashboard display settings
+        if (settingPower) settingPower.checked = settings.power;
+        if (settingHeartrate) settingHeartrate.checked = settings.heartrate;
+        if (settingPower3s) settingPower3s.checked = settings.power3s;
+
+        // Accessibility settings
+        if (settingHighContrast) settingHighContrast.checked = settings.highContrast;
+        if (settingColorblindPatterns) settingColorblindPatterns.checked = settings.colorblindPatterns;
+
+        // Voice Feedback settings
+        if (settingVoiceEnabled) settingVoiceEnabled.checked = settings.voiceEnabled;
+        if (settingVoiceLaps) settingVoiceLaps.checked = settings.voiceLaps;
+        if (settingVoiceZones) settingVoiceZones.checked = settings.voiceZones;
+
+        // Export format settings
+        if (settingExportTcx) settingExportTcx.checked = settings.exportTcx;
+        if (settingExportCsv) settingExportCsv.checked = settings.exportCsv;
+        if (settingExportJson) settingExportJson.checked = settings.exportJson;
+        if (settingExportFit) settingExportFit.checked = settings.exportFit;
+
+        applySettings(settings);
     };
 
     // Event Listeners
-    settingsButton.addEventListener('click', openModal);
-    closeSettingsModal?.addEventListener('click', closeModal);
     saveSettingsButton?.addEventListener('click', saveSettings);
-
-    // Close modal when clicking outside
-    window.addEventListener('click', (event: MouseEvent) => {
-        if (event.target === settingsModal) {
-            closeModal();
-        }
-    });
 
     // Initialize
     loadSettings();

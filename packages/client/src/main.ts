@@ -39,18 +39,25 @@ import { getInitState } from './getInitState.js';
 import { handleWakeLock } from './ui/wakeLock.js';
 import { registerServiceWorker } from './ui/serviceWorker.js';
 import { initInstallPrompt } from './ui/installPrompt.js';
-import { initSettings } from './ui/settings.js';
 import { initAboutModal } from './ui/about.js';
 import { exposeVariablesDuringTest } from './exposeVariablesDuringTest.js';
 import { StreamManager } from './streamManager.js';
 import { initStreamViewer } from './ui/streamViewer.js';
 import { initStreamingControls } from './initStreamingControls.js';
-import { initWorkoutHistory } from './ui/workoutHistory.js';
+// import { initWorkoutHistory } from './ui/workoutHistory.js';
+import { initWorkoutBuilder } from './ui/workoutBuilder.js';
 import { initKeyboardNavigation } from './ui/accessibility.js';
 import { setupDarkModeToggle } from './ui/darkMode.js';
 import { initOnboarding } from './ui/onboarding.js';
 import { initLapButton } from './ui/lap.js';
 import { initWorkoutRecovery } from './ui/workoutRecovery.js';
+import { Router } from './router/Router.js';
+import { DashboardView } from './views/DashboardView.js';
+import { HistoryView } from './views/HistoryView.js';
+import { WorkoutsView } from './views/WorkoutsView.js';
+import { SettingsView } from './views/SettingsView.js';
+import { NavBar } from './components/NavBar.js';
+import './ui/navbar.css';
 
 /**
  * Initialize application state
@@ -72,6 +79,31 @@ const zoneState = initMetricsDisplay({ connectionsState, measurementsState });
 // Initialize Bluetooth connection buttons
 initConnectionButtons({ connectionsState, measurementsState });
 
+// Initialize Navigation Logic
+const router = new Router(document.getElementById('mainContent')!);
+const dashboardView = new DashboardView();
+const historyView = new HistoryView();
+const workoutsView = new WorkoutsView();
+const settingsView = new SettingsView();
+
+router.registerView(dashboardView);
+router.registerView(historyView);
+router.registerView(workoutsView);
+router.registerView(settingsView);
+
+router.addRoute('/', 'dashboard');
+router.addRoute('/history', 'history');
+router.addRoute('/workouts', 'workouts');
+router.addRoute('/settings', 'settings');
+
+// Initialize Navigation Bar
+new NavBar(router);
+
+router.start();
+
+// Expose router to window for global access (navigation)
+(window as any).router = router;
+
 // Initialize menu controls
 initDiscardButton({ measurementsState, timeState, zoneState });
 initExportButton(measurementsState, zoneState);
@@ -83,13 +115,17 @@ initStreamingControls(streamManager, timeState);
 initStreamViewer();
 
 // Initialize workout history
-initWorkoutHistory();
+// REMOVED: initWorkoutHistory(); - Logic moved to HistoryView.ts
+
+// Initialize workouts UI
+// initWorkoutUI();
+initWorkoutBuilder();
 
 // Initialize PWA features
 handleWakeLock();
 
 // Initialize settings
-initSettings();
+// REMOVED: initSettings(); - Logic moved to SettingsView.ts
 
 // Initialize about modal
 initAboutModal();

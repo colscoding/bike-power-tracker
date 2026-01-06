@@ -595,7 +595,7 @@ export function showWorkoutSummary(
                     },
                 },
                 {
-                    text: '💾 Export',
+                    text: '💾 Save & Finish',
                     variant: 'primary',
                     onClick: () => {
                         closeModal?.();

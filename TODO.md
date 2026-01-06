@@ -368,20 +368,20 @@ Completed all technical debt items from the backlog:
 
 ### 4.1 Structured Workouts
 
-- [ ] **Workout builder**
-  - Define intervals (power target, duration)
-  - Warm-up and cool-down phases
-  - Rest intervals
+- [x] **Workout builder** ✅ *Completed Jan 6, 2026*
+  - [x] Define intervals (power target, duration)
+  - [x] Warm-up and cool-down phases
+  - [x] Rest intervals
 
-- [ ] **Workout player**
-  - Visual countdown/progress
-  - Audio cues for intervals
-  - Auto-advance through phases
+- [x] **Workout player** ✅ *Basic version implemented Jan 6, 2026*
+  - [x] Visual countdown/progress
+  - [x] Audio cues for intervals ✅ *Added Jan 6, 2026*
+  - [x] Auto-advance through phases
 
 - [ ] **Workout library**
-  - Pre-built workouts (FTP test, sweet spot, VO2max)
-  - Save custom workouts
-  - Share workouts (export/import)
+  - [x] Pre-built workouts (FTP test, sweet spot, VO2max) ✅ *Completed Jan 6, 2026*
+  - [x] Save custom workouts ✅ *Completed Jan 6, 2026*
+  - [x] Share workouts (export/import) ✅ *Completed Jan 6, 2026*
 
 ### 4.2 Smart Trainer Control (FTMS)
 
@@ -403,16 +403,16 @@ Completed all technical debt items from the backlog:
   - Weekly/monthly summaries
   - Filter by date range, type
 
-- [ ] **Performance charts**
+- [x] **Performance charts**
   - [x] Power curve (best efforts) ✅ *Completed Jan 2, 2025*
-  - [x] FTP progression over time ✅ *Backend completed Jan 6, 2026*
+  - [x] FTP progression over time ✅ *Completed Jan 6, 2026*
   - [x] Training load (TSS/week) ✅ *Completed Jan 2, 2025*
   - [x] Fitness/fatigue model (CTL/ATL) ✅ *Completed Jan 6, 2026*
 
-- [ ] **Personal records**
+- [x] **Personal records**
   - [x] Track PRs for various durations ✅ *Completed Jan 2, 2025*
   - [x] Notifications on new PRs ✅ *Completed Jan 6, 2026*
-  - [ ] PR history
+  - [x] PR history ✅ *Completed Jan 6, 2026*
 
 ---
 
@@ -525,8 +525,9 @@ These items can be completed quickly with significant user benefit:
 1. [x] **Add GitHub Actions test workflow** ✅ *Partially done - needs CI/CD setup*
 2. [x] **Implement Bluetooth auto-reconnect** ✅ *Done*
 3. [x] **Add post-workout summary modal** ✅ *Done*
-4. [ ] **Add power/HR zone indicators**
-5. [x] **Custom discard confirmation modal (replace `confirm()`)** ✅ *Done*
+4. [x] **Show/hide metrics based on connection** ✅ *Done Jan 6, 2026*
+5. [ ] **Add power/HR zone indicators**
+6. [x] **Custom discard confirmation modal (replace `confirm()`)** ✅ *Done*
 
 ### Can Do This Month (< 1 week each)
 

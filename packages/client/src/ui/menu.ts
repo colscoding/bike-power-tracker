@@ -15,6 +15,7 @@ import { showUndoNotification, createWorkoutBackup, restoreWorkoutBackup, type W
 import { resetLapCounter } from './lap.js';
 import { PersonalRecordTracker } from './analyticsHelper.js';
 import { listWorkouts, isDatabaseAvailable } from '../api/workoutClient.js';
+import { archiveWorkout } from '../storage/workoutStorage.js';
 import type { MeasurementsState } from '../MeasurementsState.js';
 import type { TimeState } from '../getInitState.js';
 import type { ZoneState } from '../ZoneState.js';
@@ -418,7 +419,29 @@ export const initWorkoutSummaryModal = ({
         }
 
         await showWorkoutSummary(summary, {
-            onExport: () => {
+            onExport: async () => {
+                try {
+                    // Archive to IndexedDB
+                    await archiveWorkout(
+                        {
+                            power: measurementsState.power,
+                            heartrate: measurementsState.heartrate,
+                            cadence: measurementsState.cadence,
+                            speed: measurementsState.speed,
+                            distance: measurementsState.distance,
+                            altitude: measurementsState.altitude,
+                            gps: measurementsState.gps,
+                            laps: measurementsState.laps,
+                        },
+                        detail.startTime || timeState.startTime || Date.now(),
+                        detail.endTime || timeState.endTime || Date.now()
+                    );
+                    announce('Workout saved to local history', 'polite');
+                } catch (err) {
+                    console.error('Failed to save to local history', err);
+                    announce('Failed to save to local history', 'assertive');
+                }
+
                 // Trigger the export button click
                 const exportButton = document.getElementById('exportData');
                 exportButton?.click();

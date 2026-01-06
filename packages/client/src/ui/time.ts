@@ -13,6 +13,7 @@
 
 import { getTimestring } from '../getTimestring.js';
 import { announce, updateWorkoutControlsAccessibility } from './accessibility.js';
+import { onWorkoutStart, onWorkoutPause } from './workoutPlayer.js';
 import type { TimeState } from '../getInitState.js';
 
 /**
@@ -140,6 +141,8 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         timeState.endTime = null;
         timeState.running = true;
 
+        onWorkoutStart();
+
         updateButtonVisibility(elements, 'recording');
         updateWorkoutControlsAccessibility('recording');
         announce('Workout started', 'assertive');
@@ -149,6 +152,8 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     pauseButton.addEventListener('click', () => {
         timeState.running = false;
         timeState.endTime = Date.now();
+
+        onWorkoutPause();
 
         updateButtonVisibility(elements, 'paused');
         updateWorkoutControlsAccessibility('paused');
@@ -165,6 +170,8 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         timeState.endTime = null;
         timeState.running = true;
 
+        onWorkoutStart();
+
         updateButtonVisibility(elements, 'recording');
         updateWorkoutControlsAccessibility('recording');
         announce('Workout resumed', 'assertive');
@@ -175,6 +182,8 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         // Keep endTime as is (already set when paused)
         // Reset to idle state for next workout
         timeState.running = false;
+
+        onWorkoutPause();
 
         updateButtonVisibility(elements, 'paused');
         updateWorkoutControlsAccessibility('paused');

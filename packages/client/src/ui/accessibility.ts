@@ -188,10 +188,16 @@ export function initKeyboardNavigation(): void {
         key: 'h',
         description: 'Open workout history',
         action: () => {
-            const historyBtn = document.getElementById('workoutHistoryButton');
-            if (historyBtn) {
-                historyBtn.click();
+            const router = (window as any).router;
+            if (router) {
+                router.navigate('/history');
                 announce('Workout history opened');
+            } else {
+                const historyBtn = document.getElementById('workoutHistoryButton');
+                if (historyBtn) {
+                    historyBtn.click();
+                    announce('Workout history opened');
+                }
             }
         },
     });

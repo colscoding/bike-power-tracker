@@ -10,7 +10,7 @@
 import type { MeasurementsData, Measurement, LapMarker, GpsPoint } from '../types/measurements.js';
 
 const DB_NAME = 'BikeTrackerDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'activeWorkout';
 const COMPLETED_STORE = 'completedWorkouts';
 
@@ -23,6 +23,8 @@ export interface StoredWorkout {
     lastUpdated: number;
     measurements: MeasurementsData;
     isCompleted: boolean;
+    synced?: boolean;
+    syncedTime?: number;
 }
 
 /**
@@ -189,6 +191,7 @@ export async function archiveWorkout(
             lastUpdated: endTime,
             measurements,
             isCompleted: true,
+            synced: false,
         };
 
         return new Promise((resolve, reject) => {
@@ -210,6 +213,41 @@ export async function archiveWorkout(
         });
     } catch (error) {
         console.error('Error archiving workout:', error);
+        throw error;
+    }
+}
+
+/**
+ * Marks a workout as synced with the server
+ */
+export async function markWorkoutSynced(workoutId: string): Promise<void> {
+    try {
+        const database = await openDatabase();
+
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction(COMPLETED_STORE, 'readwrite');
+            const store = transaction.objectStore(COMPLETED_STORE);
+            const getRequest = store.get(workoutId);
+
+            getRequest.onsuccess = () => {
+                const record = getRequest.result as StoredWorkout;
+                if (!record) {
+                    reject(new Error('Workout not found'));
+                    return;
+                }
+
+                record.synced = true;
+                record.syncedTime = Date.now();
+
+                const updateRequest = store.put(record);
+                updateRequest.onsuccess = () => resolve();
+                updateRequest.onerror = () => reject(updateRequest.error);
+            };
+
+            getRequest.onerror = () => reject(getRequest.error);
+        });
+    } catch (error) {
+        console.error('Error marking workout synced:', error);
         throw error;
     }
 }

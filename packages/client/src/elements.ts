@@ -28,37 +28,26 @@ export type SensorElementsMap = Record<SensorType, SensorElements>;
  * @returns The element or null if not found
  */
 function getElement<T extends HTMLElement = HTMLElement>(id: string): T | null {
-    const element = document.getElementById(id) as T | null;
-    if (!element) {
-        console.warn(`Element with ID "${id}" not found in DOM`);
+    const el = document.getElementById(id) as T | null;
+    if (!el) {
+        // console.warn(`Element with ID "${id}" not found`);
     }
-    return element;
+    return el;
 }
 
-// Individual element exports for backward compatibility
-export const connectPowerElem = getElement<HTMLButtonElement>('connectPower');
-export const connectHeartrateElem = getElement<HTMLButtonElement>('connectHeartrate');
-export const connectCadenceElem = getElement<HTMLButtonElement>('connectCadence');
-export const connectGpsElem = getElement<HTMLButtonElement>('connectGps');
-
-export const powerElement = getElement('power');
-export const heartrateElement = getElement('heartrate');
-export const cadenceElement = getElement('cadence');
-export const speedElement = getElement('speed');
-export const distanceElement = getElement('distance');
-export const altitudeElement = getElement('altitude');
-
 /**
- * Grouped elements by sensor type
+ * Grouped elements by sensor type.
+ * Uses getters to lazily retrieve elements from the DOM, ensuring they are found
+ * even if this module is imported before the DOM is fully constructed.
  */
 export const elements: SensorElementsMap = {
-    power: { display: powerElement, connect: connectPowerElem },
-    heartrate: { display: heartrateElement, connect: connectHeartrateElem },
-    cadence: { display: cadenceElement, connect: connectCadenceElem },
-    gps: { display: null, connect: connectGpsElem },
-    speed: { display: speedElement, connect: null },
-    distance: { display: distanceElement, connect: null },
-    altitude: { display: altitudeElement, connect: null },
+    get power() { return { display: getElement('power'), connect: getElement('connectPower') }; },
+    get heartrate() { return { display: getElement('heartrate'), connect: getElement('connectHeartrate') }; },
+    get cadence() { return { display: getElement('cadence'), connect: getElement('connectCadence') }; },
+    get gps() { return { display: null, connect: getElement('connectGps') }; },
+    get speed() { return { display: getElement('speed'), connect: null }; },
+    get distance() { return { display: getElement('distance'), connect: null }; },
+    get altitude() { return { display: getElement('altitude'), connect: null }; },
 };
 
 /**

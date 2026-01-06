@@ -399,6 +399,15 @@ main {
     align-items: stretch;
 }
 
+/* Page View Wrapper (introduced by Router) */
+.page-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 /* Metrics sections */
 .metrics-section {
     flex: 1;
@@ -2624,4 +2633,90 @@ body.has-stream-toolbar header {
     font-size: 12px;
     color: var(--color-text-muted);
     margin-top: 2px;
+}
+
+/* Workout Player Overlay */
+.workout-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(33, 33, 33, 0.95);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.workout-player-header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workout-player-body {
+    padding: 16px;
+}
+
+/* Workout List Item */
+.workout-item {
+    background: var(--card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.workout-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-accent);
+}
+
+.workout-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.workout-item-title {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.workout-item-duration {
+    background: var(--color-bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.workout-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.workout-tag {
+    font-size: 0.8em;
+    padding: 2px 6px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .workout-overlay {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+    }
 }

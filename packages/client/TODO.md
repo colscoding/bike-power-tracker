@@ -80,7 +80,7 @@ Comparison with other similar clients reveals these missing features:
   - Visual guidance (Target vs Actual) and Audio Cues for segment transitions.
 
 ### Offline & Local History
-- [ ] **Local History Browser**
+- [x] **Local History Browser**
   - Browse past workouts stored in IndexedDB without requiring a server connection.
   - Sync mechanism to upload local workouts to server when online.
 
