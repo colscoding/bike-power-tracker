@@ -12,8 +12,8 @@ COPY prisma ./prisma/
 RUN ls -la
 
 # Install ALL dependencies (need devDependencies for build)
-RUN npm -v
-RUN rm package-lock.json && npm install
+RUN npm install -g pnpm && pnpm -v
+RUN rm package-lock.json && pnpm install
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -32,7 +32,7 @@ COPY src ./src
 COPY tsconfig.json ./
 
 # Build TypeScript to JavaScript
-RUN npm run build
+RUN pnpm run build
 
 # Stage 3: Production
 FROM node:18-alpine AS production
@@ -54,11 +54,11 @@ COPY prisma ./prisma/
 
 # Install production dependencies only
 # Using --ignore-scripts to skip postinstall, we'll run prisma generate separately
-RUN rm package-lock.json && \
-    npm install --only=production --ignore-scripts && \
+RUN npm install -g pnpm && \
+    rm package-lock.json && \
+    pnpm install --prod --ignore-scripts && \
     npx prisma generate && \
-    npm cache clean --force && \
-    rm -rf /root/.npm /tmp/*
+    rm -rf /root/.local/share/pnpm/store /tmp/*
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist

@@ -2,6 +2,8 @@
 
 Real-time workout streaming service built with Node.js, Express, Redis Streams, and optional persistent database.
 
+Detailed documentation is available in the [docs/](docs/) directory.
+
 ## Table of Contents
 
 - [Overview](#overview)

@@ -398,21 +398,21 @@ Completed all technical debt items from the backlog:
 
 ### 4.3 Analytics & History
 
-- [ ] **Workout history UI improvements**
+- [x] **Workout history UI improvements** ✅ *Completed Jan 2, 2025*
   - Calendar view of workouts
   - Weekly/monthly summaries
   - Filter by date range, type
 
 - [ ] **Performance charts**
-  - Power curve (best efforts)
-  - FTP progression over time
-  - Training load (TSS/week)
-  - Fitness/fatigue model (CTL/ATL)
+  - [x] Power curve (best efforts) ✅ *Completed Jan 2, 2025*
+  - [x] FTP progression over time ✅ *Backend completed Jan 6, 2026*
+  - [x] Training load (TSS/week) ✅ *Completed Jan 2, 2025*
+  - [x] Fitness/fatigue model (CTL/ATL) ✅ *Completed Jan 6, 2026*
 
 - [ ] **Personal records**
-  - Track PRs for various durations
-  - Notifications on new PRs
-  - PR history
+  - [x] Track PRs for various durations ✅ *Completed Jan 2, 2025*
+  - [x] Notifications on new PRs ✅ *Completed Jan 6, 2026*
+  - [ ] PR history
 
 ---
 

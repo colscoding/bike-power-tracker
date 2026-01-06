@@ -11,8 +11,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Install all dependencies (including dev)
-RUN npm install
+RUN pnpm install
 
 # Copy application files
 COPY . .
@@ -24,4 +27,4 @@ EXPOSE 3000
 ENTRYPOINT ["dumb-init", "--"]
 
 # Start with nodemon for hot-reloading
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]

@@ -48,3 +48,7 @@ home-server-ip.txt
 credentials.json
 config.yml
 remote.txt
+.env.production
+
+# android
+*.apk

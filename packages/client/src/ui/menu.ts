@@ -13,6 +13,8 @@ import { showConfirmation, showWorkoutSummary, calculateWorkoutSummary } from '.
 import { announce } from './accessibility.js';
 import { showUndoNotification, createWorkoutBackup, restoreWorkoutBackup, type WorkoutBackup } from './undoNotification.js';
 import { resetLapCounter } from './lap.js';
+import { PersonalRecordTracker } from './analyticsHelper.js';
+import { listWorkouts, isDatabaseAvailable } from '../api/workoutClient.js';
 import type { MeasurementsState } from '../MeasurementsState.js';
 import type { TimeState } from '../getInitState.js';
 import type { ZoneState } from '../ZoneState.js';
@@ -399,6 +401,22 @@ export const initWorkoutSummaryModal = ({
             zoneState
         );
 
+        // Check for Personal Records
+        let newRecords: string[] = [];
+        try {
+            if (await isDatabaseAvailable()) {
+                const history = await listWorkouts({ limit: 1000 }); // Fetch simplified list
+                const tracker = new PersonalRecordTracker(history.workouts);
+                newRecords = tracker.checkNewRecords(summary);
+
+                if (newRecords.length > 0) {
+                    announce(`Congratulations! You set ${newRecords.length} new personal records!`, 'assertive');
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to check for PRs:', e);
+        }
+
         await showWorkoutSummary(summary, {
             onExport: () => {
                 // Trigger the export button click
@@ -417,6 +435,6 @@ export const initWorkoutSummaryModal = ({
                 const resumeButton = document.getElementById('resumeButton') as HTMLButtonElement | null;
                 resumeButton?.click();
             },
-        });
+        }, newRecords);
     });
 };

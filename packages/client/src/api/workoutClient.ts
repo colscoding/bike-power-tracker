@@ -55,6 +55,9 @@ export interface ListWorkoutsOptions {
     limit?: number;
     status?: string;
     userId?: string;
+    startDate?: Date;
+    endDate?: Date;
+    sport?: string;
 }
 
 /**
@@ -177,12 +180,18 @@ export async function listWorkouts({
     limit = 20,
     status,
     userId,
+    startDate,
+    endDate,
+    sport,
 }: ListWorkoutsOptions = {}): Promise<ListWorkoutsResponse> {
     const params = new URLSearchParams();
     params.set('page', page.toString());
     params.set('limit', limit.toString());
     if (status) params.set('status', status);
     if (userId) params.set('userId', userId);
+    if (startDate) params.set('startDate', startDate.toISOString());
+    if (endDate) params.set('endDate', endDate.toISOString());
+    if (sport) params.set('sport', sport);
 
     const response = await fetch(`${API_BASE_URL}/api/workouts?${params}`, {
         headers: getHeaders(),

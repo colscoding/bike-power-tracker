@@ -90,4 +90,7 @@ export interface WorkoutSummary {
     totalDuration?: number;
     startTime?: number;
     endTime?: number;
+    powerCurve?: { duration: number; watts: number }[];
+    trainingLoad?: number;
+    intensityFactor?: number;
 }

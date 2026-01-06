@@ -71,17 +71,26 @@ export function createWorkoutsRouter(redisClient: RedisClientType): Router {
                 page = '1',
                 limit = '20',
                 status,
+                startDate,
+                endDate,
+                sport,
             } = req.query as {
                 userId?: string;
                 page?: string;
                 limit?: string;
                 status?: string;
+                startDate?: string;
+                endDate?: string;
+                sport?: string;
             };
 
             const result = await workoutService.getWorkoutHistory(userId || null, {
                 page: parseInt(page, 10),
                 limit: parseInt(limit, 10),
                 status: status as 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'ARCHIVED' | 'DELETED' | undefined,
+                startDate: startDate ? new Date(startDate) : undefined,
+                endDate: endDate ? new Date(endDate) : undefined,
+                sport,
             });
 
             res.json(result);

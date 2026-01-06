@@ -14,7 +14,8 @@ import type {
     PublicUser,
     CreateUserParams,
     UpdateUserParams,
-} from '../types/user';
+    FtpHistoryEntry,
+} from '../types/user.js';
 
 /**
  * API key record
@@ -480,3 +481,83 @@ export async function verifyPassword(
         });
     });
 }
+
+/**
+ * Update user FTP and record history.
+ *
+ * @param userId - User ID
+ * @param ftp - New FTP value
+ * @param source - Source of update (optional)
+ * @returns Updated user settings
+ */
+export async function updateUserFtp(
+    userId: string,
+    ftp: number,
+    source: string = 'manual'
+): Promise<{ ftp: number }> {
+    if (!isDatabaseEnabled()) {
+        throw new Error('Database not configured');
+    }
+
+    const prisma = getPrismaClient();
+
+    // Get current settings
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { settings: true },
+    });
+
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const currentSettings = user.settings ? JSON.parse(user.settings) : {};
+
+    // Only update if changed
+    if (currentSettings.ftp === ftp) {
+        return { ftp };
+    }
+
+    const newSettings = { ...currentSettings, ftp };
+
+    // Transaction to update user and add history
+    await prisma.$transaction([
+        prisma.user.update({
+            where: { id: userId },
+            data: { settings: JSON.stringify(newSettings) },
+        }),
+        prisma.ftpHistory.create({
+            data: {
+                userId,
+                ftp,
+                source,
+            },
+        }),
+    ]);
+
+    return { ftp };
+}
+
+/**
+ * Get FTP history for a user.
+ *
+ * @param userId - User ID
+ * @returns Array of FTP history entries
+ */
+export async function getFtpHistory(
+    userId: string
+): Promise<FtpHistoryEntry[]> {
+    if (!isDatabaseEnabled()) {
+        throw new Error('Database not configured');
+    }
+
+    const prisma = getPrismaClient();
+
+    const history = await prisma.ftpHistory.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }, // Newest first
+    });
+
+    return history;
+}
+

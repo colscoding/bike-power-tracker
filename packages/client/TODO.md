@@ -66,3 +66,30 @@ Building on the recently implemented User Profile and Zone Calculation logic:
 - [x] **Offline Resilience**
   - Implement `IndexedDB` for robust workout recording persistence (prevent data loss on crash/reload).
   - Improve Service Worker caching strategy for offline-first capability.
+
+## 4. Features from Comparative Analysis (Missing in Current Client)
+
+Comparison with other similar clients reveals these missing features:
+
+### Structured Workouts
+- [ ] **Workout Editor/Import**
+  - Ability to create or import (ERG/MRC files) structured workouts.
+  - Define labels for segments (Warmup, Intervals, Recovery).
+- [ ] **Workout Execution Mode**
+  - Target matching (Power/Cadence/HR) for current segment.
+  - Visual guidance (Target vs Actual) and Audio Cues for segment transitions.
+
+### Offline & Local History
+- [ ] **Local History Browser**
+  - Browse past workouts stored in IndexedDB without requiring a server connection.
+  - Sync mechanism to upload local workouts to server when online.
+
+### Enhanced History Visualization
+- [ ] **Post-Workout Analysis**
+  - Render Power/HR/Cadence graphs in the Workout History details view.
+  - Show Time-in-Zone distribution charts for finished workouts.
+
+### Mock Mode
+- [ ] **Demo/Mock Mode Toggle**
+  - Add a setting to enable Mock Sensors for user testing/demonstration.
+  - (Currently only available in Development build).

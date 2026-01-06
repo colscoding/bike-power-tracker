@@ -11,7 +11,19 @@ export interface UserSettings {
     theme?: 'light' | 'dark' | 'system';
     units?: 'metric' | 'imperial';
     notifications?: boolean;
+    ftp?: number;
     [key: string]: unknown;
+}
+
+/**
+ * FTP History Entry
+ */
+export interface FtpHistoryEntry {
+    id: string;
+    userId: string;
+    ftp: number;
+    source: string | null;
+    createdAt: Date;
 }
 
 /**

@@ -8,10 +8,10 @@
     "test:watch": "NODE_ENV=test tsx --test --watch src/*.test.ts src/**/*.test.ts",
     "test:fuzz": "NODE_ENV=test tsx --test src/bluetooth-fuzz.test.ts",
     "dev": "vite --host",
-    "dev:fresh": "npm run clear-cache && vite --host",
+    "dev:fresh": "pnpm run clear-cache && vite --host",
     "start": "vite --host",
     "start:test": "vite --host --mode test",
-    "build": "npm run typecheck && vite build",
+    "build": "pnpm run typecheck && vite build",
     "preview": "vite preview --host",
     "clear-cache": "echo 'To clear browser cache: Open DevTools > Application > Clear Storage > Clear site data'",
     "test:e2e": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js",
@@ -19,9 +19,12 @@
     "test:visual": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js",
     "test:visual:update": "NODE_ENV=test playwright test --config=test-e2e/playwright.config.js test-e2e/visual.spec.js --update-snapshots",
     "cap:sync": "npx cap sync",
-    "cap:open:android": "npx cap open android",
+    "cap:open:android": "CAPACITOR_ANDROID_STUDIO_PATH=/snap/bin/android-studio npx cap open android",
     "cap:open:ios": "npx cap open ios",
-    "build:mobile": "npm run build && npx cap sync"
+    "build:mobile": "pnpm run build && npx cap sync",
+    "android:build": "pnpm run build && npx cap sync android",
+    "ios:build": "pnpm run build && npx cap sync ios",
+    "apk": "./latest-apk.sh"
   },
   "keywords": [
     "bike",

@@ -438,19 +438,116 @@
             <div class="stream-modal-body" style="overflow-y: auto; max-height: calc(80vh - 120px);">
                 <!-- List Panel -->
                 <div id="workoutListPanel">
-                    <div class="workout-controls" role="toolbar" aria-label="Workout history controls">
-                        <button id="historyRefresh" class="workout-control-btn" aria-label="Refresh workout list"
-                            title="Refresh">🔄</button>
-                        <nav class="workout-pagination" aria-label="Workout history pagination">
-                            <button id="historyPrevPage" class="workout-control-btn" aria-label="Previous page"
-                                disabled>◀</button>
-                            <span id="historyPageInfo" aria-live="polite">Page 1 of 1</span>
-                            <button id="historyNextPage" class="workout-control-btn" aria-label="Next page"
-                                disabled>▶</button>
-                        </nav>
+                    <div class="workout-filters"
+                        style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--color-border); padding-bottom: 12px;">
+                        <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
+                            <label for="workoutTypeFilter" class="sr-only">Type</label>
+                            <select id="workoutTypeFilter"
+                                style="padding: 6px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                                <option value="">All Types</option>
+                                <option value="cycling">Cycling</option>
+                                <option value="indoor_cycling">Indoor Cycling</option>
+                                <option value="running">Running</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="display: flex; gap: 4px; align-items: center;">
+                            <label for="workoutDateStart" class="sr-only">Start Date</label>
+                            <input type="date" id="workoutDateStart"
+                                style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                            <span aria-hidden="true">-</span>
+                            <label for="workoutDateEnd" class="sr-only">End Date</label>
+                            <input type="date" id="workoutDateEnd"
+                                style="padding: 5px; border-radius: 4px; border: 1px solid var(--color-border); background: var(--input-bg); color: var(--color-text-primary);">
+                        </div>
+                        <div style="flex-grow: 1;"></div>
+                        <div class="view-toggle"
+                            style="display: flex; border: 1px solid var(--color-border); border-radius: 4px; overflow: hidden;">
+                            <button id="viewListBtn" class="view-btn active" aria-pressed="true"
+                                style="padding: 6px 12px; border: none; background: var(--color-bg-active); color: var(--color-text-primary); cursor: pointer;">List</button>
+                            <button id="viewCalendarBtn" class="view-btn" aria-pressed="false"
+                                style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;">📅</button>
+                            <button id="viewAnalyticsBtn" class="view-btn" aria-pressed="false"
+                                style="padding: 6px 12px; border: none; background: transparent; color: var(--color-text-primary); cursor: pointer;"
+                                title="Analytics">📈</button>
+                        </div>
                     </div>
-                    <div id="workoutList" class="workout-list" role="list" aria-label="Workout entries">
-                        <!-- Workout cards will be injected here -->
+
+                    <div id="workoutListView">
+                        <div class="workout-controls" role="toolbar" aria-label="Workout history controls">
+                            <button id="historyRefresh" class="workout-control-btn" aria-label="Refresh workout list"
+                                title="Refresh">🔄</button>
+                            <nav class="workout-pagination" aria-label="Workout history pagination">
+                                <button id="historyPrevPage" class="workout-control-btn" aria-label="Previous page"
+                                    disabled>◀</button>
+                                <span id="historyPageInfo" aria-live="polite">Page 1 of 1</span>
+                                <button id="historyNextPage" class="workout-control-btn" aria-label="Next page"
+                                    disabled>▶</button>
+                            </nav>
+                        </div>
+                        <div id="workoutList" class="workout-list" role="list" aria-label="Workout entries">
+                            <!-- Workout cards will be injected here -->
+                        </div>
+                    </div>
+
+                    <div id="workoutCalendarView" style="display: none;">
+                        <div class="calendar-controls"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <button id="calendarPrevMonth" class="workout-control-btn"
+                                aria-label="Previous month">◀</button>
+                            <h3 id="calendarMonthLabel" style="margin: 0;">January 2026</h3>
+                            <button id="calendarNextMonth" class="workout-control-btn"
+                                aria-label="Next month">▶</button>
+                        </div>
+                        <div id="workoutCalendarGrid" class="calendar-grid"
+                            style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">
+                            <!-- Calendar will be generated -->
+                        </div>
+                    </div>
+
+                    <div id="workoutAnalyticsView" style="display: none;">
+                        <h3 class="section-title">📊 Analytics & Records</h3>
+
+                        <div class="analytics-grid"
+                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; padding: 8px;">
+                            <!-- Personal Records Card -->
+                            <div class="card"
+                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
+                                <h4>🏅 Personal Records</h4>
+                                <div id="prList" style="margin-top: 12px;">
+                                    <div style="padding: 12px; text-align: center; color: var(--color-text-secondary);">
+                                        Loading records...</div>
+                                </div>
+                            </div>
+
+                            <!-- Weekly Load Card -->
+                            <div class="card"
+                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border);">
+                                <h4>🏋️ Training Load (Last 4 Weeks)</h4>
+                                <div id="trainingLoadChart"
+                                    style="height: 150px; margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-around; gap: 4px;">
+                                    <!-- Bars will be injected -->
+                                </div>
+                            </div>
+
+                            <!-- Power Curve Card -->
+                            <div class="card"
+                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                                <h4>⚡ Power Curve (All Time Bests)</h4>
+                                <div id="powerCurveChart" style="height: 200px; margin-top: 12px; position: relative;">
+                                    <!-- SVG Chart will be injected -->
+                                </div>
+                            </div>
+
+                            <!-- Fitness Trend Card -->
+                            <div class="card"
+                                style="background: var(--card-bg); padding: 16px; border-radius: 8px; border: 1px solid var(--color-border); grid-column: 1 / -1;">
+                                <h4>📈 Fitness Trend (CTL / ATL)</h4>
+                                <div id="fitnessTrendChart"
+                                    style="height: 250px; margin-top: 12px; position: relative;">
+                                    <!-- SVG Chart will be injected -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <!-- Detail Panel (hidden by default) -->

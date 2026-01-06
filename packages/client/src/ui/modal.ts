@@ -263,6 +263,9 @@ export interface WorkoutSummary {
     };
     powerZoneDistribution?: ZoneDistribution;
     hrZoneDistribution?: ZoneDistribution;
+    powerCurve?: { duration: number; watts: number }[];
+    trainingLoad?: number;
+    intensityFactor?: number;
 }
 
 /**
@@ -291,6 +294,74 @@ export function calculateWorkoutSummary(
         };
     };
 
+    // Calculate Power Curve
+    const powerValues = measurements.power.map(p => p.value);
+    const powerCurve: { duration: number; watts: number }[] = [];
+    const durations = [1, 5, 10, 30, 60, 300, 1200, 3600]; // 1s, 5s, 10s, 30s, 1m, 5m, 20m, 1h
+
+    // Helper for sliding window max
+    const getMaxForDuration = (windowSize: number) => {
+        if (powerValues.length < windowSize) return 0;
+        let sum = 0;
+        for (let i = 0; i < windowSize; i++) sum += powerValues[i];
+        let maxAvg = sum / windowSize;
+
+        for (let i = windowSize; i < powerValues.length; i++) {
+            sum = sum - powerValues[i - windowSize] + powerValues[i];
+            if ((sum / windowSize) > maxAvg) maxAvg = sum / windowSize;
+        }
+        return Math.round(maxAvg);
+    };
+
+    for (const d of durations) {
+        if (powerValues.length >= d) {
+            powerCurve.push({ duration: d, watts: getMaxForDuration(d) });
+        }
+    }
+
+    // Calculate TSS & IF (Assuming FTP = 200 if not set, should ideally come from user profile)
+    // TODO: Fetch user profile FTP properly. Using a fallback for now.
+    // Normalized power approximation: xPower (simple moving average for now or just avg)
+    // Real NP requires 30s rolling avg, raised to 4th power, avg, 4th root.
+
+    let trainingLoad = 0;
+    let intensityFactor = 0;
+
+    // Quick and dirty TSS if we have "bpt-user-profile" in localstorage
+    try {
+        const profileStr = localStorage.getItem('bpt-user-profile');
+        if (profileStr && powerValues.length > 0) {
+            const profile = JSON.parse(profileStr);
+            const ftp = profile.ftp || 200;
+
+            // Calculate Normalized Power (Simplified algorithm)
+            // 1. 30s rolling avg
+            const rolling30s: number[] = [];
+            let sum30 = 0;
+            for (let i = 0; i < powerValues.length; i++) {
+                sum30 += powerValues[i];
+                if (i >= 30) sum30 -= powerValues[i - 30];
+                if (i >= 29) rolling30s.push(sum30 / 30);
+            }
+
+            if (rolling30s.length > 0) {
+                // 2. raise to 4th power
+                const pow4 = rolling30s.map(v => Math.pow(v, 4));
+                // 3. average
+                const avgPow4 = pow4.reduce((a, b) => a + b, 0) / pow4.length;
+                // 4. 4th root
+                const np = Math.pow(avgPow4, 0.25);
+
+                intensityFactor = np / ftp;
+                // TSS = (sec x NP x IF) / (FTP x 3600) x 100
+                const durationSec = (endTime - startTime) / 1000;
+                trainingLoad = (durationSec * np * intensityFactor) / (ftp * 3600) * 100;
+            }
+        }
+    } catch (e) {
+        console.warn('Error calculating TSS', e);
+    }
+
     const summary: WorkoutSummary = {
         duration: endTime - startTime,
         startTime,
@@ -298,6 +369,9 @@ export function calculateWorkoutSummary(
         power: calcStats(measurements.power),
         heartrate: calcStats(measurements.heartrate),
         cadence: calcStats(measurements.cadence),
+        powerCurve: powerCurve.length > 0 ? powerCurve : undefined,
+        trainingLoad: trainingLoad > 0 ? Math.round(trainingLoad) : undefined,
+        intensityFactor: intensityFactor > 0 ? parseFloat(intensityFactor.toFixed(2)) : undefined,
     };
 
     // Add zone distributions if available
@@ -399,7 +473,7 @@ function createZoneHistogram(distribution: ZoneDistribution, title: string): HTM
 /**
  * Create workout summary content HTML element
  */
-export function createSummaryContent(summary: WorkoutSummary): HTMLElement {
+export function createSummaryContent(summary: WorkoutSummary, newRecords: string[] = []): HTMLElement {
     const container = document.createElement('div');
     container.className = 'workout-summary';
 
@@ -407,7 +481,23 @@ export function createSummaryContent(summary: WorkoutSummary): HTMLElement {
         return value !== null ? `${value}${unit}` : '--';
     };
 
+    // New Records Section
+    let recordsHtml = '';
+    if (newRecords.length > 0) {
+        recordsHtml = `
+            <div class="summary-records" style="background: rgba(255, 215, 0, 0.1); border: 1px solid var(--color-accent); border-radius: 8px; padding: 12px; margin-bottom: 16px;">
+                <h4 style="margin: 0 0 8px 0; color: var(--color-accent); display: flex; align-items: center; gap: 8px;">
+                    🏆 New Personal Records!
+                </h4>
+                <ul style="margin: 0; padding-left: 20px; list-style-type: none;">
+                    ${newRecords.map(r => `<li style="margin-bottom: 4px;">🆕 ${r}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
+
     container.innerHTML = `
+        ${recordsHtml}
         <div class="summary-duration">
             <span class="summary-label">Duration</span>
             <span class="summary-value">${formatDurationLong(summary.duration)}</span>
@@ -472,12 +562,13 @@ export function showWorkoutSummary(
         onExport: () => void;
         onDiscard: () => void;
         onKeepRecording: () => void;
-    }
+    },
+    newRecords: string[] = []
 ): Promise<'export' | 'discard' | 'keep'> {
     return new Promise((resolve) => {
         let closeModal: (() => void) | null = null;
 
-        const content = createSummaryContent(summary);
+        const content = createSummaryContent(summary, newRecords);
 
         closeModal = showModal({
             title: 'Workout Complete',

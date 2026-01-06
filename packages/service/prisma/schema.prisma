@@ -41,10 +41,23 @@ model User {
   // Relations
   workouts      Workout[]
   apiKeys       ApiKey[]
+  ftpHistory    FtpHistory[]
   
   @@map("users")
   @@index([email])
   @@index([provider, providerId])
+}
+
+model FtpHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ftp       Int
+  source    String?  // e.g., "manual", "auto-detected"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("ftp_history")
 }
 
 model ApiKey {
@@ -133,6 +146,6 @@ model PersonalRecord {
   createdAt   DateTime  @default(now()) @map("created_at")
   
   @@map("personal_records")
-  @@unique([userId, metric, duration])
+  @@index([userId, metric, duration])
   @@index([userId])
 }

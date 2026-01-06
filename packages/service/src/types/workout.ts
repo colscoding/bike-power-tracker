@@ -38,6 +38,9 @@ export interface WorkoutSummary {
     totalElevationGain: number | null;
     totalEnergy: number | null;
     sampleCount: number;
+    powerCurve?: { duration: number; watts: number }[];
+    trainingLoad?: number;
+    intensityFactor?: number;
 }
 
 /**
@@ -99,6 +102,9 @@ export interface WorkoutQueryOptions {
     page?: number;
     limit?: number;
     status?: WorkoutStatus;
+    startDate?: Date;
+    endDate?: Date;
+    sport?: string;
 }
 
 /**

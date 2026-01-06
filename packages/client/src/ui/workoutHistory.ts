@@ -7,14 +7,15 @@
  */
 
 import {
-    isDatabaseAvailable,
-    listWorkouts,
-    getWorkout,
-    deleteWorkout,
-    formatDuration,
-    formatDate,
-    type Workout,
-    type ListWorkoutsResponse,
+  isDatabaseAvailable,
+  listWorkouts,
+  getWorkout,
+  deleteWorkout,
+  formatDuration,
+  formatDate,
+  type Workout,
+  type ListWorkoutsResponse,
+  type ListWorkoutsOptions,
 } from '../api/workoutClient.js';
 
 /** Current pagination page */
@@ -24,189 +25,324 @@ let totalPages = 1;
 /** Database availability flag */
 let dbAvailable = false;
 
+/* Filter State */
+let filterType = '';
+let filterStartDate = '';
+let filterEndDate = '';
+
+/* View State */
+let currentView: 'list' | 'calendar' | 'analytics' = 'list';
+let calendarDate = new Date(); // Points to current month
+
 /**
  * Workout summary data from API
  */
 interface WorkoutSummary {
-    avgPower?: number;
-    maxPower?: number;
-    normalizedPower?: number;
-    avgCadence?: number;
-    maxCadence?: number;
-    avgHeartrate?: number;
-    maxHeartrate?: number;
-    totalEnergy?: number;
-    sampleCount?: number;
+  avgPower?: number;
+  maxPower?: number;
+  normalizedPower?: number;
+  avgCadence?: number;
+  maxCadence?: number;
+  avgHeartrate?: number;
+  maxHeartrate?: number;
+  totalEnergy?: number;
+  totalDistance?: number;
+  sampleCount?: number;
+  powerCurve?: { duration: number; watts: number }[];
+  trainingLoad?: number;
+  intensityFactor?: number;
+}
+
+/**
+ * Helper to safely parse summary
+ */
+function getSummary(workout: Workout): WorkoutSummary {
+  if (!workout.summary) return {};
+  if (typeof workout.summary === 'string') {
+    try {
+      return JSON.parse(workout.summary);
+    } catch {
+      return {};
+    }
+  }
+  return workout.summary as unknown as WorkoutSummary;
 }
 
 /**
  * Initialize the workout history feature
  */
 export function initWorkoutHistory(): void {
-    const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
-    const modal = document.getElementById('workoutHistoryModal') as HTMLDivElement | null;
-    const closeBtn = document.getElementById('closeWorkoutHistoryModal');
-    const prevBtn = document.getElementById('historyPrevPage') as HTMLButtonElement | null;
-    const nextBtn = document.getElementById('historyNextPage') as HTMLButtonElement | null;
-    const refreshBtn = document.getElementById('historyRefresh');
+  const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
+  const modal = document.getElementById('workoutHistoryModal') as HTMLDivElement | null;
+  const closeBtn = document.getElementById('closeWorkoutHistoryModal');
+  const prevBtn = document.getElementById('historyPrevPage') as HTMLButtonElement | null;
+  const nextBtn = document.getElementById('historyNextPage') as HTMLButtonElement | null;
+  const refreshBtn = document.getElementById('historyRefresh');
 
-    if (!historyButton || !modal) {
-        console.warn('Workout history elements not found');
-        return;
+  // Filters & Views
+  const typeFilter = document.getElementById('workoutTypeFilter') as HTMLSelectElement | null;
+  const dateStart = document.getElementById('workoutDateStart') as HTMLInputElement | null;
+  const dateEnd = document.getElementById('workoutDateEnd') as HTMLInputElement | null;
+  const viewListBtn = document.getElementById('viewListBtn');
+  const viewCalendarBtn = document.getElementById('viewCalendarBtn');
+  const viewAnalyticsBtn = document.getElementById('viewAnalyticsBtn');
+
+  const listView = document.getElementById('workoutListView');
+  const calendarView = document.getElementById('workoutCalendarView');
+  const analyticsView = document.getElementById('workoutAnalyticsView');
+
+  // Calendar Controls
+  const prevMonthBtn = document.getElementById('calendarPrevMonth');
+  const nextMonthBtn = document.getElementById('calendarNextMonth');
+
+  if (!historyButton || !modal) {
+    console.warn('Workout history elements not found');
+    return;
+  }
+
+  // Check if database is available on load
+  checkDatabaseAvailability();
+
+  // Open modal
+  historyButton.addEventListener('click', async () => {
+    modal.style.display = 'flex';
+    // Reset to today
+    calendarDate = new Date();
+    if (currentView === 'list') {
+      currentPage = 1;
+      await loadWorkouts();
+    } else {
+      await loadCalendar();
+    }
+  });
+
+  // Close modal
+  closeBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  // Close on outside click
+  modal.addEventListener('click', (e: MouseEvent) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
+
+  // Toggle Views
+  const setView = (view: 'list' | 'calendar' | 'analytics') => {
+    currentView = view;
+
+    // Buttons
+    if (viewListBtn) {
+      viewListBtn.classList.toggle('active', view === 'list');
+      viewListBtn.setAttribute('aria-pressed', (view === 'list').toString());
+      viewListBtn.style.background = view === 'list' ? 'var(--color-bg-active)' : 'transparent';
+    }
+    if (viewCalendarBtn) {
+      viewCalendarBtn.classList.toggle('active', view === 'calendar');
+      viewCalendarBtn.setAttribute('aria-pressed', (view === 'calendar').toString());
+      viewCalendarBtn.style.background = view === 'calendar' ? 'var(--color-bg-active)' : 'transparent';
+    }
+    if (viewAnalyticsBtn) {
+      viewAnalyticsBtn.classList.toggle('active', view === 'analytics');
+      viewAnalyticsBtn.setAttribute('aria-pressed', (view === 'analytics').toString());
+      viewAnalyticsBtn.style.background = view === 'analytics' ? 'var(--color-bg-active)' : 'transparent';
     }
 
-    // Check if database is available on load
-    checkDatabaseAvailability();
+    // Panels
+    if (listView) listView.style.display = view === 'list' ? 'block' : 'none';
+    if (calendarView) calendarView.style.display = view === 'calendar' ? 'block' : 'none';
+    if (analyticsView) analyticsView.style.display = view === 'analytics' ? 'block' : 'none';
 
-    // Open modal
-    historyButton.addEventListener('click', async () => {
-        modal.style.display = 'flex';
-        currentPage = 1;
-        await loadWorkouts();
-    });
+    // Filters visibility (hide generic filters for analytics maybe? Keeping for now)
+  };
 
-    // Close modal
-    closeBtn?.addEventListener('click', () => {
-        modal.style.display = 'none';
-    });
+  viewListBtn?.addEventListener('click', () => {
+    setView('list');
+    loadWorkouts();
+  });
 
-    // Close on outside click
-    modal.addEventListener('click', (e: MouseEvent) => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    });
+  viewCalendarBtn?.addEventListener('click', () => {
+    setView('calendar');
+    loadCalendar();
+  });
 
-    // Pagination
-    prevBtn?.addEventListener('click', async () => {
-        if (currentPage > 1) {
-            currentPage--;
-            await loadWorkouts();
-        }
-    });
+  viewAnalyticsBtn?.addEventListener('click', () => {
+    setView('analytics');
+    loadAnalytics();
+  });
 
-    nextBtn?.addEventListener('click', async () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            await loadWorkouts();
-        }
-    });
+  // Filter Change Listeners
+  const handleFilterChange = () => {
+    if (typeFilter) filterType = typeFilter.value;
+    if (dateStart) filterStartDate = dateStart.value;
+    if (dateEnd) filterEndDate = dateEnd.value;
 
-    // Refresh
-    refreshBtn?.addEventListener('click', async () => {
-        await loadWorkouts();
-    });
+    currentPage = 1;
 
-    // Close on Escape key
-    document.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && modal.style.display === 'flex') {
-            modal.style.display = 'none';
-        }
-    });
+    if (currentView === 'list') {
+      loadWorkouts();
+    } else if (currentView === 'calendar') {
+      loadCalendar();
+    } else if (currentView === 'analytics') {
+      loadAnalytics();
+    }
+  };
+
+  typeFilter?.addEventListener('change', handleFilterChange);
+  dateStart?.addEventListener('change', handleFilterChange);
+  dateEnd?.addEventListener('change', handleFilterChange);
+
+  // Calendar Navigation
+  prevMonthBtn?.addEventListener('click', () => {
+    calendarDate.setMonth(calendarDate.getMonth() - 1);
+    loadCalendar();
+  });
+
+  nextMonthBtn?.addEventListener('click', () => {
+    calendarDate.setMonth(calendarDate.getMonth() + 1);
+    loadCalendar();
+  });
+
+  // Pagination
+  prevBtn?.addEventListener('click', async () => {
+    if (currentPage > 1) {
+      currentPage--;
+      await loadWorkouts();
+    }
+  });
+
+  nextBtn?.addEventListener('click', async () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      await loadWorkouts();
+    }
+  });
+
+  // Refresh
+  refreshBtn?.addEventListener('click', async () => {
+    await loadWorkouts();
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+    }
+  });
 }
 
 /**
  * Check if database features are available
  */
 async function checkDatabaseAvailability(): Promise<void> {
-    const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
+  const historyButton = document.getElementById('workoutHistoryButton') as HTMLButtonElement | null;
 
-    try {
-        dbAvailable = await isDatabaseAvailable();
-        if (historyButton) {
-            historyButton.disabled = !dbAvailable;
-            historyButton.title = dbAvailable
-                ? 'View workout history'
-                : 'Database not configured';
-        }
-    } catch {
-        dbAvailable = false;
-        if (historyButton) {
-            historyButton.disabled = true;
-            historyButton.title = 'Database not available';
-        }
+  try {
+    dbAvailable = await isDatabaseAvailable();
+    if (historyButton) {
+      historyButton.disabled = !dbAvailable;
+      historyButton.title = dbAvailable
+        ? 'View workout history'
+        : 'Database not configured';
     }
+  } catch {
+    dbAvailable = false;
+    if (historyButton) {
+      historyButton.disabled = true;
+      historyButton.title = 'Database not available';
+    }
+  }
 }
 
 /**
  * Load and display workouts
  */
 async function loadWorkouts(): Promise<void> {
-    const listContainer = document.getElementById('workoutList');
-    const pageInfo = document.getElementById('historyPageInfo');
-    const prevBtn = document.getElementById('historyPrevPage') as HTMLButtonElement | null;
-    const nextBtn = document.getElementById('historyNextPage') as HTMLButtonElement | null;
+  const listContainer = document.getElementById('workoutList');
+  const pageInfo = document.getElementById('historyPageInfo');
+  const prevBtn = document.getElementById('historyPrevPage') as HTMLButtonElement | null;
+  const nextBtn = document.getElementById('historyNextPage') as HTMLButtonElement | null;
 
-    if (!listContainer) return;
+  if (!listContainer) return;
 
-    // Show loading state
-    listContainer.innerHTML = '<div class="workout-loading">Loading workouts...</div>';
+  // Show loading state
+  listContainer.innerHTML = '<div class="workout-loading">Loading workouts...</div>';
 
-    try {
-        const result: ListWorkoutsResponse = await listWorkouts({ page: currentPage, limit: 10 });
-        const { workouts, pagination } = result;
+  try {
+    const options: ListWorkoutsOptions = {
+      page: currentPage,
+      limit: 10
+    };
 
-        totalPages = pagination.totalPages;
+    if (filterType) options.sport = filterType;
+    if (filterStartDate) options.startDate = new Date(filterStartDate);
+    if (filterEndDate) options.endDate = new Date(filterEndDate);
 
-        // Update pagination info
-        if (pageInfo) {
-            pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} total)`;
-        }
+    const result: ListWorkoutsResponse = await listWorkouts(options);
+    const { workouts, pagination } = result;
 
-        // Update pagination buttons
-        if (prevBtn) prevBtn.disabled = currentPage <= 1;
-        if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+    totalPages = pagination.totalPages;
 
-        // Render workouts
-        if (workouts.length === 0) {
-            listContainer.innerHTML = `
+    // Update pagination info
+    if (pageInfo) {
+      pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.total} total)`;
+    }
+
+    // Update pagination buttons
+    if (prevBtn) prevBtn.disabled = currentPage <= 1;
+    if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
+
+    // Render workouts
+    if (workouts.length === 0) {
+      listContainer.innerHTML = `
         <div class="workout-empty">
           <p>No workouts found</p>
           <p class="workout-empty-hint">Start a workout to see it here!</p>
         </div>
       `;
-            return;
-        }
+      return;
+    }
 
-        listContainer.innerHTML = workouts.map((workout) => renderWorkoutCard(workout)).join('');
+    listContainer.innerHTML = workouts.map((workout) => renderWorkoutCard(workout)).join('');
 
-        // Add event listeners for workout cards
-        listContainer.querySelectorAll('.workout-card').forEach((card) => {
-            const workoutId = (card as HTMLElement).dataset.workoutId;
-            if (!workoutId) return;
+    // Add event listeners for workout cards
+    listContainer.querySelectorAll('.workout-card').forEach((card) => {
+      const workoutId = (card as HTMLElement).dataset.workoutId;
+      if (!workoutId) return;
 
-            // View details
-            card.querySelector('.workout-view-btn')?.addEventListener('click', (e: Event) => {
-                e.stopPropagation();
-                viewWorkoutDetails(workoutId);
-            });
+      // View details
+      card.querySelector('.workout-view-btn')?.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        viewWorkoutDetails(workoutId);
+      });
 
-            // Delete
-            card.querySelector('.workout-delete-btn')?.addEventListener('click', (e: Event) => {
-                e.stopPropagation();
-                confirmDeleteWorkout(workoutId);
-            });
-        });
-    } catch (error) {
-        console.error('Failed to load workouts:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        listContainer.innerHTML = `
+      // Delete
+      card.querySelector('.workout-delete-btn')?.addEventListener('click', (e: Event) => {
+        e.stopPropagation();
+        confirmDeleteWorkout(workoutId);
+      });
+    });
+  } catch (error) {
+    console.error('Failed to load workouts:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    listContainer.innerHTML = `
       <div class="workout-error">
         <p>Failed to load workouts</p>
         <p class="workout-error-detail">${message}</p>
       </div>
     `;
-    }
+  }
 }
 
 /**
  * Render a workout card
  */
 function renderWorkoutCard(workout: Workout): string {
-    const statusClass = workout.status.toLowerCase();
-    const summary: WorkoutSummary = workout.summary ? JSON.parse(workout.summary) : {};
+  const statusClass = workout.status.toLowerCase();
+  const summary = getSummary(workout);
 
-    return `
+  return `
     <div class="workout-card" data-workout-id="${workout.id}">
       <div class="workout-card-header">
         <span class="workout-title">${workout.title || 'Untitled Workout'}</span>
@@ -236,55 +372,55 @@ function renderWorkoutCard(workout: Workout): string {
  * View workout details in a detail panel
  */
 async function viewWorkoutDetails(workoutId: string): Promise<void> {
-    const detailPanel = document.getElementById('workoutDetailPanel');
-    const listPanel = document.getElementById('workoutListPanel');
+  const detailPanel = document.getElementById('workoutDetailPanel');
+  const listPanel = document.getElementById('workoutListPanel');
 
-    if (!detailPanel || !listPanel) return;
+  if (!detailPanel || !listPanel) return;
 
-    // Show detail panel
-    listPanel.style.display = 'none';
-    detailPanel.style.display = 'block';
-    detailPanel.innerHTML = '<div class="workout-loading">Loading workout details...</div>';
+  // Show detail panel
+  listPanel.style.display = 'none';
+  detailPanel.style.display = 'block';
+  detailPanel.innerHTML = '<div class="workout-loading">Loading workout details...</div>';
 
-    try {
-        const workout = await getWorkout(workoutId, true);
-        detailPanel.innerHTML = renderWorkoutDetail(workout);
+  try {
+    const workout = await getWorkout(workoutId, true);
+    detailPanel.innerHTML = renderWorkoutDetail(workout);
 
-        // Back button
-        detailPanel.querySelector('.workout-back-btn')?.addEventListener('click', () => {
-            detailPanel.style.display = 'none';
-            listPanel.style.display = 'block';
-        });
+    // Back button
+    detailPanel.querySelector('.workout-back-btn')?.addEventListener('click', () => {
+      detailPanel.style.display = 'none';
+      listPanel.style.display = 'block';
+    });
 
-        // Export button
-        detailPanel.querySelector('.workout-export-btn')?.addEventListener('click', () => {
-            exportWorkoutData(workout);
-        });
-    } catch (error) {
-        console.error('Failed to load workout details:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        detailPanel.innerHTML = `
+    // Export button
+    detailPanel.querySelector('.workout-export-btn')?.addEventListener('click', () => {
+      exportWorkoutData(workout);
+    });
+  } catch (error) {
+    console.error('Failed to load workout details:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    detailPanel.innerHTML = `
       <div class="workout-error">
         <p>Failed to load workout</p>
         <p class="workout-error-detail">${message}</p>
         <button class="workout-back-btn">← Back to list</button>
       </div>
     `;
-        detailPanel.querySelector('.workout-back-btn')?.addEventListener('click', () => {
-            detailPanel.style.display = 'none';
-            listPanel.style.display = 'block';
-        });
-    }
+    detailPanel.querySelector('.workout-back-btn')?.addEventListener('click', () => {
+      detailPanel.style.display = 'none';
+      listPanel.style.display = 'block';
+    });
+  }
 }
 
 /**
  * Render workout detail view
  */
 function renderWorkoutDetail(workout: Workout): string {
-    const summary: WorkoutSummary = workout.summary ? JSON.parse(workout.summary) : {};
-    const statusClass = workout.status.toLowerCase();
+  const summary = getSummary(workout);
+  const statusClass = workout.status.toLowerCase();
 
-    return `
+  return `
     <div class="workout-detail">
       <div class="workout-detail-header">
         <button class="workout-back-btn">← Back</button>
@@ -373,50 +509,564 @@ function renderWorkoutDetail(workout: Workout): string {
  * Export workout data to files
  */
 function exportWorkoutData(workout: Workout): void {
-    const timestamp = new Date(workout.startTime).toISOString().replace(/[:.]/g, '-').slice(0, 19);
-    const filename = `workout-${timestamp}`;
+  const timestamp = new Date(workout.startTime).toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  const filename = `workout-${timestamp}`;
 
-    const jsonData = {
-        id: workout.id,
-        title: workout.title,
-        sport: workout.sport,
-        startTime: workout.startTime,
-        endTime: workout.endTime,
-        duration: workout.duration,
-        summary: workout.summary,
-        telemetry: workout.telemetry,
-    };
+  const jsonData = {
+    id: workout.id,
+    title: workout.title,
+    sport: workout.sport,
+    startTime: workout.startTime,
+    endTime: workout.endTime,
+    duration: workout.duration,
+    summary: workout.summary,
+    telemetry: workout.telemetry,
+  };
 
-    const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-    const jsonUrl = URL.createObjectURL(jsonBlob);
-    const jsonLink = document.createElement('a');
-    jsonLink.href = jsonUrl;
-    jsonLink.download = `${filename}.json`;
-    jsonLink.click();
-    URL.revokeObjectURL(jsonUrl);
+  const jsonBlob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
+  const jsonUrl = URL.createObjectURL(jsonBlob);
+  const jsonLink = document.createElement('a');
+  jsonLink.href = jsonUrl;
+  jsonLink.download = `${filename}.json`;
+  jsonLink.click();
+  URL.revokeObjectURL(jsonUrl);
 }
 
 /**
  * Confirm and delete a workout
  */
 async function confirmDeleteWorkout(workoutId: string): Promise<void> {
-    if (!confirm('Are you sure you want to delete this workout? This cannot be undone.')) {
-        return;
-    }
+  if (!confirm('Are you sure you want to delete this workout? This cannot be undone.')) {
+    return;
+  }
 
-    try {
-        await deleteWorkout(workoutId);
-        await loadWorkouts();
-    } catch (error) {
-        console.error('Failed to delete workout:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        alert(`Failed to delete workout: ${message}`);
-    }
+  try {
+    await deleteWorkout(workoutId);
+    await loadWorkouts();
+  } catch (error) {
+    console.error('Failed to delete workout:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    alert(`Failed to delete workout: ${message}`);
+  }
 }
 
 /**
  * Check database availability (exported for other modules)
  */
 export function getDatabaseAvailable(): boolean {
-    return dbAvailable;
+  return dbAvailable;
+}
+
+/**
+ * Load and display calendar view
+ */
+async function loadCalendar(): Promise<void> {
+  const calendarGrid = document.getElementById('workoutCalendarGrid');
+  const monthLabel = document.getElementById('calendarMonthLabel');
+
+  if (!calendarGrid || !monthLabel) return;
+
+  // Set month label
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"];
+  monthLabel.textContent = `${monthNames[calendarDate.getMonth()]} ${calendarDate.getFullYear()}`;
+
+  // Show loading
+  calendarGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 20px;">Loading calendar...</div>';
+
+  // Calculate start and end of month
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
+
+  try {
+    const options: ListWorkoutsOptions = {
+      startDate,
+      endDate,
+      limit: 1000 // Get all workouts for the month
+    };
+    if (filterType) options.sport = filterType;
+
+    const result = await listWorkouts(options);
+    const workouts = result.workouts;
+
+    renderCalendar(workouts);
+    renderMonthlyStats(workouts);
+  } catch (error) {
+    console.error('Failed to load calendar:', error);
+    calendarGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--color-error);">Failed to load calendar data</div>';
+  }
+}
+
+/**
+ * Render the calendar grid
+ */
+function renderCalendar(workouts: Workout[]): void {
+  const calendarGrid = document.getElementById('workoutCalendarGrid');
+  if (!calendarGrid) return;
+
+  calendarGrid.innerHTML = '';
+
+  // Add day headers
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  days.forEach(day => {
+    const d = document.createElement('div');
+    d.textContent = day;
+    d.style.textAlign = 'center';
+    d.style.fontWeight = 'bold';
+    d.style.padding = '4px';
+    d.style.fontSize = '0.9em';
+    d.style.color = 'var(--color-text-secondary)';
+    calendarGrid.appendChild(d);
+  });
+
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+
+  // First day of the month
+  const firstDay = new Date(year, month, 1).getDay();
+  // Days in month
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Empty cells for days before first of month
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    calendarGrid.appendChild(empty);
+  }
+
+  // Days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayCell = document.createElement('div');
+    dayCell.style.border = '1px solid var(--color-border)';
+    dayCell.style.borderRadius = '4px';
+    dayCell.style.minHeight = '60px';
+    dayCell.style.padding = '4px';
+    dayCell.style.background = 'var(--card-bg)';
+    dayCell.style.position = 'relative';
+
+    const dayNum = document.createElement('div');
+    dayNum.textContent = day.toString();
+    dayNum.style.fontSize = '0.8em';
+    dayNum.style.marginBottom = '4px';
+    dayCell.appendChild(dayNum);
+
+    // Find workouts for this day
+    const dayWorkouts = workouts.filter(w => {
+      const wDate = new Date(w.startTime);
+      return wDate.getDate() === day && wDate.getMonth() === month && wDate.getFullYear() === year;
+    });
+
+    dayWorkouts.forEach(w => {
+      const dot = document.createElement('div');
+      dot.title = `${w.title || 'Workout'} (${formatDuration(w.duration || 0)})`;
+      dot.style.fontSize = '0.7em';
+      dot.style.whiteSpace = 'nowrap';
+      dot.style.overflow = 'hidden';
+      dot.style.textOverflow = 'ellipsis';
+      dot.style.cursor = 'pointer';
+      dot.style.padding = '2px';
+      dot.style.marginTop = '2px';
+      dot.style.borderRadius = '2px';
+      dot.style.background = 'var(--color-bg-active)';
+      dot.style.color = 'var(--color-text-primary)';
+
+      // Icon based on sport
+      const icon = w.sport === 'running' ? '🏃' : '🚴';
+      dot.textContent = `${icon} ${formatDuration(w.duration || 0)}`;
+
+      dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        viewWorkoutDetails(w.id);
+      });
+
+      dayCell.appendChild(dot);
+    });
+
+    // Highlight today
+    const today = new Date();
+    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+      dayCell.style.borderColor = 'var(--color-accent)';
+      dayNum.style.fontWeight = 'bold';
+      dayNum.style.color = 'var(--color-accent)';
+    }
+
+    calendarGrid.appendChild(dayCell);
+  }
+}
+
+/**
+ * Render monthly statistics
+ */
+function renderMonthlyStats(workouts: Workout[]): void {
+  const statsContainer = document.getElementById('monthlyStats');
+  if (!statsContainer) return;
+
+  const totalWorkouts = workouts.length;
+  const totalDuration = workouts.reduce((acc, w) => acc + (w.duration || 0), 0);
+  const totalDistance = workouts.reduce((acc, w) => {
+    const summary = getSummary(w);
+    return acc + (summary.totalDistance || 0);
+  }, 0);
+  const totalEnergy = workouts.reduce((acc, w) => {
+    const summary = getSummary(w);
+    return acc + (summary.totalEnergy || 0);
+  }, 0);
+
+  statsContainer.innerHTML = `
+        <div class="stat-item" style="background: var(--card-bg); padding: 8px; border-radius: 4px; text-align: center;">
+            <div style="font-size: 0.8em; color: var(--color-text-secondary);">Workouts</div>
+            <div style="font-weight: bold;">${totalWorkouts}</div>
+        </div>
+        <div class="stat-item" style="background: var(--card-bg); padding: 8px; border-radius: 4px; text-align: center;">
+            <div style="font-size: 0.8em; color: var(--color-text-secondary);">Duration</div>
+            <div style="font-weight: bold;">${formatDuration(totalDuration)}</div>
+        </div>
+        <div class="stat-item" style="background: var(--card-bg); padding: 8px; border-radius: 4px; text-align: center;">
+            <div style="font-size: 0.8em; color: var(--color-text-secondary);">Distance</div>
+            <div style="font-weight: bold;">${(totalDistance / 1000).toFixed(1)} km</div>
+        </div>
+        <div class="stat-item" style="background: var(--card-bg); padding: 8px; border-radius: 4px; text-align: center;">
+            <div style="font-size: 0.8em; color: var(--color-text-secondary);">Energy</div>
+            <div style="font-weight: bold;">${totalEnergy.toFixed(0)} kJ</div>
+        </div>
+    `;
+}
+
+/**
+ * Load and display analytics
+ */
+async function loadAnalytics(): Promise<void> {
+  const analyticsView = document.getElementById('workoutAnalyticsView');
+  if (!analyticsView) return;
+
+  // Show loading
+  const prList = document.getElementById('prList');
+  if (prList) prList.innerHTML = '<div style="padding: 12px; text-align: center;">Loading records...</div>';
+
+  try {
+    // Fetch all history (might be heavy, better to have a dedicated endpoint in future)
+    // For now, fetch with large limit but minimal fields? 
+    // Unfortunately getWorkoutHistory fetches all summary fields.
+    // We can respect filters though.
+
+    const options: ListWorkoutsOptions = {
+      limit: 1000, // Reasonable cap
+    };
+    if (filterType) options.sport = filterType;
+    if (filterStartDate) options.startDate = new Date(filterStartDate);
+    if (filterEndDate) options.endDate = new Date(filterEndDate);
+
+    const result = await listWorkouts(options);
+    const workouts = result.workouts;
+
+    renderAnalytics(workouts);
+  } catch (error) {
+    console.error('Failed to load analytics:', error);
+    if (prList) prList.innerHTML = '<div style="color: var(--color-error); text-align: center;">Failed to load data</div>';
+  }
+}
+
+/**
+ * Render all analytics charts and stats
+ */
+function renderAnalytics(workouts: Workout[]): void {
+  renderPersonalRecords(workouts);
+  renderTrainingLoad(workouts);
+  renderPowerCurve(workouts);
+  renderFitnessTrend(workouts);
+}
+
+/**
+ * Render Personal Records
+ */
+function renderPersonalRecords(workouts: Workout[]): void {
+  const container = document.getElementById('prList');
+  if (!container) return;
+
+  let maxPower = { val: 0, date: '', id: '' };
+  let maxHr = { val: 0, date: '', id: '' };
+  let longestRide = { val: 0, date: '', id: '' }; // Duration
+  let maxDistance = { val: 0, date: '', id: '' };
+
+  workouts.forEach(w => {
+    const summary = getSummary(w);
+    const dateStr = formatDate(w.startTime);
+
+    if (summary.maxPower && summary.maxPower > maxPower.val) {
+      maxPower = { val: summary.maxPower, date: dateStr, id: w.id };
+    }
+    if (summary.maxHeartrate && summary.maxHeartrate > maxHr.val) {
+      maxHr = { val: summary.maxHeartrate, date: dateStr, id: w.id };
+    }
+    if (w.duration && w.duration > longestRide.val) {
+      longestRide = { val: w.duration, date: dateStr, id: w.id };
+    }
+    if (summary.totalDistance && summary.totalDistance > maxDistance.val) {
+      maxDistance = { val: summary.totalDistance, date: dateStr, id: w.id };
+    }
+  });
+
+  const createRow = (label: string, value: string, date: string, id: string) => `
+        <div class="pr-row" data-id="${id}" style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--color-border); cursor: pointer;">
+            <div style="font-weight: 500;">${label}</div>
+            <div style="text-align: right;">
+                <div style="font-weight: bold; color: var(--color-accent);">${value}</div>
+                <div style="font-size: 0.8em; color: var(--color-text-secondary);">${date}</div>
+            </div>
+        </div>
+    `;
+
+  container.innerHTML = `
+        ${maxPower.val > 0 ? createRow('Max Power (1s)', `${maxPower.val} W`, maxPower.date, maxPower.id) : ''}
+        ${maxHr.val > 0 ? createRow('Max Heart Rate', `${maxHr.val} bpm`, maxHr.date, maxHr.id) : ''}
+        ${longestRide.val > 0 ? createRow('Longest Duration', formatDuration(longestRide.val), longestRide.date, longestRide.id) : ''}
+        ${maxDistance.val > 0 ? createRow('Longest Distance', `${(maxDistance.val / 1000).toFixed(1)} km`, maxDistance.date, maxDistance.id) : ''}
+    `;
+
+  // Re-attach click listeners
+  container.querySelectorAll('.pr-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = (row as HTMLElement).dataset.id;
+      if (id) viewWorkoutDetails(id);
+    });
+  });
+}
+
+/**
+ * Render Training Load (Weekly TSS)
+ */
+function renderTrainingLoad(workouts: Workout[]): void {
+  const container = document.getElementById('trainingLoadChart');
+  if (!container) return;
+
+  // Group by week
+  const weeks: Record<string, number> = {};
+  // Generate last 4 weeks keys
+  for (let i = 3; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - (i * 7));
+    const weekNum = getWeekNumber(d);
+    weeks[`${d.getFullYear()}-W${weekNum}`] = 0;
+  }
+
+  workouts.forEach(w => {
+    const summary = getSummary(w);
+    if (summary.trainingLoad) {
+      const date = new Date(w.startTime);
+      const key = `${date.getFullYear()}-W${getWeekNumber(date)}`;
+      if (weeks[key] !== undefined) {
+        weeks[key] += summary.trainingLoad;
+      }
+    }
+  });
+
+  const maxLoad = Math.max(...Object.values(weeks), 100); // Scale max
+
+  container.innerHTML = Object.entries(weeks).map(([week, load]) => {
+    const height = (load / maxLoad) * 100;
+    return `
+            <div style="display: flex; flex-direction: column; align-items: center; width: 20%;">
+                <div style="font-size: 0.8em; font-weight: bold; margin-bottom: 4px;">${Math.round(load)}</div>
+                <div style="width: 100%; height: 100px; display: flex; align-items: flex-end; justify-content: center;">
+                    <div style="width: 80%; background: var(--color-accent); height: ${height}%; border-radius: 4px 4px 0 0; min-height: 4px;"></div>
+                </div>
+                <div style="font-size: 0.7em; color: var(--color-text-secondary); margin-top: 4px;">${week.split('-')[1]}</div>
+            </div>
+        `;
+  }).join('');
+}
+
+function getWeekNumber(d: Date): number {
+  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/**
+ * Render Power Curve (SVG Chart)
+ */
+function renderPowerCurve(workouts: Workout[]): void {
+  const container = document.getElementById('powerCurveChart');
+  if (!container) return;
+
+  // Aggregate best power for each duration
+  const bests: Record<number, number> = {};
+  const durations = [1, 5, 10, 30, 60, 300, 1200, 3600];
+
+  workouts.forEach(w => {
+    const summary = getSummary(w);
+    if (summary.powerCurve) {
+      summary.powerCurve.forEach(p => {
+        if (!bests[p.duration] || p.watts > bests[p.duration]) {
+          bests[p.duration] = p.watts;
+        }
+      });
+    }
+    // Fallback for older workouts if we have maxPower (1s)
+    if (summary.maxPower && (!bests[1] || summary.maxPower > bests[1])) {
+      bests[1] = summary.maxPower;
+    }
+  });
+
+  if (Object.keys(bests).length === 0) {
+    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color: var(--color-text-secondary);">No power data available</div>';
+    return;
+  }
+
+  // Chart Dimensions
+  const width = container.clientWidth || 300;
+  const height = 200;
+  const pad = 30;
+
+  // Scales
+  const maxWatts = Math.max(...Object.values(bests)) * 1.1; // 10% overhead
+
+  const points = durations.map((d, i) => {
+    if (!bests[d]) return null;
+    const x = pad + (i * ((width - pad * 2) / (durations.length - 1)));
+    const y = height - pad - ((bests[d] / maxWatts) * (height - pad * 2));
+    return { x, y, val: bests[d], duration: d };
+  }).filter(p => p !== null);
+
+  if (points.length < 2) {
+    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color: var(--color-text-secondary);">Insufficient data points</div>';
+    return;
+  }
+
+  const pathD = `M ${points.map(p => `${p!.x},${p!.y}`).join(' L ')}`;
+
+  // SVG Content
+  const svg = `
+        <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <!-- Grid Lines -->
+            <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${height - pad}" stroke="var(--color-border)" stroke-width="1" />
+            <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="var(--color-border)" stroke-width="1" />
+            
+            <!-- Path -->
+            <path d="${pathD}" fill="none" stroke="var(--color-accent)" stroke-width="2" />
+            
+            <!-- Points -->
+            ${points.map(p => `
+                <circle cx="${p!.x}" cy="${p!.y}" r="4" fill="var(--card-bg)" stroke="var(--color-accent)" stroke-width="2" />
+                <text x="${p!.x}" y="${p!.y - 10}" text-anchor="middle" font-size="10" fill="var(--color-text-primary)">${p!.val}W</text>
+                <text x="${p!.x}" y="${height - 10}" text-anchor="middle" font-size="10" fill="var(--color-text-secondary)">${formatDurationLabel(p!.duration)}</text>
+            `).join('')}
+        </svg>
+    `;
+
+  container.innerHTML = svg;
+}
+
+function formatDurationLabel(sec: number): string {
+  if (sec < 60) return `${sec}s`;
+  if (sec < 3600) return `${sec / 60}m`;
+  return `${sec / 3600}h`;
+}
+
+/**
+ * Render Fitness Trend (CTL/ATL)
+ */
+function renderFitnessTrend(workouts: Workout[]): void {
+  const container = document.getElementById('fitnessTrendChart');
+  if (!container) return;
+
+  // Sort workouts by date ascending
+  const sorted = [...workouts].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  if (sorted.length < 2) {
+    container.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100%; color: var(--color-text-secondary);">Not enough data for trend analysis</div>';
+    return;
+  }
+
+  // Daily TSS Map
+  const tssMap = new Map<string, number>();
+  sorted.forEach(w => {
+    const summary = getSummary(w);
+    if (summary.trainingLoad) {
+      const dateStr = new Date(w.startTime).toISOString().split('T')[0];
+      const current = tssMap.get(dateStr) || 0;
+      tssMap.set(dateStr, current + summary.trainingLoad);
+    }
+  });
+
+  // Calculate CTL/ATL day by day
+  const dataPoints: { date: Date, ctl: number, atl: number, tsb: number }[] = [];
+  const startDate = new Date(sorted[0].startTime);
+  const endDate = new Date(); // Today
+
+  // Constants
+  const kCTL = Math.exp(-1 / 42);
+  const kATL = Math.exp(-1 / 7);
+
+  let ctl = 0;
+  let atl = 0;
+
+  // Iterate day by day
+  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+    const dateStr = d.toISOString().split('T')[0];
+    const tss = tssMap.get(dateStr) || 0;
+
+    ctl = ctl * kCTL + tss * (1 - kCTL);
+    atl = atl * kATL + tss * (1 - kATL);
+
+    dataPoints.push({
+      date: new Date(d),
+      ctl,
+      atl,
+      tsb: ctl - atl
+    });
+  }
+
+  // Chart Dimensions
+  const width = container.clientWidth || 600;
+  const height = 250;
+  const pad = { top: 20, right: 30, bottom: 30, left: 40 };
+  const chartW = width - pad.left - pad.right;
+  const chartH = height - pad.top - pad.bottom;
+
+  // Scales
+  const maxVal = Math.max(...dataPoints.map(p => Math.max(p.ctl, p.atl))) * 1.1;
+
+  const timeSpan = endDate.getTime() - startDate.getTime();
+  if (timeSpan === 0) return;
+
+  const getX = (date: Date) => pad.left + ((date.getTime() - startDate.getTime()) / timeSpan) * chartW;
+  const getY = (val: number) => pad.top + chartH - ((val / maxVal) * chartH);
+
+  // Generate Paths
+  const ctlPath = 'M ' + dataPoints.map(p => `${getX(p.date)},${getY(p.ctl)}`).join(' L ');
+  const atlPath = 'M ' + dataPoints.map(p => `${getX(p.date)},${getY(p.atl)}`).join(' L ');
+
+  // SVG Content
+  const svg = `
+        <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+            <!-- Grid Lines -->
+            <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height - pad.bottom}" stroke="var(--color-border)" stroke-width="1" />
+            <line x1="${pad.left}" y1="${height - pad.bottom}" x2="${width - pad.right}" y2="${height - pad.bottom}" stroke="var(--color-border)" stroke-width="1" />
+            
+            <!-- CTL Line (Fitness) - Blue -->
+            <path d="${ctlPath}" fill="none" stroke="#3b82f6" stroke-width="2" />
+            
+            <!-- ATL Line (Fatigue) - Pink/Purple -->
+            <path d="${atlPath}" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="4" />
+            
+            <!-- Legend -->
+            <g transform="translate(${pad.left + 10}, ${pad.top})">
+                <rect x="0" y="0" width="10" height="10" fill="#3b82f6" />
+                <text x="15" y="10" font-size="12" fill="var(--color-text-secondary)">Fitness (CTL)</text>
+                
+                <rect x="100" y="0" width="10" height="10" fill="none" stroke="#ec4899" stroke-width="2" stroke-dasharray="4" />
+                <text x="115" y="10" font-size="12" fill="var(--color-text-secondary)">Fatigue (ATL)</text>
+            </g>
+
+            <!-- Latest Stats -->
+             <text x="${width - pad.right}" y="${pad.top}" text-anchor="end" font-size="12" fill="var(--color-text-primary)">
+                CTL: ${Math.round(ctl)} | ATL: ${Math.round(atl)} | TSB: ${Math.round(ctl - atl)}
+            </text>
+        </svg>
+    `;
+
+  container.innerHTML = svg;
 }

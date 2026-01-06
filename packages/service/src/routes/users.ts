@@ -48,6 +48,38 @@ export function createUsersRouter(): Router {
         }
     });
 
+    // Update FTP
+    router.put('/:userId/ftp', async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.params;
+            const { ftp, source } = req.body;
+
+            if (typeof ftp !== 'number' || ftp <= 0) {
+                return res.status(400).json({ error: 'Invalid FTP value' });
+            }
+
+            const result = await userService.updateUserFtp(userId, ftp, source);
+            res.json(result);
+        } catch (error) {
+            const err = error as Error;
+            logger.error({ err, userId: req.params.userId }, 'Error updating FTP');
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // Get FTP History
+    router.get('/:userId/ftp-history', async (req: Request, res: Response) => {
+        try {
+            const { userId } = req.params;
+            const history = await userService.getFtpHistory(userId);
+            res.json(history);
+        } catch (error) {
+            const err = error as Error;
+            logger.error({ err, userId: req.params.userId }, 'Error getting FTP history');
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // Get user's workout statistics
     router.get('/:userId/stats', async (req: Request, res: Response) => {
         try {

@@ -30,13 +30,13 @@ export default defineConfig({
     ],
     webServer: [
         {
-            command: 'cd ../packages/service && docker-compose up -d redis && npm run start',
+            command: 'cd ../packages/service && docker-compose up -d redis && pnpm run start',
             url: 'http://localhost:3000/health',
             reuseExistingServer: true,
             timeout: 120000,
         },
         {
-            command: 'cd ../packages/client && npm run start',
+            command: 'cd ../packages/client && pnpm run start',
             url: 'http://localhost:5173',
             reuseExistingServer: true,
             timeout: 120000,

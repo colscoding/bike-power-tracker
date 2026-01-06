@@ -186,7 +186,7 @@ export async function updateWorkoutStatus(
  */
 export async function getWorkoutHistory(
     userId: string | null,
-    { page = 1, limit = 20, status }: WorkoutQueryOptions = {}
+    { page = 1, limit = 20, status, startDate, endDate, sport }: WorkoutQueryOptions = {}
 ): Promise<PaginatedWorkouts> {
     if (!isDatabaseEnabled()) {
         throw new Error('Database not configured');
@@ -194,12 +194,20 @@ export async function getWorkoutHistory(
 
     const prisma = getPrismaClient();
 
-    const where: { userId?: string; status?: WorkoutStatus } = {};
+    const where: any = {};
     if (userId) {
         where.userId = userId;
     }
     if (status) {
         where.status = status;
+    }
+    if (sport) {
+        where.sport = sport;
+    }
+    if (startDate || endDate) {
+        where.startTime = {};
+        if (startDate) where.startTime.gte = startDate;
+        if (endDate) where.startTime.lte = endDate;
     }
 
     const [workouts, total] = await Promise.all([
