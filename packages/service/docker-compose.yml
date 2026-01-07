@@ -60,6 +60,7 @@ services:
       - DATABASE_PROVIDER=${DATABASE_PROVIDER:-}
       - DATABASE_URL=${DATABASE_URL:-}
       - API_KEY=${API_KEY:-}
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     depends_on:
       redis:

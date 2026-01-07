@@ -26,6 +26,17 @@ export interface GpsPoint {
 }
 
 /**
+ * Treadmill data point (FTMS)
+ */
+export interface TreadmillMeasurement {
+    timestamp: number;
+    /** Speed in km/h */
+    speed: number | null;
+    /** Incline in % */
+    incline: number | null;
+}
+
+/**
  * A lap marker in the workout
  */
 export interface LapMarker {
@@ -53,6 +64,7 @@ export interface MeasurementsData {
     distance: Measurement[];
     altitude: Measurement[];
     gps: GpsPoint[];
+    treadmill?: TreadmillMeasurement[];
     laps?: LapMarker[];
 }
 

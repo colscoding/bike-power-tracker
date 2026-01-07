@@ -1,102 +1,59 @@
 /**
  * Stream Manager
- * 
- * Manages streaming workout data to the server in real-time.
+ * Handles streaming workout data to the backend service.
+ * Used for live sharing of workout metrics.
  * 
  * @module StreamManager
  */
 
-import { createStream, sendWorkoutData } from './api/streamClient.js';
-import { getTimestring } from './getTimestring.js';
+import { createStream, sendWorkoutData, type CreateStreamResponse } from './api/streamClient.js';
 import type { MeasurementsState } from './measurements-state.js';
+import type { TimeState } from './getInitState.js';
 import type { MeasurementType } from './types/measurements.js';
 
-/**
- * Time state interface for workout timing
- */
-export interface WorkoutTimeState {
-    running: boolean;
-    startTime: number | null;
-    endTime: number | null;
-}
-
-/**
- * Stream status information
- */
 export interface StreamStatus {
     isStreaming: boolean;
     isPaused: boolean;
     streamName: string | null;
 }
 
-/**
- * Index tracking for sent measurements
- */
-interface SentIndex {
-    power: number;
-    cadence: number;
-    heartrate: number;
-    speed: number;
-    distance: number;
-    altitude: number;
-}
-
-/**
- * Manages streaming workout data to the server.
- * 
- * Creates a stream on the server and sends workout metrics
- * (power, cadence, heart rate) at regular intervals.
- * 
- * @example
- * const streamManager = new StreamManager(measurementsState, timeState);
- * await streamManager.startStreaming('my-workout');
- * // ... workout in progress ...
- * await streamManager.stopStreaming();
- */
 export class StreamManager {
+    // Made public readonly to support access from UI checks (temporary fix for existing code)
+    // In a future refactor, prefer getStatus()
+    public isStreaming = false;
+    private isPaused = false;
+    private streamName: string | null = null;
+    private streamInterval: any = null;
     private measurementsState: MeasurementsState;
-    private timeState: WorkoutTimeState;
+    private timeState: TimeState;
 
-    public isStreaming: boolean = false;
-    public isPaused: boolean = false;
-    public streamName: string | null = null;
-
-    private streamInterval: ReturnType<typeof setInterval> | null = null;
-    private lastSentIndex: SentIndex = {
-        power: 0,
-        cadence: 0,
-        heartrate: 0,
-        speed: 0,
-        distance: 0,
-        altitude: 0,
-    };
-
-    constructor(measurementsState: MeasurementsState, timeState: WorkoutTimeState) {
+    constructor(measurementsState: MeasurementsState, timeState: TimeState) {
         this.measurementsState = measurementsState;
         this.timeState = timeState;
     }
 
     /**
      * Start streaming workout data
-     * 
-     * @param customStreamName - Optional custom stream name
-     * @returns The stream name
-     * @throws Error if already streaming or stream creation fails
+     * @param streamName - Optional custom stream name
+     * @returns Promise resolving to the stream name
      */
-    async startStreaming(customStreamName?: string): Promise<string> {
+    async startStreaming(name?: string): Promise<string> {
         if (this.isStreaming) {
-            throw new Error('Already streaming');
+            return this.streamName!;
         }
 
-        // Generate stream name: workout-YYYYMMDD-HHMMSS or use custom name
-        this.streamName = customStreamName || `workout-${this._getTimestamp()}`;
-
         try {
-            // Create the stream on the server
-            await createStream(this.streamName);
+            const safeName = name || `workout-${Date.now()}`;
+            const response: CreateStreamResponse = await createStream(safeName);
 
+            if (!response.success) {
+                throw new Error('Failed to create stream');
+            }
+
+            this.streamName = response.streamName;
             this.isStreaming = true;
             this.isPaused = false;
+
             this._startStreamingLoop();
 
             return this.streamName;
@@ -143,7 +100,6 @@ export class StreamManager {
 
         // We don't delete the stream here so that data persists for a while (handled by server cleanup)
         this.streamName = null;
-        this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0, speed: 0, distance: 0, altitude: 0 };
     }
 
     /**
@@ -189,9 +145,10 @@ export class StreamManager {
         const speed = this._getLatestValue('speed');
         const distance = this._getLatestValue('distance');
         const altitude = this._getLatestValue('altitude');
+        const incline = this._getLatestTreadmillIncline();
 
         // Only send if we have at least one measurement
-        if (power === null && cadence === null && heartrate === null && speed === null && distance === null && altitude === null) {
+        if (power === null && cadence === null && heartrate === null && speed === null && distance === null && altitude === null && incline === null) {
             return;
         }
 
@@ -201,51 +158,55 @@ export class StreamManager {
                 ? this.timeState.endTime - this.timeState.startTime
                 : 0;
 
-        const workoutData = {
+        await sendWorkoutData(this.streamName, {
+            timestamp: Date.now(),
+            elapsed: Math.floor(elapsedMs / 1000).toString(),
             power,
             cadence,
             heartrate,
             speed,
             distance,
             altitude,
-            timestamp: Date.now(),
-            elapsed: getTimestring(elapsedMs),
-        };
-
-        await sendWorkoutData(this.streamName, workoutData);
+            incline
+        });
     }
 
     /**
-     * Get the latest value for a measurement type
+     * Get latest value for a measurement type
      * @private
      */
     private _getLatestValue(type: Exclude<MeasurementType, 'gps'>): number | null {
-        const measurements = this.measurementsState[type];
-        if (!measurements || measurements.length === 0) {
+        // @ts-ignore - dynamic access
+        const array = this.measurementsState[type];
+        if (!Array.isArray(array) || array.length === 0) {
             return null;
         }
 
-        const lastIndex = measurements.length - 1;
-        if (lastIndex >= this.lastSentIndex[type]) {
-            this.lastSentIndex[type] = lastIndex;
-            return measurements[lastIndex].value;
+        // Only send data newer than 5 seconds
+        const latest = array[array.length - 1];
+        if (Date.now() - latest.timestamp > 5000) {
+            return null;
         }
 
-        return measurements[lastIndex].value;
+        return latest.value;
     }
 
     /**
-     * Generate timestamp string for stream name
+     * Get latest treadmill incline value
      * @private
      */
-    private _getTimestamp(): string {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+    private _getLatestTreadmillIncline(): number | null {
+        const array = this.measurementsState.treadmill;
+        if (!Array.isArray(array) || array.length === 0) {
+            return null;
+        }
+
+        // Only send data newer than 5 seconds
+        const latest = array[array.length - 1];
+        if (Date.now() - latest.timestamp > 5000) {
+            return null;
+        }
+
+        return latest.incline;
     }
 }

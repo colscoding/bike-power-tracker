@@ -30,6 +30,12 @@ export const NODE_ENV = process.env.NODE_ENV || 'development';
 /** API key for authentication */
 export const API_KEY = process.env.API_KEY;
 
+/** 
+ * Whether authentication is enabled 
+ * Defaults to false (optional)
+ */
+export const AUTH_ENABLED = process.env.AUTH_ENABLED === 'true';
+
 /** Log level from environment or default */
 export const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 

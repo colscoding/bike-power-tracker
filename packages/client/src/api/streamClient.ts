@@ -106,8 +106,9 @@ export interface WorkoutDataPayload {
     speed?: number | null;
     distance?: number | null;
     altitude?: number | null;
+    incline?: number | null;
     timestamp: number;
-    elapsed: string;
+    elapsed: string; // usually seconds as string, or mm:ss
 }
 
 /**
@@ -392,6 +393,10 @@ export async function sendWorkoutData(
         power: workoutData.power ?? null,
         cadence: workoutData.cadence ?? null,
         heartrate: workoutData.heartrate ?? null,
+        speed: workoutData.speed ?? null,
+        distance: workoutData.distance ?? null,
+        altitude: workoutData.altitude ?? null,
+        incline: workoutData.incline ?? null,
         timestamp: workoutData.timestamp,
         elapsed: workoutData.elapsed,
         dataType: 'workout_metrics',

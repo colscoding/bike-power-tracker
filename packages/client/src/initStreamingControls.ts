@@ -7,7 +7,8 @@
  */
 
 import { showNotification } from './ui/notifications.js';
-import type { StreamManager, StreamStatus, WorkoutTimeState } from './stream-manager.js';
+import type { StreamManager, StreamStatus } from './stream-manager.js';
+import type { TimeState } from './getInitState.js';
 
 /**
  * Initialize streaming controls.
@@ -23,7 +24,7 @@ import type { StreamManager, StreamStatus, WorkoutTimeState } from './stream-man
  */
 export function initStreamingControls(
     streamManager: StreamManager,
-    timeState: WorkoutTimeState
+    timeState: TimeState
 ): void {
     // Main button
     const startStreamButton = document.getElementById('startStreamButton') as HTMLButtonElement | null;

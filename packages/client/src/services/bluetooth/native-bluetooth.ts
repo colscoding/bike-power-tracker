@@ -1,6 +1,7 @@
 import { BleClient } from '@capacitor-community/bluetooth-le';
-import type { SensorConnection, MeasurementListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
-import type { Measurement } from '../../types/measurements.js';
+import type { SensorConnection, TreadmillConnection, MeasurementListener, TreadmillListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
+import type { Measurement, TreadmillMeasurement } from '../../types/measurements.js';
+import { parseTreadmillData } from './ftms.js';
 
 const CYCLING_POWER_SERVICE = '00001818-0000-1000-8000-00805f9b34fb';
 const CYCLING_POWER_MEASUREMENT = '00002a63-0000-1000-8000-00805f9b34fb';
@@ -10,6 +11,9 @@ const HEART_RATE_MEASUREMENT = '00002a37-0000-1000-8000-00805f9b34fb';
 
 const CYCLING_SPEED_AND_CADENCE_SERVICE = '00001816-0000-1000-8000-00805f9b34fb';
 const CSC_MEASUREMENT = '00002a5b-0000-1000-8000-00805f9b34fb';
+
+const FITNESS_MACHINE_SERVICE = '00001826-0000-1000-8000-00805f9b34fb';
+const TREADMILL_DATA_CHARACTERISTIC = '00002acd-0000-1000-8000-00805f9b34fb';
 
 /** Maximum reconnection attempts before giving up */
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -346,6 +350,123 @@ export const connectCadenceNative = async (): Promise<SensorConnection> => {
             }
         },
         addListener: (callback: MeasurementListener) => {
+            listeners.push(callback);
+        },
+        deviceName,
+        onStatusChange: (callback: ConnectionStatusListener) => {
+            statusListeners.push(callback);
+        }
+    };
+};
+
+export const connectTreadmillNative = async (): Promise<TreadmillConnection> => {
+    const listeners: TreadmillListener[] = [];
+    const statusListeners: ConnectionStatusListener[] = [];
+    let deviceId: string | null = null;
+    let isManualDisconnect = false;
+    let reconnectAttempts = 0;
+
+    await BleClient.initialize();
+
+    const device = await BleClient.requestDevice({
+        services: [FITNESS_MACHINE_SERVICE],
+        optionalServices: [FITNESS_MACHINE_SERVICE]
+    });
+
+    deviceId = device.deviceId;
+    const deviceName = device.name || 'Treadmill';
+
+    const notifyStatus = (status: ConnectionStatus) => {
+        statusListeners.forEach(listener => listener(status));
+    };
+
+    const onDisconnect = (disconnectedDeviceId: string) => {
+        if (disconnectedDeviceId === deviceId && !isManualDisconnect) {
+            console.log('Treadmill: Connection lost, attempting to reconnect...');
+            notifyStatus('disconnected');
+            attemptReconnect();
+        }
+    };
+
+    const connect = async (): Promise<void> => {
+        if (!deviceId) return;
+        await BleClient.connect(deviceId, onDisconnect);
+        notifyStatus('connected');
+
+        await BleClient.startNotifications(
+            deviceId,
+            FITNESS_MACHINE_SERVICE,
+            TREADMILL_DATA_CHARACTERISTIC,
+            (value) => {
+                try {
+                    const ftmsData = parseTreadmillData(value);
+
+                    if (ftmsData.speed !== undefined || ftmsData.incline !== undefined) {
+                        const entry: TreadmillMeasurement = {
+                            timestamp: Date.now(),
+                            speed: ftmsData.speed ?? null,
+                            incline: ftmsData.incline ?? null
+                        };
+                        listeners.forEach(listener => listener(entry));
+                    }
+                } catch (e) {
+                    console.error('Error parsing treadmill data', e);
+                }
+            }
+        );
+        reconnectAttempts = 0;
+    };
+
+    const attemptReconnect = async (): Promise<void> => {
+        if (isManualDisconnect) return;
+
+        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            console.error('Treadmill: Max reconnection attempts reached');
+            notifyStatus('failed');
+            return;
+        }
+
+        reconnectAttempts++;
+        const delay = RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+        console.log(`Treadmill: Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+        notifyStatus('reconnecting');
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        try {
+            await connect();
+            console.log('Treadmill: Reconnected successfully');
+        } catch (error) {
+            console.error('Treadmill: Reconnection failed:', error);
+            attemptReconnect();
+        }
+    };
+
+    try {
+        await connect();
+    } catch (error) {
+        if (deviceId) {
+            try {
+                await BleClient.disconnect(deviceId);
+            } catch (e) { /* ignore */ }
+        }
+        throw error;
+    }
+
+    return {
+        disconnect: async () => {
+            isManualDisconnect = true;
+            if (deviceId) {
+                try {
+                    await BleClient.stopNotifications(deviceId, FITNESS_MACHINE_SERVICE, TREADMILL_DATA_CHARACTERISTIC);
+                    await BleClient.disconnect(deviceId);
+                } catch (e) {
+                    console.error('Error disconnecting treadmill', e);
+                }
+            }
+            notifyStatus('disconnected');
+        },
+        addListener: (callback: TreadmillListener) => {
             listeners.push(callback);
         },
         deviceName,

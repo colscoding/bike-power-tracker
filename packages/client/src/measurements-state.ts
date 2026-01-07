@@ -7,7 +7,7 @@
  * @module MeasurementsState
  */
 
-import type { Measurement, MeasurementsData, MeasurementType, LapMarker, GpsPoint } from './types/measurements.js';
+import type { Measurement, MeasurementsData, MeasurementType, LapMarker, GpsPoint, TreadmillMeasurement } from './types/measurements.js';
 import {
     throttledSave,
     flushPendingSave,
@@ -42,6 +42,7 @@ export class MeasurementsState implements MeasurementsData {
     distance: Measurement[] = [];
     altitude: Measurement[] = [];
     gps: GpsPoint[] = [];
+    treadmill: TreadmillMeasurement[] = [];
     laps: LapMarker[] = [];
 
     private _persistenceEnabled: boolean;
@@ -385,5 +386,28 @@ export class MeasurementsState implements MeasurementsData {
             altitude: this.altitude.length,
             gps: this.gps.length,
         };
+    }
+
+    /**
+     * Add a treadmill measurement
+     * 
+     * @param entry - Treadmill measurement (speed/incline)
+     */
+    addTreadmillData(entry: TreadmillMeasurement): void {
+        this.treadmill.push(entry);
+
+        if (entry.speed != null) {
+            // Speed from treadmill is already in km/h
+            this.addSpeed({
+                timestamp: entry.timestamp,
+                value: entry.speed
+            });
+        }
+
+        // Note: We don't explicitly notifyChange here if addSpeed was called, 
+        // because addSpeed calls it. But if only incline changed, we must notify.
+        if (entry.speed == null) {
+            this._notifyChange();
+        }
     }
 }

@@ -113,7 +113,9 @@ docker compose -f docker-compose.prod.yml up -d
 
 ### Authentication
 
-If `API_KEY` is set, all requests must include authentication:
+Authentication is disabled by default. valid `API_KEY` is only required if `AUTH_ENABLED=true`.
+
+If enabled, requests must include the key:
 - Header (recommended): `X-API-Key: your-api-key`
 - Query (deprecated, for SSE backwards compatibility): `?apiKey=your-api-key`
 
@@ -296,6 +298,8 @@ Full API documentation is available in `openapi.yaml`. View it with:
 npx swagger-ui-express -p 8080 openapi.yaml
 ```
 
+> **Note**: The API also includes endpoints for User Management (`/api/users`) and Workout History (`/api/workouts`) when the database is enabled. Please refer to the `openapi.yaml` for full details on these endpoints.
+
 ## Configuration
 
 ### Environment Variables
@@ -308,7 +312,8 @@ npx swagger-ui-express -p 8080 openapi.yaml
 | `REDIS_PORT` | `6379` | Redis server port |
 | `REDIS_PASSWORD` | - | Redis password (optional) |
 | `CORS_ORIGIN` | `*` | Allowed CORS origins |
-| `API_KEY` | - | API authentication key (optional) |
+| `AUTH_ENABLED` | `false` | Enable API authentication (requires API_KEY) |
+| `API_KEY` | - | API authentication key (required if AUTH_ENABLED=true) |
 | `DATABASE_URL` | - | Database connection string |
 
 ### Example `.env` File
@@ -324,6 +329,7 @@ REDIS_PORT=6379
 REDIS_PASSWORD=your-redis-password
 
 # Security
+AUTH_ENABLED=true
 API_KEY=your-secret-api-key
 CORS_ORIGIN=https://bikepowertracker.com
 
@@ -359,32 +365,56 @@ pnpm prisma generate
 pnpm prisma migrate deploy
 ```
 
-### Database Schema
+### Database Schema (Simplified)
 
 ```prisma
 model User {
-  id        String    @id @default(uuid())
-  email     String?   @unique
-  name      String?
-  workouts  Workout[]
-  createdAt DateTime  @default(now())
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   @map("password_hash")
+  
+  // Profile
+  displayName   String?   @map("display_name")
+  avatarUrl     String?   @map("avatar_url")
+  settings      String?   @default("{}")
+
+  // Relations
+  workouts      Workout[]
+  ftpHistory    FtpHistory[]
+  apiKeys       ApiKey[]
+  
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+}
+
+model FtpHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  ftp       Int
+  source    String?
+  createdAt DateTime @default(now()) @map("created_at")
 }
 
 model Workout {
   id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id])
-  startTime    DateTime
-  endTime      DateTime?
+  userId       String?  @map("user_id")
+  
+  // Timing
+  startTime    DateTime @map("start_time")
+  endTime      DateTime? @map("end_time")
   duration     Int?
-  avgPower     Float?
-  maxPower     Float?
-  avgHeartrate Float?
-  maxHeartrate Float?
-  avgCadence   Float?
+  
+  // Metrics
+  avgPower     Float?   @map("avg_power")
+  maxPower     Float?   @map("max_power")
+  avgHeartrate Float?   @map("avg_heartrate")
+  maxHeartrate Float?   @map("max_heartrate")
+  avgCadence   Float?   @map("avg_cadence")
+  
   status       String   @default("active")
-  data         Json?
-  createdAt    DateTime @default(now())
+  data         Json?    // Full workout data points
+  
+  createdAt    DateTime @default(now()) @map("created_at")
 }
 ```
 
@@ -420,14 +450,14 @@ service/
 │       ├── stream.ts
 │       └── db.ts
 ├── tests/
-│   ├── unit.test.js          # Unit tests
-│   ├── api.test.js           # API integration tests
-│   ├── workoutApi.test.js    # Workout API tests
-│   ├── workoutService.test.js # Workout service tests
-│   ├── userService.test.js   # User service tests
-│   ├── redis.test.js         # Redis connection tests
-│   ├── security.test.js      # Security/validation tests
-│   └── client-integration.test.js
+│   ├── unit.test.ts          # Unit tests
+│   ├── api.test.ts           # API integration tests
+│   ├── workoutApi.test.ts    # Workout API tests
+│   ├── workoutService.test.ts # Workout service tests
+│   ├── userService.test.ts   # User service tests
+│   ├── redis.test.ts         # Redis connection tests
+│   ├── security.test.ts      # Security/validation tests
+│   └── client-integration.test.ts
 ├── prisma/
 │   └── schema.prisma     # Database schema
 ├── nginx/
@@ -449,7 +479,7 @@ service/
 pnpm dev
 
 # Run specific script
-node src/server.js
+tsx src/server.ts
 ```
 
 ### Code Style
@@ -472,27 +502,27 @@ pnpm test
 # Run specific test suites
 pnpm test:unit     # Unit tests only
 pnpm test:api      # API tests only
-pnpm test:redis    # Redis tests only
+pnpm test:integration # Redis and Integration tests
 
 # Run with coverage
-pnpm test -- --coverage
+pnpm test:coverage
 
 # Watch mode
-pnpm test -- --watch
+pnpm dev # (Run dev server, tests don't have a specific watch script configured)
 ```
 
 ### Test Structure
 
 | File | Description |
 |------|-------------|
-| `unit.test.js` | Pure function tests, utilities |
-| `api.test.js` | HTTP endpoint tests |
-| `workoutApi.test.js` | Workout endpoint tests |
-| `workoutService.test.js` | Workout service layer tests |
-| `userService.test.js` | User/password service tests |
-| `redis.test.js` | Redis connection and stream tests |
-| `security.test.js` | Input validation and security tests |
-| `client-integration.test.js` | End-to-end client flows |
+| `unit.test.ts` | Pure function tests, utilities |
+| `api.test.ts` | HTTP endpoint tests |
+| `workoutApi.test.ts` | Workout endpoint tests |
+| `workoutService.test.ts` | Workout service layer tests |
+| `userService.test.ts` | User/password service tests |
+| `redis.test.ts` | Redis connection and stream tests |
+| `security.test.ts` | Input validation and security tests |
+| `client-integration.test.ts` | End-to-end client flows |
 
 **Total: 115+ tests across 8 test files**
 

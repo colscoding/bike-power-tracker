@@ -29,8 +29,9 @@ The BPT Client is a Progressive Web App (PWA) that connects to Bluetooth cycling
 
 | Feature | Description |
 |---------|-------------|
-| **Real-time Metrics** | Monitor power (watts), cadence (RPM), and heart rate (BPM) |
+| **Real-time Metrics** | Monitor power (watts), cadence (RPM), heart rate (BPM), and speed/incline |
 | **Hybrid Bluetooth** | Supports Web Bluetooth (Browser) and Native Bluetooth (Android/iOS) |
+| **Sensor Support** | Power Meters, Heart Rate Monitors, Cadence Sensors, FTMS Treadmills, GPS |
 | **Auto-Reconnect** | Automatic reconnection with exponential backoff |
 | **Live Streaming** | Stream your workout to viewers in real-time via Redis Streams |
 | **Offline Mode** | Fully functional offline with IndexedDB persistence |

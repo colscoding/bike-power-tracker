@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
-import type { SensorConnection } from '../../types/bluetooth.js';
-import { connectPowerNative, connectHeartRateNative, connectCadenceNative } from './native-bluetooth.js';
-import { connectPowerWeb, connectHeartRateWeb, connectCadenceWeb } from './web-bluetooth.js';
+import type { SensorConnection, TreadmillConnection } from '../../types/bluetooth.js';
+import { connectPowerNative, connectHeartRateNative, connectCadenceNative, connectTreadmillNative } from './native-bluetooth.js';
+import { connectPowerWeb, connectHeartRateWeb, connectCadenceWeb, connectTreadmillWeb } from './web-bluetooth.js';
 
 /**
  * Bluetooth Factory
@@ -44,6 +44,18 @@ export const BluetoothFactory = {
             return connectCadenceNative();
         } else {
             return connectCadenceWeb();
+        }
+    },
+
+    /**
+     * Connect to a Treadmill
+     * @returns Promise resolving to a TreadmillConnection
+     */
+    connectTreadmill: async (): Promise<TreadmillConnection> => {
+        if (Capacitor.isNativePlatform()) {
+            return connectTreadmillNative();
+        } else {
+            return connectTreadmillWeb();
         }
     }
 };

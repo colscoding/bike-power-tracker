@@ -9,6 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert';
+import { parseTreadmillData } from './services/bluetooth/ftms.js';
 
 // ============================================
 // Simulated DataView for testing
@@ -542,4 +543,66 @@ test('Parsers handle boundary values', () => {
     const powerOverView = createDataView([0x00, 0x00, 0xb9, 0x0b]); // 3001
     const powerOver = parsePower(powerOverView);
     assert.strictEqual(powerOver, null, '3001W should be invalid');
+});
+
+// ============================================
+// FTMS Treadmill Data Parsing
+// ============================================
+
+test('FTMS Treadmill Fuzzing', async (t) => {
+    // 1. Minimum valid packet (Flags + Speed) = 4 bytes
+    await t.test('Minimum valid packet', () => {
+        // Flags: 0x0000 (Nothing present)
+        // Speed: 10.00 km/h (1000 = 0x03E8)
+        const view = createDataView([0x00, 0x00, 0xE8, 0x03]);
+        const result = parseTreadmillData(view);
+        assert.strictEqual(result.speed, 10);
+        assert.strictEqual(result.incline, undefined);
+    });
+
+    // 2. Malformed input handling
+    await t.test('Resilience to malformed inputs', () => {
+        for (const bytes of malformedDataGenerator()) {
+            const view = createDataView(bytes);
+
+            // Should not throw, even if data is garbage
+            try {
+                const result = parseTreadmillData(view);
+
+                // If we got a result, values should be sane types or undefined
+                if (result.speed !== undefined) {
+                    assert.ok(typeof result.speed === 'number' && !isNaN(result.speed));
+                }
+                if (result.incline !== undefined) {
+                    assert.ok(typeof result.incline === 'number' && !isNaN(result.incline));
+                }
+            } catch (error) {
+                // The current implementation is EXPECTED to throw RangeError for < 2 bytes
+                // because it reads flags immediately: data.getUint16(0, true)
+                // We're documenting this behavior via the test.
+                if (bytes.length < 2) {
+                    assert.ok((error as RangeError).name === 'RangeError', 'Should throw RangeError for < 2 bytes');
+                } else {
+                    assert.fail(`Should not throw for ${bytes.length} bytes: ${error}`);
+                }
+            }
+        }
+    });
+
+    // 3. Flag mismatch (Flags say incl present, but data missing)
+    await t.test('Buffer overrun protection (Flag claimed but data missing)', () => {
+        // Flags: 0x0008 (Bit 3 set -> Incline present)
+        // Speed: 5.0 km/h (500 = 0x01F4)
+        // Total Length: 4 bytes (Missing 4 bytes for incline/ramp)
+        const view = createDataView([0x08, 0x00, 0xF4, 0x01]);
+
+        try {
+            const result = parseTreadmillData(view);
+            // Should parse what it can (Speed) but skip Incline safely
+            assert.strictEqual(result.speed, 5);
+            assert.strictEqual(result.incline, undefined);
+        } catch (e) {
+            assert.fail('Should not throw on missing optional fields');
+        }
+    });
 });

@@ -139,6 +139,8 @@
                         Cadence</button>
                     <button id="connectHeartrate" role="menuitem" aria-label="Connect heart rate monitor">❤️ Connect
                         Heartrate</button>
+                    <button id="connectTreadmill" role="menuitem" aria-label="Connect Treadmill">🏃 Connect
+                        Treadmill</button>
                     <button id="connectGps" role="menuitem" aria-label="Connect GPS">📍 Connect GPS</button>
                     <button id="exportData" role="menuitem" aria-label="Export workout data">💾 Export Data</button>
                     <button id="discardButton" role="menuitem" aria-label="Discard workout data">🗑️ Discard
@@ -232,6 +234,10 @@
                         <div class="metric-group metric-group-altitude">
                             <dt id="altitudeLabel">Altitude</dt>
                             <dd id="altitude" aria-labelledby="altitudeLabel" aria-live="polite"></dd>
+                        </div>
+                        <div class="metric-group metric-group-incline" style="display: none;">
+                            <dt id="inclineLabel">Incline</dt>
+                            <dd id="value-incline" aria-labelledby="inclineLabel" aria-live="polite">--</dd>
                         </div>
                     </dl>
                 </div>

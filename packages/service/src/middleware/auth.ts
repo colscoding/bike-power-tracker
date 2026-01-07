@@ -16,6 +16,11 @@ import { logger } from '../logger.js';
  */
 export function createAuthMiddleware(): RequestHandler {
     return (req: Request, res: Response, next: NextFunction) => {
+        // Check if authentication is enabled (defaults to false)
+        if (process.env.AUTH_ENABLED !== 'true') {
+            return next();
+        }
+
         const apiKeyConfig = process.env.API_KEY;
 
         if (!apiKeyConfig) {

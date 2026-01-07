@@ -21,6 +21,7 @@ describe('Middleware Tests', function () {
 
             beforeEach(function () {
                 process.env.API_KEY = TEST_API_KEY;
+                process.env.AUTH_ENABLED = 'true';
                 app = express();
                 app.use(express.json());
                 app.use(createAuthMiddleware());
@@ -32,6 +33,7 @@ describe('Middleware Tests', function () {
 
             afterEach(function () {
                 delete process.env.API_KEY;
+                delete process.env.AUTH_ENABLED;
             });
 
             it('should allow requests with valid X-API-Key header', async function () {
@@ -104,6 +106,39 @@ describe('Middleware Tests', function () {
                     .expect(401);
 
                 assert.ok(response.body.error.includes('Invalid API Key'));
+            });
+        });
+
+        describe('Authentication Optionality', function () {
+            const TEST_API_KEY = 'test-api-key-optional';
+
+            beforeEach(function () {
+                process.env.API_KEY = TEST_API_KEY;
+                // NOT setting AUTH_ENABLED, so it should default to false (undefined)
+                app = express();
+                app.use(express.json());
+                app.use(createAuthMiddleware());
+                app.get('/test', (req, res) => res.json({ success: true }));
+            });
+
+            afterEach(function () {
+                delete process.env.API_KEY;
+                delete process.env.AUTH_ENABLED;
+            });
+
+            it('should skip authentication by default when AUTH_ENABLED is not set', async function () {
+                const response = await request(app)
+                    .get('/test')
+                    .expect(200);
+                assert.strictEqual(response.body.success, true);
+            });
+
+            it('should skip authentication when AUTH_ENABLED is explicitly false', async function () {
+                process.env.AUTH_ENABLED = 'false';
+                const response = await request(app)
+                    .get('/test')
+                    .expect(200);
+                assert.strictEqual(response.body.success, true);
             });
         });
 

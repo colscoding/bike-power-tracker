@@ -1,5 +1,6 @@
-import type { SensorConnection, MeasurementListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
-import type { Measurement } from '../../types/measurements.js';
+import type { SensorConnection, TreadmillConnection, MeasurementListener, TreadmillListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
+import type { Measurement, TreadmillMeasurement } from '../../types/measurements.js';
+import { parseTreadmillData } from './ftms.js';
 
 /** Maximum reconnection attempts before giving up */
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -403,5 +404,132 @@ export const connectCadenceWeb = async (): Promise<SensorConnection> => {
         onStatusChange: (callback: ConnectionStatusListener) => {
             statusListeners.push(callback);
         },
+    };
+};
+
+export const connectTreadmillWeb = async (): Promise<TreadmillConnection> => {
+    const listeners: TreadmillListener[] = [];
+    const statusListeners: ConnectionStatusListener[] = [];
+    let isManualDisconnect = false;
+    let reconnectAttempts = 0;
+    let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
+    let server: BluetoothRemoteGATTServer | undefined;
+
+    // Request Bluetooth device with Fitness Machine Service
+    const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['fitness_machine'] }],
+        optionalServices: ['fitness_machine'],
+    });
+
+    if (!device.gatt) {
+        throw new Error('GATT server not available');
+    }
+
+    const deviceName = device.name || 'Treadmill';
+
+    const notifyStatus = (status: ConnectionStatus) => {
+        statusListeners.forEach(listener => listener(status));
+    };
+
+    const handleCharacteristicChange = (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic;
+        const value = target.value;
+        if (!value) return;
+
+        try {
+            const ftmsData = parseTreadmillData(value);
+
+            // Only emit if we have relevant data
+            if (ftmsData.speed !== undefined || ftmsData.incline !== undefined) {
+                const entry: TreadmillMeasurement = {
+                    timestamp: Date.now(),
+                    speed: ftmsData.speed ?? null,
+                    incline: ftmsData.incline ?? null
+                };
+                listeners.forEach(listener => listener(entry));
+            }
+        } catch (e) {
+            console.error('Error parsing treadmill data', e);
+        }
+    };
+
+    const connect = async (): Promise<void> => {
+        if (!device.gatt) return;
+
+        server = await device.gatt.connect();
+        const service = await server.getPrimaryService('fitness_machine');
+        characteristic = await service.getCharacteristic('treadmill_data');
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicChange);
+
+        reconnectAttempts = 0;
+        notifyStatus('connected');
+    };
+
+    const attemptReconnect = async (): Promise<void> => {
+        if (isManualDisconnect || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                console.error('Treadmill: Max reconnection attempts reached');
+                notifyStatus('failed');
+            }
+            return;
+        }
+
+        reconnectAttempts++;
+        const delay = RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+        console.log(`Treadmill: Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+        notifyStatus('reconnecting');
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        try {
+            await connect();
+            console.log('Treadmill: Reconnected successfully');
+        } catch (error) {
+            console.error('Treadmill: Reconnection failed:', error);
+            attemptReconnect();
+        }
+    };
+
+    device.addEventListener('gattserverdisconnected', () => {
+        if (!isManualDisconnect) {
+            console.log('Treadmill: Connection lost, attempting to reconnect...');
+            notifyStatus('disconnected');
+            attemptReconnect();
+        }
+    });
+
+    // Initial connection
+    try {
+        await connect();
+    } catch (error) {
+        if (server && server.connected) {
+            server.disconnect();
+        }
+        throw error;
+    }
+
+    return {
+        disconnect: () => {
+            isManualDisconnect = true;
+            if (characteristic) {
+                try {
+                    characteristic.stopNotifications();
+                    characteristic.removeEventListener('characteristicvaluechanged', handleCharacteristicChange);
+                } catch (e) { /* ignore */ }
+            }
+            if (device.gatt?.connected) {
+                device.gatt.disconnect();
+            }
+            notifyStatus('disconnected');
+        },
+        addListener: (callback: TreadmillListener) => {
+            listeners.push(callback);
+        },
+        deviceName,
+        onStatusChange: (callback: ConnectionStatusListener) => {
+            statusListeners.push(callback);
+        }
     };
 };

@@ -397,20 +397,7 @@ export const initWorkoutSummaryModal = ({
             onExport: async () => {
                 try {
                     // Archive to IndexedDB
-                    await archiveWorkout(
-                        {
-                            power: measurementsState.power,
-                            heartrate: measurementsState.heartrate,
-                            cadence: measurementsState.cadence,
-                            speed: measurementsState.speed,
-                            distance: measurementsState.distance,
-                            altitude: measurementsState.altitude,
-                            gps: measurementsState.gps,
-                            laps: measurementsState.laps,
-                        },
-                        detail.startTime || timeState.startTime || Date.now(),
-                        detail.endTime || timeState.endTime || Date.now()
-                    );
+                    await archiveWorkout();
                     announce('Workout saved to local history', 'polite');
                 } catch (err) {
                     console.error('Failed to save to local history', err);

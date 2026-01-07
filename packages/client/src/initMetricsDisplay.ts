@@ -312,6 +312,37 @@ export const initMetricsDisplay = ({
     };
 
     /**
+     * Update incline display from Treadmill data
+     */
+    const updateInclineDisplay = (): void => {
+        const inclineDisplay = document.getElementById('value-incline');
+        const inclineContainer = document.querySelector('.metric-group-incline') as HTMLElement;
+
+        // Show container if we have treadmill data or checks
+
+        let validIncline = false;
+        let displayValue = emptyValue;
+
+        if (measurementsState.treadmill.length > 0) {
+            const latest = measurementsState.treadmill[measurementsState.treadmill.length - 1];
+            if (Date.now() - latest.timestamp < DATA_TIMEOUT_MS && latest.incline != null) {
+                validIncline = true;
+                displayValue = latest.incline.toFixed(1) + '%';
+            }
+        }
+
+        if (inclineDisplay) {
+            inclineDisplay.textContent = displayValue;
+        }
+
+        if (inclineContainer) {
+            // Only show incline metric group if we have valid data at some point or connectionsState has treadmill
+            // For simplicity, let's toggle based on data
+            inclineContainer.style.display = validIncline ? '' : 'none';
+        }
+    };
+
+    /**
      * Update the display for a single metric type
      */
     const updateMetricDisplay = (key: MeasurementType): void => {
@@ -419,6 +450,7 @@ export const initMetricsDisplay = ({
     // Start the update loop
     setInterval(() => {
         metricTypes.forEach(updateMetricDisplay);
+        updateInclineDisplay();
         updateZoneDisplays(powerGauge, hrGauge, zoneState);
         updateLiveCharts();
     }, UPDATE_INTERVAL_MS);

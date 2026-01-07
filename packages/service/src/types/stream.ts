@@ -16,6 +16,7 @@ export interface StreamMessage {
     position_lat?: string | number;
     position_long?: string | number;
     altitude?: string | number;
+    incline?: string | number;
     elapsed?: string;
     message?: string;
     [key: string]: string | number | undefined;

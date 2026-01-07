@@ -97,6 +97,7 @@ const mockIndexedDB = {
 
 // Set up global mock
 (globalThis as unknown as { indexedDB: typeof mockIndexedDB }).indexedDB = mockIndexedDB;
+(globalThis as unknown as { window: { indexedDB: typeof mockIndexedDB } }).window = { indexedDB: mockIndexedDB };
 
 describe('workoutStorage', () => {
     beforeEach(() => {

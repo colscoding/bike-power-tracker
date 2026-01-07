@@ -24,20 +24,21 @@ interface ErrorInfo {
 /**
  * Sensor type display names
  */
-const sensorLabels: Record<MeasurementType, string> = {
+const sensorLabels: Record<MeasurementType | 'treadmill', string> = {
     power: 'Power Meter',
     heartrate: 'Heart Rate Monitor',
     cadence: 'Cadence Sensor',
     speed: 'Speed Sensor',
-    distance: 'Distance',
-    altitude: 'Altitude',
+    distance: 'Distance Sensor',
+    altitude: 'Altimeter',
     gps: 'GPS',
+    treadmill: 'Treadmill',
 };
 
 /**
  * Sensor type icons
  */
-const sensorIcons: Record<MeasurementType, string> = {
+const sensorIcons: Record<MeasurementType | 'treadmill', string> = {
     power: '⚡',
     heartrate: '❤️',
     cadence: '🚴',
@@ -45,12 +46,13 @@ const sensorIcons: Record<MeasurementType, string> = {
     distance: '📏',
     altitude: '🏔️',
     gps: '📍',
+    treadmill: '🏃',
 };
 
 /**
  * Parse a Bluetooth error and return user-friendly information
  */
-function parseBluetoothError(error: unknown, sensorType: MeasurementType): ErrorInfo {
+function parseBluetoothError(error: unknown, sensorType: MeasurementType | 'treadmill'): ErrorInfo {
     const sensorLabel = sensorLabels[sensorType];
     const errorMessage = error instanceof Error ? error.message : String(error);
     const errorName = error instanceof Error ? error.name : '';
@@ -231,7 +233,7 @@ function createErrorContent(errorInfo: ErrorInfo): HTMLElement {
  */
 export function showConnectionError(
     error: unknown,
-    sensorType: MeasurementType,
+    sensorType: MeasurementType | 'treadmill',
     onRetry?: () => void
 ): Promise<boolean> {
     return new Promise((resolve) => {
@@ -294,7 +296,7 @@ export function showConnectionError(
  * @param onRetry - Optional callback to manually retry connection
  */
 export function showReconnectionFailed(
-    sensorType: MeasurementType,
+    sensorType: MeasurementType | 'treadmill',
     onRetry?: () => void
 ): void {
     const sensorLabel = sensorLabels[sensorType];
