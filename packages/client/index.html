@@ -312,6 +312,38 @@
             <h2 id="settingsTitle">⚙️ Settings</h2>
         </div>
         <div class="page-content" style="padding: 16px; overflow-y: auto; flex: 1;">
+            <!-- User Profile Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">👤 User Profile</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="settingFtp" style="font-size: 16px;">Functional Threshold Power (FTP)</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="settingFtp" min="0" max="2000"
+                                style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                            <span style="font-size: 14px; color: #666;">Watts</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="settingMaxHr" style="font-size: 16px;">Max Heart Rate</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="settingMaxHr" min="0" max="250"
+                                style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                            <span style="font-size: 14px; color: #666;">BPM</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <label for="settingWeight" style="font-size: 16px;">Weight</label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="number" id="settingWeight" min="0" max="300" step="0.1"
+                                style="padding: 8px; border: 1px solid #ccc; border-radius: 4px; flex: 1;">
+                            <span style="font-size: 14px; color: #666;">kg</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
             <!-- Display Settings Section -->
             <fieldset class="settings-fieldset"
                 style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">

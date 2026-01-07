@@ -514,7 +514,6 @@ See detailed guides in the `docs/` folder:
 
 - [DEPLOY.md](../../docs/DEPLOY.md) - VPS deployment guide
 - [HOME_DEPLOYMENT.md](../../docs/HOME_DEPLOYMENT.md) - Home server setup
-- [TUNNEL_OPTIONS.md](../../docs/TUNNEL_OPTIONS.md) - Cloudflare tunnel setup
 
 ### Production Checklist
 

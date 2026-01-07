@@ -74,7 +74,6 @@ bike-power-tracker/
 ├── docs/                # Documentation
 │   ├── DEPLOY.md        # VPS deployment guide
 │   ├── HOME_DEPLOYMENT.md    # Home server setup
-│   └── CLOUDFLARE_TUNNEL_GUIDE.md  # Cloudflare tunnel guide
 ├── package.json         # Root workspace config
 └── pnpm-workspace.yaml  # PNPM workspace definition
 ```
@@ -215,7 +214,6 @@ For deploying both client and service:
 |-------|-------------|
 | [DEPLOY.md](./docs/DEPLOY.md) | VPS deployment with Docker |
 | [HOME_DEPLOYMENT.md](./docs/HOME_DEPLOYMENT.md) | Home server setup |
-| [CLOUDFLARE_TUNNEL_GUIDE.md](./docs/CLOUDFLARE_TUNNEL_GUIDE.md) | Cloudflare tunnel for home servers |
 
 ### Docker Quick Deploy
 
@@ -265,7 +263,6 @@ DATABASE_URL=file:./data/bpt.db
 | [Simulation README](./packages/simulation/README.md) | Testing tools |
 | [DEPLOY.md](./docs/DEPLOY.md) | VPS deployment |
 | [HOME_DEPLOYMENT.md](./docs/HOME_DEPLOYMENT.md) | Home server guide |
-| [CLOUDFLARE_TUNNEL_GUIDE.md](./docs/CLOUDFLARE_TUNNEL_GUIDE.md) | Tunnel setup |
 | [OpenAPI Spec](./packages/service/openapi.yaml) | Full API specification |
 
 ## License

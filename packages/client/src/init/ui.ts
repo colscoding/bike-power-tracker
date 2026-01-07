@@ -18,6 +18,9 @@ import type { TimeState, ConnectionsState } from '../getInitState.js';
 import type { ZoneState } from '../zone-state.js';
 import type { StreamManager } from '../stream-manager.js';
 
+/**
+ * Parameters for UI initialization
+ */
 interface UiInitParams {
     measurementsState: MeasurementsState;
     timeState: TimeState;
@@ -25,6 +28,20 @@ interface UiInitParams {
     streamManager: StreamManager;
 }
 
+/**
+ * Initialize all User Interface components
+ * 
+ * Sets up:
+ * - Metrics displays (Power, HR, Cadence)
+ * - Navigation and Menus
+ * - Streaming controls and viewer
+ * - Workout builder
+ * - System features (Wake lock, PWA install, Service Worker)
+ * - Accessibility features
+ * 
+ * @param params - State objects and dependencies
+ * @returns The initialized ZoneState for zone distribution tracking
+ */
 export function initUi({ measurementsState, timeState, connectionsState, streamManager }: UiInitParams): ZoneState {
     // Initialize UI components
     initTimerDisplay(timeState);

@@ -6,6 +6,8 @@
  * @module settings
  */
 
+import { loadUserProfile, saveUserProfile } from './onboarding.js';
+
 /**
  * Application settings
  */
@@ -73,6 +75,11 @@ export function getSettings(): AppSettings {
  */
 export function initSettingsLogic(): void {
     const saveSettingsButton = document.getElementById('saveSettings');
+
+    // User Profile settings
+    const settingFtp = document.getElementById('settingFtp') as HTMLInputElement | null;
+    const settingMaxHr = document.getElementById('settingMaxHr') as HTMLInputElement | null;
+    const settingWeight = document.getElementById('settingWeight') as HTMLInputElement | null;
 
     // Dashboard display settings
     const settingSpeed = document.getElementById('settingSpeed') as HTMLInputElement | null;
@@ -146,6 +153,17 @@ export function initSettingsLogic(): void {
      * Save settings to localStorage
      */
     const saveSettings = (): void => {
+        // Save User Profile
+        const currentProfile = loadUserProfile();
+        const updatedProfile = {
+            ...currentProfile,
+            ftp: settingFtp?.value ? Number(settingFtp.value) : null,
+            maxHr: settingMaxHr?.value ? Number(settingMaxHr.value) : null,
+            weight: settingWeight?.value ? Number(settingWeight.value) : null,
+        };
+        saveUserProfile(updatedProfile);
+        window.dispatchEvent(new CustomEvent('user-profile-changed'));
+
         const settings: AppSettings = {
             speed: settingSpeed?.checked ?? defaultSettings.speed,
             distance: settingDistance?.checked ?? defaultSettings.distance,
@@ -177,6 +195,12 @@ export function initSettingsLogic(): void {
      */
     const loadSettings = (): void => {
         const settings = getSettings();
+        const profile = loadUserProfile();
+
+        // User Profile settings
+        if (settingFtp) settingFtp.value = profile.ftp?.toString() ?? '';
+        if (settingMaxHr) settingMaxHr.value = profile.maxHr?.toString() ?? '';
+        if (settingWeight) settingWeight.value = profile.weight?.toString() ?? '';
 
         // Dashboard display settings
         if (settingPower) settingPower.checked = settings.power;

@@ -21,11 +21,11 @@ export class MockSensor implements SensorConnection {
         this.listeners.forEach(listener => listener(entry));
     }
 
-    public addListener(callback: MeasurementListener): void {
+    public addListener = (callback: MeasurementListener): void => {
         this.listeners.push(callback);
     }
 
-    public disconnect(): void {
+    public disconnect = (): void => {
         clearInterval(this.intervalId);
     }
 }
