@@ -130,7 +130,8 @@ export async function loadActiveWorkout(): Promise<ActiveWorkoutRecord | null> {
     try {
         const database = await openDatabase();
 
-        return new Promise((resolve, reject) => {
+        // Check IndexedDB
+        const idbPromise = new Promise<ActiveWorkoutRecord | null>((resolve, reject) => {
             const transaction = database.transaction(STORE_NAME, 'readonly');
             const store = transaction.objectStore(STORE_NAME);
             const request = store.get('current');
@@ -143,6 +144,26 @@ export async function loadActiveWorkout(): Promise<ActiveWorkoutRecord | null> {
                 reject(request.error);
             };
         });
+
+        const idbResult = await idbPromise;
+
+        // Check LocalStorage
+        let lsResult: ActiveWorkoutRecord | null = null;
+        try {
+            const item = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (item) {
+                lsResult = JSON.parse(item);
+            }
+        } catch (e) {
+            console.error('Failed to load from localStorage', e);
+        }
+
+        // Compare and return the most recent
+        if (idbResult && lsResult) {
+            return idbResult.lastUpdated >= lsResult.lastUpdated ? idbResult : lsResult;
+        }
+        return idbResult || lsResult;
+
     } catch (error) {
         console.error('Error loading active workout:', error);
         return null;
@@ -302,6 +323,29 @@ export async function deleteCompletedWorkout(workoutId: string): Promise<void> {
     }
 }
 
+const LOCAL_STORAGE_KEY = 'bpt_active_workout_backup';
+
+function backupToLocalStorage(measurements: MeasurementsData, startTime: number | null): void {
+    try {
+        const record: ActiveWorkoutRecord = {
+            id: 'current',
+            startTime: startTime ?? Date.now(),
+            lastUpdated: Date.now(),
+            heartrate: measurements.heartrate,
+            power: measurements.power,
+            cadence: measurements.cadence,
+            speed: measurements.speed,
+            distance: measurements.distance,
+            altitude: measurements.altitude,
+            gps: measurements.gps,
+            laps: measurements.laps ?? [],
+        };
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(record));
+    } catch (e) {
+        console.error('Failed to backup to localStorage', e);
+    }
+}
+
 /**
  * Checks if there's an active workout that can be recovered
  */
@@ -353,6 +397,9 @@ export async function flushPendingSave(): Promise<void> {
         saveTimeout = null;
     }
     if (pendingSave) {
+        // Synchronous backup first
+        backupToLocalStorage(pendingSave.measurements, pendingSave.startTime);
+
         await saveActiveWorkout(pendingSave.measurements, pendingSave.startTime);
         pendingSave = null;
     }

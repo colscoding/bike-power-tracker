@@ -7,13 +7,11 @@
  */
 
 import type { SensorConnection } from './types/bluetooth.js';
-import { BluetoothFactory } from './services/bluetooth/factory.js';
+import { MockSensor } from './services/bluetooth/mockSensor.js';
 
-/**
- * Connect to a heart rate sensor.
- * 
- * @returns Promise resolving to a sensor connection
- */
 export const connectHeartRate = async (): Promise<SensorConnection> => {
-    return BluetoothFactory.connectHeartRate();
+    return new MockSensor(
+        'Mock HR Sensor',
+        () => Math.floor(Math.random() * 80) + 120 // 120-200 bpm
+    );
 };

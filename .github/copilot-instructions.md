@@ -76,11 +76,25 @@ describe('Calculations', () => {
 -   Add **JSDoc** to all exported functions, interfaces, and classes.
 -   Describe parameters, return values, and potential exceptions.
 
+### Quality & Robustness
+-   **Verification Loop**: ALWAYS run `pnpm typecheck` (or package equivalent) after making changes to TypeScript files. Do not assume your code is correct.
+-   **Imports**: ALL imports must include file extensions (e.g., `.js` for local files). This is crucial for ES Modules in Node.js and browser environments.
+-   **No Regression**: When modifying existing code, you MUST verify that you haven't broken existing functionality.
+    -   Run related unit tests.
+    -   Check for TypeScript errors in the entire package, not just the file you edited.
+    -   Use `list_code_usages` to understand the impact of your changes before editing.
+-   **Clean Code**:
+    -   Functions should be small and do one thing.
+    -   Avoid "magic numbers" - use constants.
+    -   Variable names should be descriptive.
+
 ## Specific Task Rules
 
 1.  **Hardware Integration**: When working on Bluetooth or GPS, always check `Capacitor.isNativePlatform()` to switch between Web implementations and Native Plugins.
 2.  **File Paths**: Always use absolute paths or paths relative to the package root.
-3.  **Refactoring**: If refactoring, ensure no functionality is lost. Check `list_code_usages` before renaming symbols.
+3.  **Refactoring & Safety**: 
+    -   If refactoring, ensure no functionality is lost. 
+    -   **MANDATORY**: Run `pnpm typecheck` (for client) or builds after any refactoring to catch contract breaches immediately.
 4.  **Security**: Never hardcode secrets. Use environment variables. Validate all data entering the `MeasurementsState`.
 5.  **Performance**: Minimize main thread work. Use `requestAnimationFrame` for UI updates involving high-frequency sensor data.
 

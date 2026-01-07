@@ -4,11 +4,14 @@
  * Handles the bottom navigation bar.
  */
 
+import { IRouter } from '../router/types.js';
+import { ViewId } from '../router/view-ids.js';
+
 export class NavBar {
     private container: HTMLElement;
-    private router: any; // Type as 'any' to avoid circular dependency or import complexity for now
+    private router: IRouter;
 
-    constructor(router: any) {
+    constructor(router: IRouter) {
         this.router = router;
         this.container = document.createElement('nav');
         this.container.id = 'bottom-nav';
@@ -27,19 +30,19 @@ export class NavBar {
 
     private render(): void {
         this.container.innerHTML = `
-            <button class="nav-item active" data-target="dashboard">
+            <button class="nav-item active" data-target="${ViewId.Dashboard}">
                 <span class="nav-icon">📊</span>
                 <span class="nav-label">Dashboard</span>
             </button>
-            <button class="nav-item" data-target="history">
+            <button class="nav-item" data-target="${ViewId.History}">
                 <span class="nav-icon">📅</span>
                 <span class="nav-label">History</span>
             </button>
-            <button class="nav-item" data-target="workouts">
+            <button class="nav-item" data-target="${ViewId.Workouts}">
                 <span class="nav-icon">🏋️</span>
                 <span class="nav-label">Workouts</span>
             </button>
-            <button class="nav-item" data-target="settings">
+            <button class="nav-item" data-target="${ViewId.Settings}">
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-label">Settings</span>
             </button>
@@ -48,7 +51,7 @@ export class NavBar {
         this.container.querySelectorAll('.nav-item').forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = (btn as HTMLElement).dataset.target;
-                if (target === 'dashboard') {
+                if (target === ViewId.Dashboard) {
                     this.router.navigate('/');
                 } else if (target) {
                     this.router.navigate('/' + target);

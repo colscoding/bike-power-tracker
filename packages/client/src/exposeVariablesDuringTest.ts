@@ -6,7 +6,7 @@
  * @module exposeVariablesDuringTest
  */
 
-import type { MeasurementsState } from './MeasurementsState.js';
+import type { MeasurementsState } from './measurements-state.js';
 import type { ConnectionsState } from './types/connections.js';
 
 /**

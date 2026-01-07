@@ -8,7 +8,7 @@
  */
 
 import { announce } from './accessibility.js';
-import type { ZoneState, ZoneDistribution } from '../ZoneState.js';
+import type { ZoneState, ZoneDistribution } from '../zone-state.js';
 
 /**
  * Modal button configuration

@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ZoneState } from './ZoneState.js';
+import { ZoneState } from './zone-state.js';
 
 // Mock localStorage
 const mockStorage: Record<string, string> = {};

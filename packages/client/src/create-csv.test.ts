@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { getCsvString } from './create-csv.js';
-import { MeasurementsState } from './MeasurementsState.js';
+import { MeasurementsState } from './measurements-state.js';
 
 test('getCsvString returns empty string when no measurements', () => {
     const measurements = new MeasurementsState();

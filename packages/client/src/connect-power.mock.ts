@@ -7,13 +7,11 @@
  */
 
 import type { SensorConnection } from './types/bluetooth.js';
-import { BluetoothFactory } from './services/bluetooth/factory.js';
+import { MockSensor } from './services/bluetooth/mockSensor.js';
 
-/**
- * Connect to a power sensor.
- * 
- * @returns Promise resolving to a sensor connection
- */
 export const connectPower = async (): Promise<SensorConnection> => {
-    return BluetoothFactory.connectPower();
+    return new MockSensor(
+        'Mock Power Sensor',
+        () => Math.floor(Math.random() * 300) + 100 // 100-400W
+    );
 };

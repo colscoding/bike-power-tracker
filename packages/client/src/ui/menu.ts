@@ -16,35 +16,10 @@ import { resetLapCounter } from './lap.js';
 import { PersonalRecordTracker } from './analyticsHelper.js';
 import { listWorkouts, isDatabaseAvailable } from '../api/workoutClient.js';
 import { archiveWorkout } from '../storage/workoutStorage.js';
-import type { MeasurementsState } from '../MeasurementsState.js';
+import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState } from '../getInitState.js';
-import type { ZoneState } from '../ZoneState.js';
-
-/**
- * Application settings stored in localStorage
- */
-interface AppSettings {
-    power: boolean;
-    cadence: boolean;
-    heartrate: boolean;
-    exportTcx: boolean;
-    exportCsv: boolean;
-    exportJson: boolean;
-    exportFit: boolean;
-}
-
-/**
- * Default settings
- */
-const defaultSettings: AppSettings = {
-    power: true,
-    cadence: true,
-    heartrate: true,
-    exportTcx: true,
-    exportCsv: true,
-    exportJson: false,
-    exportFit: false,
-};
+import type { ZoneState } from '../zone-state.js';
+import { type AppSettings, defaultSettings } from '../types/settings.js';
 
 /**
  * Initialize the metrics visibility toggles.

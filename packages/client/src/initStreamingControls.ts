@@ -7,7 +7,7 @@
  */
 
 import { showNotification } from './ui/notifications.js';
-import type { StreamManager, StreamStatus, WorkoutTimeState } from './streamManager.js';
+import type { StreamManager, StreamStatus, WorkoutTimeState } from './stream-manager.js';
 
 /**
  * Initialize streaming controls.

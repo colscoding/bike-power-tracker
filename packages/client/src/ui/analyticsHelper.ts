@@ -35,18 +35,20 @@ export class PersonalRecordTracker {
         workouts.forEach(w => {
             const summary = getSummary(w);
 
-            if (summary.maxPower && summary.maxPower > this.state.maxPower) {
-                this.state.maxPower = summary.maxPower;
+            if (summary.power?.max && summary.power.max > this.state.maxPower) {
+                this.state.maxPower = summary.power.max;
             }
-            if (summary.maxHeartrate && summary.maxHeartrate > this.state.maxHr) {
-                this.state.maxHr = summary.maxHeartrate;
+            if (summary.heartrate?.max && summary.heartrate.max > this.state.maxHr) {
+                this.state.maxHr = summary.heartrate.max;
             }
             if (w.duration && w.duration > this.state.longestDuration) {
                 this.state.longestDuration = w.duration;
             }
+            /*
             if (summary.totalDistance && summary.totalDistance > this.state.longestDistance) {
                 this.state.longestDistance = summary.totalDistance;
             }
+            */
 
             // Power Curve
             if (summary.powerCurve) {
@@ -120,16 +122,16 @@ export class PersonalRecordTracker {
  * Note: Local WorkoutSummary type has different shape than DB text/json summary.
  * We cast to 'any' for reading flexible fields.
  */
-export function getSummary(workout: Workout): any {
+export function getSummary(workout: Workout): Partial<WorkoutSummary> {
     if (!workout.summary) return {};
     if (typeof workout.summary === 'string') {
         try {
-            return JSON.parse(workout.summary);
+            return JSON.parse(workout.summary) as Partial<WorkoutSummary>;
         } catch {
             return {};
         }
     }
-    return workout.summary;
+    return workout.summary as unknown as Partial<WorkoutSummary>;
 }
 
 function formatDuration(ms: number): string {

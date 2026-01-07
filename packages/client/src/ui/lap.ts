@@ -11,7 +11,7 @@ import { announce } from './accessibility.js';
 import { showNotification } from './notifications.js';
 import { getTimestring } from '../getTimestring.js';
 import { voiceFeedback } from '../services/VoiceFeedback.js';
-import type { MeasurementsState } from '../MeasurementsState.js';
+import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState } from '../getInitState.js';
 
 /**

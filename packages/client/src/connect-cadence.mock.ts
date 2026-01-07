@@ -7,13 +7,11 @@
  */
 
 import type { SensorConnection } from './types/bluetooth.js';
-import { BluetoothFactory } from './services/bluetooth/factory.js';
+import { MockSensor } from './services/bluetooth/mockSensor.js';
 
-/**
- * Connect to a cadence sensor.
- * 
- * @returns Promise resolving to a sensor connection
- */
 export const connectCadence = async (): Promise<SensorConnection> => {
-    return BluetoothFactory.connectCadence();
+    return new MockSensor(
+        'Mock Cadence Sensor',
+        () => Math.floor(Math.random() * 40) + 70 // 70-110 rpm
+    );
 };

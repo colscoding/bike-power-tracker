@@ -11,7 +11,7 @@ import { connectHeartRate } from './connect-heartrate.js';
 import { connectPower } from './connect-power.js';
 import { connectGps } from './connect-gps.js';
 import { elements } from './elements.js';
-import type { MeasurementsState } from './MeasurementsState.js';
+import type { MeasurementsState } from './measurements-state.js';
 import type { MeasurementType, Measurement, GpsPoint } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
 import type { SensorConnection, ConnectionStatus } from './types/bluetooth.js';

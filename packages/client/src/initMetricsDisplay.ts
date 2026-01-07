@@ -8,13 +8,14 @@
  */
 
 import { elements } from './elements.js';
-import type { MeasurementsState } from './MeasurementsState.js';
+import type { MeasurementsState } from './measurements-state.js';
 import type { MeasurementType } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
-import { ZoneState } from './ZoneState.js';
+import { ZoneState } from './zone-state.js';
 import type { ZoneGauge } from './components/ZoneGauge.js';
 import type { LiveChart } from './components/LiveChart.js';
 import { voiceFeedback } from './services/VoiceFeedback.js';
+import { getSettings } from './ui/settings.js';
 
 /**
  * Parameters for metrics display initialization
@@ -272,6 +273,21 @@ export const initMetricsDisplay = ({
     let lastPowerZone: number | null = null;
     let lastHrZone: number | null = null;
 
+    // Cache settings to avoid reading localStorage in loop
+    let cachedSettings = getSettings();
+
+    // Listen for settings changes
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'bpt-settings') {
+            cachedSettings = getSettings();
+        }
+    });
+
+    // Custom event for same-window updates
+    window.addEventListener('settings-changed', () => {
+        cachedSettings = getSettings();
+    });
+
     /**
      * Update live charts with new data
      */
@@ -312,6 +328,23 @@ export const initMetricsDisplay = ({
 
         const container = element.closest('.metric-group') as HTMLElement;
 
+        // Skip if this metric is disabled in settings
+        // @ts-ignore - dynamic key access
+        const isEnabled = cachedSettings[key];
+
+        if (container) {
+            // Respect settings-based visibility
+            if (isEnabled === false) {
+                container.style.display = 'none';
+                return;
+            } else {
+                // Enabled in settings (or undefined), so ensure it is visible
+                if (container.style.display === 'none') {
+                    container.style.display = '';
+                }
+            }
+        }
+
         // Show empty value if not connected
         if (!connectionState.isConnected) {
             element.textContent = emptyValue;
@@ -319,14 +352,7 @@ export const initMetricsDisplay = ({
             if (key === 'power' || key === 'heartrate') {
                 applyZoneColorToMetric(element, null, key);
             }
-            if (container) {
-                container.style.display = 'none';
-            }
             return;
-        }
-
-        if (container && container.style.display === 'none') {
-            container.style.display = '';
         }
 
         const arr = measurementsState[key];

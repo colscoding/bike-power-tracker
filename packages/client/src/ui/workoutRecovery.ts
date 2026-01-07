@@ -13,7 +13,7 @@ import {
     hasRecoverableWorkout,
     type ActiveWorkoutRecord
 } from '../storage/workoutStorage.js';
-import type { MeasurementsState } from '../MeasurementsState.js';
+import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState } from '../getInitState.js';
 
 /**

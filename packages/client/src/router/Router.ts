@@ -1,4 +1,5 @@
 import { View } from './View.js';
+import { IRouter } from './types.js';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 
@@ -7,7 +8,7 @@ interface Route {
     viewId: string;
 }
 
-export class Router {
+export class Router implements IRouter {
     private views: Map<string, View> = new Map();
     private routes: Route[] = [];
     private currentViewId: string | null = null;

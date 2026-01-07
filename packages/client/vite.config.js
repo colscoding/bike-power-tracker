@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 export default defineConfig({
     base: './',
@@ -7,6 +9,13 @@ export default defineConfig({
         outDir: 'dist',
         assetsDir: 'assets',
         sourcemap: true,
+    },
+    resolve: {
+        alias: process.env.NODE_ENV === 'production' ? [] : [
+            { find: './connect-power.js', replacement: fileURLToPath(new URL('./src/connect-power.mock.ts', import.meta.url)) },
+            { find: './connect-cadence.js', replacement: fileURLToPath(new URL('./src/connect-cadence.mock.ts', import.meta.url)) },
+            { find: './connect-heartrate.js', replacement: fileURLToPath(new URL('./src/connect-heartrate.mock.ts', import.meta.url)) }
+        ]
     },
     server: {
         proxy: {

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { MeasurementsState } from './MeasurementsState.js';
+import { MeasurementsState } from './measurements-state.js';
 
 test('MeasurementsState should add cadence measurement with timestamp and value', () => {
     const bike = new MeasurementsState();

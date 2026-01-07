@@ -14,6 +14,9 @@ export interface AppSettings {
     power: boolean;
     cadence: boolean;
     heartrate: boolean;
+    speed: boolean;
+    distance: boolean;
+    altitude: boolean;
     power3s: boolean;
 
     // Accessibility settings
@@ -40,6 +43,9 @@ const defaultSettings: AppSettings = {
     power: true,
     cadence: true,
     heartrate: true,
+    speed: true,
+    distance: true,
+    altitude: true,
     power3s: false,
     highContrast: false,
     colorblindPatterns: false,
@@ -69,6 +75,9 @@ export function initSettingsLogic(): void {
     const saveSettingsButton = document.getElementById('saveSettings');
 
     // Dashboard display settings
+    const settingSpeed = document.getElementById('settingSpeed') as HTMLInputElement | null;
+    const settingDistance = document.getElementById('settingDistance') as HTMLInputElement | null;
+    const settingAltitude = document.getElementById('settingAltitude') as HTMLInputElement | null;
     const settingPower = document.getElementById('settingPower') as HTMLInputElement | null;
     const settingCadence = document.getElementById('settingCadence') as HTMLInputElement | null;
     const settingHeartrate = document.getElementById('settingHeartrate') as HTMLInputElement | null;
@@ -101,6 +110,9 @@ export function initSettingsLogic(): void {
             });
         };
 
+        toggleMetric('speed', settings.speed);
+        toggleMetric('distance', settings.distance);
+        toggleMetric('altitude', settings.altitude);
         toggleMetric('power', settings.power);
         toggleMetric('cadence', settings.cadence);
         toggleMetric('heartrate', settings.heartrate);
@@ -135,6 +147,9 @@ export function initSettingsLogic(): void {
      */
     const saveSettings = (): void => {
         const settings: AppSettings = {
+            speed: settingSpeed?.checked ?? defaultSettings.speed,
+            distance: settingDistance?.checked ?? defaultSettings.distance,
+            altitude: settingAltitude?.checked ?? defaultSettings.altitude,
             power: settingPower?.checked ?? defaultSettings.power,
             cadence: settingCadence?.checked ?? defaultSettings.cadence,
             heartrate: settingHeartrate?.checked ?? defaultSettings.heartrate,
@@ -152,6 +167,9 @@ export function initSettingsLogic(): void {
 
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
         applySettings(settings);
+
+        // Notify other components (like initMetricsDisplay) about the update
+        window.dispatchEvent(new CustomEvent('settings-changed'));
     };
 
     /**
@@ -162,7 +180,11 @@ export function initSettingsLogic(): void {
 
         // Dashboard display settings
         if (settingPower) settingPower.checked = settings.power;
+        if (settingCadence) settingCadence.checked = settings.cadence;
         if (settingHeartrate) settingHeartrate.checked = settings.heartrate;
+        if (settingSpeed) settingSpeed.checked = settings.speed;
+        if (settingDistance) settingDistance.checked = settings.distance;
+        if (settingAltitude) settingAltitude.checked = settings.altitude;
         if (settingPower3s) settingPower3s.checked = settings.power3s;
 
         // Accessibility settings

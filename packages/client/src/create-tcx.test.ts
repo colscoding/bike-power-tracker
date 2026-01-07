@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { getTcxString } from './create-tcx.js';
-import { MeasurementsState } from './MeasurementsState.js';
+import { MeasurementsState } from './measurements-state.js';
 
 test('getTcxString returns empty string when no measurements', () => {
     const measurements = new MeasurementsState();

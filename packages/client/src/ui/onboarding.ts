@@ -14,6 +14,7 @@
 
 import { announce, trapFocus } from './accessibility.js';
 import { showNotification } from './notifications.js';
+import { selectElement } from '../utils/dom.js';
 
 /**
  * User profile settings for training zones
@@ -349,18 +350,18 @@ export function showOnboarding(forceShow = false): Promise<UserProfile> {
         }
 
         // Get elements
-        const icon = document.getElementById('onboardingIcon')!;
-        const title = document.getElementById('onboardingStepTitle')!;
-        const content = document.getElementById('onboardingContent')!;
-        const inputContainer = document.getElementById('onboardingInput')!;
-        const inputField = document.getElementById('onboardingInputField') as HTMLInputElement;
-        const inputLabel = document.getElementById('onboardingInputLabel')!;
-        const inputUnit = document.getElementById('onboardingInputUnit')!;
-        const helpText = document.getElementById('onboardingHelpText')!;
-        const prevBtn = document.getElementById('onboardingPrev') as HTMLButtonElement;
-        const nextBtn = document.getElementById('onboardingNext') as HTMLButtonElement;
-        const skipBtn = document.getElementById('skipOnboarding') as HTMLButtonElement;
-        const progressDots = document.getElementById('onboardingProgressDots')!;
+        const icon = selectElement('onboardingIcon');
+        const title = selectElement('onboardingStepTitle');
+        const content = selectElement('onboardingContent');
+        const inputContainer = selectElement('onboardingInput');
+        const inputField = selectElement<HTMLInputElement>('onboardingInputField');
+        const inputLabel = selectElement('onboardingInputLabel');
+        const inputUnit = selectElement('onboardingInputUnit');
+        const helpText = selectElement('onboardingHelpText');
+        const prevBtn = selectElement<HTMLButtonElement>('onboardingPrev');
+        const nextBtn = selectElement<HTMLButtonElement>('onboardingNext');
+        const skipBtn = selectElement<HTMLButtonElement>('skipOnboarding');
+        const progressDots = selectElement('onboardingProgressDots');
 
         const elements = { icon, title, content, inputContainer, inputField, inputLabel, inputUnit, helpText, prevBtn, nextBtn, progressDots };
 

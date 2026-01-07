@@ -6,7 +6,7 @@
  * @module getInitState
  */
 
-import { MeasurementsState } from './MeasurementsState.js';
+import { MeasurementsState } from './measurements-state.js';
 import type { ConnectionsState, SensorConnectionState } from './types/connections.js';
 
 // Re-export types for convenience
@@ -64,6 +64,10 @@ export const getInitState = (): AppState => {
                 disconnect: null,
             },
             altitude: {
+                isConnected: false,
+                disconnect: null,
+            },
+            gps: {
                 isConnected: false,
                 disconnect: null,
             },

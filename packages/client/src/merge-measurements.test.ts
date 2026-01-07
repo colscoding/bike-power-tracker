@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
 import { getValuesAtTimestamps, mergeMeasurements } from './merge-measurements.js';
-import { MeasurementsState } from './MeasurementsState.js';
+import { MeasurementsState } from './measurements-state.js';
 
 // Tests for getValuesAtTimestamps
 test('getValuesAtTimestamps returns null values for empty input', () => {

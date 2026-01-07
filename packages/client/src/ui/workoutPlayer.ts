@@ -5,7 +5,7 @@
  */
 
 import { WORKOUT_LIBRARY, getWorkoutDuration } from '../workouts/workoutLibrary.js';
-import type { StructuredWorkout } from '../workouts/types.js';
+import type { StructuredWorkout, WorkoutStep } from '../workouts/types.js';
 import { WorkoutRunner, type RunnerState } from '../workouts/WorkoutRunner.js';
 import { formatDuration } from '../api/workoutClient.js';
 import { announce } from './accessibility.js';
@@ -366,7 +366,7 @@ function formatTime(seconds: number): string {
 }
 
 // Temporary helper until I expose calculation from Runner or pass it in state
-function calculateNextTarget(step: any): string {
+function calculateNextTarget(step: WorkoutStep): string {
     // This logic is duplicated from Runner, improving later
     return step.targetValue ? ` @ ~${step.targetValue}${step.targetType === 'percent_ftp' ? '%' : 'W'}` : '';
 }
