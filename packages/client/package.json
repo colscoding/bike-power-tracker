@@ -24,7 +24,7 @@
     "build:mobile": "pnpm run build && npx cap sync",
     "android:build": "pnpm run build && npx cap sync android",
     "ios:build": "pnpm run build && npx cap sync ios",
-    "apk": "./latest-apk.sh"
+    "apk": "./build-apk.sh"
   },
   "keywords": [
     "bike",

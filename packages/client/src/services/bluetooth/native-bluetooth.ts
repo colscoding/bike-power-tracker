@@ -21,6 +21,23 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 /** Base delay between reconnection attempts (ms) */
 const RECONNECT_BASE_DELAY = 1000;
 
+// Track if BleClient has been initialized
+let isBleInitialized = false;
+
+const ensureBleInitialized = async () => {
+    if (!isBleInitialized) {
+        try {
+            await BleClient.initialize();
+            isBleInitialized = true;
+        } catch (error) {
+            console.error('Failed to initialize BleClient:', error);
+            // On some versions/platforms, re-initializing might throw but not be fatal if already initialized.
+            // But usually we want to propagate this error if it's the first time.
+            throw error;
+        }
+    }
+};
+
 export const connectPowerNative = async (): Promise<SensorConnection> => {
     const listeners: MeasurementListener[] = [];
     const statusListeners: ConnectionStatusListener[] = [];
@@ -28,12 +45,18 @@ export const connectPowerNative = async (): Promise<SensorConnection> => {
     let isManualDisconnect = false;
     let reconnectAttempts = 0;
 
-    await BleClient.initialize();
+    await ensureBleInitialized();
 
-    const device = await BleClient.requestDevice({
-        services: [CYCLING_POWER_SERVICE],
-        optionalServices: [CYCLING_POWER_SERVICE]
-    });
+    let device;
+    try {
+        device = await BleClient.requestDevice({
+            services: [CYCLING_POWER_SERVICE],
+            optionalServices: [CYCLING_POWER_SERVICE]
+        });
+    } catch (error) {
+        console.error('Error requesting Power device:', error);
+        throw error;
+    }
 
     deviceId = device.deviceId;
     const deviceName = device.name || 'Power Sensor';
@@ -126,12 +149,18 @@ export const connectHeartRateNative = async (): Promise<SensorConnection> => {
     let isManualDisconnect = false;
     let reconnectAttempts = 0;
 
-    await BleClient.initialize();
+    await ensureBleInitialized();
 
-    const device = await BleClient.requestDevice({
-        services: [HEART_RATE_SERVICE],
-        optionalServices: [HEART_RATE_SERVICE]
-    });
+    let device;
+    try {
+        device = await BleClient.requestDevice({
+            services: [HEART_RATE_SERVICE],
+            optionalServices: [HEART_RATE_SERVICE]
+        });
+    } catch (error) {
+        console.error('Error requesting Heart Rate device:', error);
+        throw error;
+    }
 
     deviceId = device.deviceId;
     const deviceName = device.name || 'Heart Rate Monitor';
@@ -236,12 +265,18 @@ export const connectCadenceNative = async (): Promise<SensorConnection> => {
     let isManualDisconnect = false;
     let reconnectAttempts = 0;
 
-    await BleClient.initialize();
+    await ensureBleInitialized();
 
-    const device = await BleClient.requestDevice({
-        services: [CYCLING_SPEED_AND_CADENCE_SERVICE],
-        optionalServices: [CYCLING_SPEED_AND_CADENCE_SERVICE]
-    });
+    let device;
+    try {
+        device = await BleClient.requestDevice({
+            services: [CYCLING_SPEED_AND_CADENCE_SERVICE],
+            optionalServices: [CYCLING_SPEED_AND_CADENCE_SERVICE]
+        });
+    } catch (error) {
+        console.error('Error requesting Cadence device:', error);
+        throw error;
+    }
 
     deviceId = device.deviceId;
     const deviceName = device.name || 'Cadence Sensor';
@@ -370,12 +405,18 @@ export const connectTreadmillNative = async (): Promise<TreadmillConnection> => 
     let isManualDisconnect = false;
     let reconnectAttempts = 0;
 
-    await BleClient.initialize();
+    await ensureBleInitialized();
 
-    const device = await BleClient.requestDevice({
-        services: [FITNESS_MACHINE_SERVICE],
-        optionalServices: [FITNESS_MACHINE_SERVICE]
-    });
+    let device;
+    try {
+        device = await BleClient.requestDevice({
+            services: [FITNESS_MACHINE_SERVICE],
+            optionalServices: [FITNESS_MACHINE_SERVICE]
+        });
+    } catch (error) {
+        console.error('Error requesting Treadmill device:', error);
+        throw error;
+    }
 
     deviceId = device.deviceId;
     const deviceName = device.name || 'Treadmill';

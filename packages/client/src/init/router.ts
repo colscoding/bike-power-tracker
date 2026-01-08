@@ -31,5 +31,18 @@ export function setupRouter(): Router {
     // Initialize Navigation Bar
     new NavBar(router);
 
+    // Wire up Sidebar Settings Button (for mobile/hamburger menu)
+    const settingsButton = document.getElementById('settingsButton');
+    if (settingsButton) {
+        settingsButton.addEventListener('click', () => {
+            router.navigate('/settings');
+            // Close the details menu if open
+            const details = document.querySelector('nav details') as HTMLDetailsElement;
+            if (details) {
+                details.open = false;
+            }
+        });
+    }
+
     return router;
 }
