@@ -9,7 +9,6 @@ The service is designed to be containerized using Docker.
 -   `Dockerfile.dev`: Development container with hot-reload (via `tsx` or `nodemon`).
 -   `docker-compose.yml`: Base composition.
 -   `docker-compose.prod.yml`: Production overrides (restart policies, volume mapping).
--   `docker-compose.home.yml`: Specific configuration for home server deployment.
 
 ### Building & Running
 

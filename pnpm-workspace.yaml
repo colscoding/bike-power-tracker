@@ -1,4 +1,5 @@
 packages:
   - 'packages/client'
   - 'packages/service'
+  - 'packages/inspect'
   - 'test-integration'

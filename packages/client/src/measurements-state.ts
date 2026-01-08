@@ -250,6 +250,22 @@ export class MeasurementsState implements MeasurementsData {
             });
         }
 
+        // Add speed if available (convert m/s to km/h)
+        if (point.speed !== null) {
+            this.addSpeed({
+                timestamp: point.timestamp,
+                value: point.speed * 3.6
+            });
+        }
+
+        // Add altitude if available
+        if (point.altitude !== null) {
+            this.addAltitude({
+                timestamp: point.timestamp,
+                value: point.altitude
+            });
+        }
+
         this.gps.push(point);
         this._notifyChange();
     }

@@ -13,7 +13,6 @@
         "test:client": "pnpm --filter client test",
         "test:integration": "pnpm --filter test-integration test",
         "preview": "pnpm --filter client preview",
-        "deploy": "./deploy.sh",
         "deploy:client": "./deploy-client.sh"
     },
     "keywords": [
