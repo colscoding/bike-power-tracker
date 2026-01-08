@@ -1,6 +1,7 @@
 import type { SensorConnection, TreadmillConnection, MeasurementListener, TreadmillListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
 import type { Measurement, TreadmillMeasurement } from '../../types/measurements.js';
 import { parseTreadmillData } from './ftms.js';
+import { BluetoothDebugService } from '../debug/BluetoothDebugService.js';
 
 /** Maximum reconnection attempts before giving up */
 const MAX_RECONNECT_ATTEMPTS = 5;
@@ -40,6 +41,8 @@ export const connectPowerWeb = async (): Promise<SensorConnection> => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
         if (!value) return;
+
+        BluetoothDebugService.log(deviceName, value);
 
         // Cycling power measurement format: bytes 2-3 contain instantaneous power (little-endian)
         const power = value.getInt16(2, true);
@@ -156,6 +159,8 @@ export const connectHeartRateWeb = async (): Promise<SensorConnection> => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
         if (!value) return;
+
+        BluetoothDebugService.log(deviceName, value);
 
         const flags = value.getUint8(0);
         let heartRate: number;
@@ -284,6 +289,8 @@ export const connectCadenceWeb = async (): Promise<SensorConnection> => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
         if (!value) return;
+
+        BluetoothDebugService.log(deviceName, value);
 
         const flags = value.getUint8(0);
 
@@ -435,6 +442,8 @@ export const connectTreadmillWeb = async (): Promise<TreadmillConnection> => {
         const target = event.target as BluetoothRemoteGATTCharacteristic;
         const value = target.value;
         if (!value) return;
+
+        BluetoothDebugService.log(deviceName, value);
 
         try {
             const ftmsData = parseTreadmillData(value);

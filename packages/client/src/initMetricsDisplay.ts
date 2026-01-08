@@ -15,7 +15,7 @@ import { ZoneState } from './zone-state.js';
 import type { ZoneGauge } from './components/ZoneGauge.js';
 import type { LiveChart } from './components/LiveChart.js';
 import { voiceFeedback } from './services/VoiceFeedback.js';
-import { getSettings } from './ui/settings.js';
+import { getSettings } from './config/settings.js';
 
 /**
  * Parameters for metrics display initialization
@@ -445,7 +445,7 @@ export const initMetricsDisplay = ({
         }
     };
 
-    const metricTypes: MeasurementType[] = ['power', 'heartrate', 'cadence', 'speed', 'distance', 'altitude'];
+    const metricTypes: MeasurementType[] = ['power', 'heartrate', 'cadence', 'speed', 'distance', 'altitude', 'treadmillSpeed'];
 
     // Start the update loop
     setInterval(() => {

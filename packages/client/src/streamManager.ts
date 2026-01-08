@@ -39,6 +39,7 @@ interface SentIndex {
     speed: number;
     distance: number;
     altitude: number;
+    treadmillSpeed: number;
 }
 
 /**
@@ -69,6 +70,7 @@ export class StreamManager {
         speed: 0,
         distance: 0,
         altitude: 0,
+        treadmillSpeed: 0,
     };
 
     constructor(measurementsState: MeasurementsState, timeState: WorkoutTimeState) {
@@ -143,7 +145,7 @@ export class StreamManager {
 
         // We don't delete the stream here so that data persists for a while (handled by server cleanup)
         this.streamName = null;
-        this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0, speed: 0, distance: 0, altitude: 0 };
+        this.lastSentIndex = { power: 0, cadence: 0, heartrate: 0, speed: 0, distance: 0, altitude: 0, treadmillSpeed: 0 };
     }
 
     /**

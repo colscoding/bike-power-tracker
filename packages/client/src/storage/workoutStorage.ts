@@ -10,9 +10,20 @@
 import type { MeasurementsData, Measurement, LapMarker, GpsPoint, TreadmillMeasurement } from '../types/measurements.js';
 
 const DB_NAME = 'BikeTrackerDB';
-const DB_VERSION = 3; // Bump version for schema change
+const DB_VERSION = 4; // Bump version for schema change
 const STORE_NAME = 'activeWorkout';
 const COMPLETED_STORE = 'completedWorkouts';
+const DEBUG_STORE = 'rawDebugData';
+
+/**
+ * Raw Debug Log Entry
+ */
+export interface DebugLogEntry {
+    id?: number;
+    timestamp: number;
+    sensor: string;
+    data: string; // Hex representation
+}
 
 /**
  * Stored workout data with metadata
@@ -79,8 +90,80 @@ export async function openDatabase(): Promise<IDBDatabase> {
                 const completedStore = database.createObjectStore(COMPLETED_STORE, { keyPath: 'id' });
                 completedStore.createIndex('startTime', 'startTime', { unique: false });
             }
+
+            // Store for raw debug data
+            if (!database.objectStoreNames.contains(DEBUG_STORE)) {
+                const debugStore = database.createObjectStore(DEBUG_STORE, { keyPath: 'id', autoIncrement: true });
+                debugStore.createIndex('timestamp', 'timestamp', { unique: false });
+                debugStore.createIndex('sensor', 'sensor', { unique: false });
+            }
         };
     });
+}
+
+/**
+ * Save a raw debug log entry
+ */
+export async function saveDebugLog(sensor: string, data: string): Promise<void> {
+    try {
+        const database = await openDatabase();
+        const record: DebugLogEntry = {
+            timestamp: Date.now(),
+            sensor,
+            data
+        };
+
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([DEBUG_STORE], 'readwrite');
+            const store = transaction.objectStore(DEBUG_STORE);
+            const request = store.add(record); // Using add since key is auto-increment
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.warn('Could not save debug log:', e);
+    }
+}
+
+/**
+ * Get all debug logs
+ */
+export async function getDebugLogs(): Promise<DebugLogEntry[]> {
+    try {
+        const database = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([DEBUG_STORE], 'readonly');
+            const store = transaction.objectStore(DEBUG_STORE);
+            const index = store.index('timestamp');
+            const request = index.getAll();
+
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.warn('Could not load debug logs:', e);
+        return [];
+    }
+}
+
+/**
+ * Clear all debug logs
+ */
+export async function clearDebugLogs(): Promise<void> {
+    try {
+        const database = await openDatabase();
+        return new Promise((resolve, reject) => {
+            const transaction = database.transaction([DEBUG_STORE], 'readwrite');
+            const store = transaction.objectStore(DEBUG_STORE);
+            const request = store.clear();
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    } catch (e) {
+        console.warn('Could not clear debug logs:', e);
+    }
 }
 
 /**

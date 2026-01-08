@@ -37,7 +37,8 @@ const emojis: Record<MeasurementType | 'treadmill', string> = {
     distance: '📏',
     altitude: '🏔️',
     gps: '📍',
-    treadmill: '🏃'
+    treadmill: '🏃',
+    treadmillSpeed: '🏃'
 };
 
 /**

@@ -43,6 +43,7 @@ export class MeasurementsState implements MeasurementsData {
     altitude: Measurement[] = [];
     gps: GpsPoint[] = [];
     treadmill: TreadmillMeasurement[] = [];
+    treadmillSpeed: Measurement[] = [];
     laps: LapMarker[] = [];
 
     private _persistenceEnabled: boolean;
@@ -213,6 +214,20 @@ export class MeasurementsState implements MeasurementsData {
         this._notifyChange();
     }
 
+    addTreadmillSpeed(entry: Measurement): void {
+        // Use same limits as speed for now
+        const { min, max } = VALIDATION_LIMITS.speed;
+        if (entry.value < min || entry.value >= max) {
+            console.warn(`Invalid treadmill speed value: ${entry.value}`);
+            return;
+        }
+        this.treadmillSpeed.push({
+            timestamp: entry.timestamp,
+            value: entry.value,
+        });
+        this._notifyChange();
+    }
+
     addGps(point: GpsPoint): void {
         // Calculate distance if we have a previous point
         if (this.gps.length > 0) {
@@ -266,6 +281,9 @@ export class MeasurementsState implements MeasurementsData {
             case 'altitude':
                 this.addAltitude(entry);
                 break;
+            case 'treadmillSpeed':
+                this.addTreadmillSpeed(entry);
+                break;
             default:
                 throw new Error(`Unknown measurement type: ${type}`);
         }
@@ -282,6 +300,7 @@ export class MeasurementsState implements MeasurementsData {
         this.speed = [];
         this.distance = [];
         this.altitude = [];
+        this.treadmillSpeed = [];
         this.laps = [];
         this._startTime = null;
 
@@ -329,6 +348,7 @@ export class MeasurementsState implements MeasurementsData {
             speed: [...this.speed],
             distance: [...this.distance],
             altitude: [...this.altitude],
+            treadmillSpeed: [...this.treadmillSpeed],
             gps: [...this.gps],
             laps: [...this.laps],
         };
@@ -346,6 +366,7 @@ export class MeasurementsState implements MeasurementsData {
         this.speed = [...(data.speed || [])];
         this.distance = [...(data.distance || [])];
         this.altitude = [...(data.altitude || [])];
+        this.treadmillSpeed = [...(data.treadmillSpeed || [])];
         this.laps = [...(data.laps || [])];
         this._startTime = startTime;
 
@@ -385,6 +406,7 @@ export class MeasurementsState implements MeasurementsData {
             distance: this.distance.length,
             altitude: this.altitude.length,
             gps: this.gps.length,
+            treadmillSpeed: this.treadmillSpeed.length,
         };
     }
 
@@ -397,15 +419,20 @@ export class MeasurementsState implements MeasurementsData {
         this.treadmill.push(entry);
 
         if (entry.speed != null) {
-            // Speed from treadmill is already in km/h
-            this.addSpeed({
+            const measurement = {
                 timestamp: entry.timestamp,
                 value: entry.speed
-            });
+            };
+
+            // Add to specific treadmill Speed metric
+            this.addTreadmillSpeed(measurement);
+
+            // Speed from treadmill is already in km/h
+            this.addSpeed(measurement);
         }
 
-        // Note: We don't explicitly notifyChange here if addSpeed was called, 
-        // because addSpeed calls it. But if only incline changed, we must notify.
+        // Note: We don't explicitly notifyChange here if addSpeed/addTreadmillSpeed was called, 
+        // because they call it. But if only incline changed, we must notify.
         if (entry.speed == null) {
             this._notifyChange();
         }

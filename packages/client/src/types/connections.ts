@@ -31,12 +31,13 @@ export interface ConnectionsState {
     distance?: SensorConnectionState;
     altitude?: SensorConnectionState;
     treadmill?: SensorConnectionState;
+    treadmillSpeed?: SensorConnectionState;
 }
 
 /**
  * Bluetooth sensor types
  */
-export type SensorType = 'power' | 'cadence' | 'heartrate' | 'speed' | 'distance' | 'altitude' | 'gps' | 'treadmill';
+export type SensorType = 'power' | 'cadence' | 'heartrate' | 'speed' | 'distance' | 'altitude' | 'gps' | 'treadmill' | 'treadmillSpeed';
 
 /**
  * Bluetooth connection result

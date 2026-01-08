@@ -33,6 +33,7 @@ const sensorLabels: Record<MeasurementType | 'treadmill', string> = {
     altitude: 'Altimeter',
     gps: 'GPS',
     treadmill: 'Treadmill',
+    treadmillSpeed: 'Treadmill Speed',
 };
 
 /**
@@ -47,6 +48,7 @@ const sensorIcons: Record<MeasurementType | 'treadmill', string> = {
     altitude: '🏔️',
     gps: '📍',
     treadmill: '🏃',
+    treadmillSpeed: '🏃',
 };
 
 /**

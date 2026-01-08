@@ -2,6 +2,7 @@ import { BleClient } from '@capacitor-community/bluetooth-le';
 import type { SensorConnection, TreadmillConnection, MeasurementListener, TreadmillListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
 import type { Measurement, TreadmillMeasurement } from '../../types/measurements.js';
 import { parseTreadmillData } from './ftms.js';
+import { BluetoothDebugService } from '../debug/BluetoothDebugService.js';
 
 const CYCLING_POWER_SERVICE = '00001818-0000-1000-8000-00805f9b34fb';
 const CYCLING_POWER_MEASUREMENT = '00002a63-0000-1000-8000-00805f9b34fb';
@@ -51,6 +52,7 @@ export const connectPowerNative = async (): Promise<SensorConnection> => {
             CYCLING_POWER_SERVICE,
             CYCLING_POWER_MEASUREMENT,
             (value) => {
+                BluetoothDebugService.log(deviceName, value);
                 // Cycling power measurement format: bytes 2-3 contain instantaneous power (little-endian)
                 const power = value.getInt16(2, true);
                 const entry: Measurement = { timestamp: Date.now(), value: power };
@@ -148,6 +150,7 @@ export const connectHeartRateNative = async (): Promise<SensorConnection> => {
             HEART_RATE_SERVICE,
             HEART_RATE_MEASUREMENT,
             (value) => {
+                BluetoothDebugService.log(deviceName, value);
                 const flags = value.getUint8(0);
                 let heartRate: number;
 
@@ -257,6 +260,7 @@ export const connectCadenceNative = async (): Promise<SensorConnection> => {
             CYCLING_SPEED_AND_CADENCE_SERVICE,
             CSC_MEASUREMENT,
             (value) => {
+                BluetoothDebugService.log(deviceName, value);
                 const flags = value.getUint8(0);
 
                 // Check if crank revolution data is present (bit 1 of flags)
@@ -398,6 +402,7 @@ export const connectTreadmillNative = async (): Promise<TreadmillConnection> => 
             FITNESS_MACHINE_SERVICE,
             TREADMILL_DATA_CHARACTERISTIC,
             (value) => {
+                BluetoothDebugService.log(deviceName, value);
                 try {
                     const ftmsData = parseTreadmillData(value);
 

@@ -7,68 +7,13 @@
  */
 
 import { loadUserProfile, saveUserProfile } from './onboarding.js';
+import { BluetoothDebugService } from '../services/debug/BluetoothDebugService.js';
+import { getSettings, saveSettingsToStorage, defaultSettings } from '../config/settings.js';
+import type { AppSettings } from '../config/settings.js';
 
-/**
- * Application settings
- */
-export interface AppSettings {
-    // Dashboard display settings
-    power: boolean;
-    cadence: boolean;
-    heartrate: boolean;
-    speed: boolean;
-    distance: boolean;
-    altitude: boolean;
-    power3s: boolean;
+// Re-export for compatibility if needed (but prefer importing from config)
+export { getSettings };
 
-    // Accessibility settings
-    highContrast: boolean;
-    colorblindPatterns: boolean;
-
-    // Voice Feedback settings
-    voiceEnabled: boolean;
-    voiceLaps: boolean;
-    voiceZones: boolean;
-
-    // Export format settings
-    exportTcx: boolean;
-    exportCsv: boolean;
-    exportJson: boolean;
-    exportFit: boolean;
-}
-
-/** Storage key for settings */
-const SETTINGS_KEY = 'bpt-settings';
-
-/** Default settings */
-const defaultSettings: AppSettings = {
-    power: true,
-    cadence: true,
-    heartrate: true,
-    speed: true,
-    distance: true,
-    altitude: true,
-    power3s: false,
-    highContrast: false,
-    colorblindPatterns: false,
-    voiceEnabled: false,
-    voiceLaps: true,
-    voiceZones: true,
-    exportTcx: true,
-    exportCsv: true,
-    exportJson: false,
-    exportFit: false,
-};
-
-/**
- * Get current settings from localStorage
- */
-export function getSettings(): AppSettings {
-    const settingsJson = localStorage.getItem(SETTINGS_KEY);
-    return settingsJson
-        ? { ...defaultSettings, ...JSON.parse(settingsJson) }
-        : { ...defaultSettings };
-}
 
 /**
  * Initialize the Settings UI logic
@@ -88,6 +33,7 @@ export function initSettingsLogic(): void {
     const settingPower = document.getElementById('settingPower') as HTMLInputElement | null;
     const settingCadence = document.getElementById('settingCadence') as HTMLInputElement | null;
     const settingHeartrate = document.getElementById('settingHeartrate') as HTMLInputElement | null;
+    const settingTreadmillSpeed = document.getElementById('settingTreadmillSpeed') as HTMLInputElement | null;
     const settingPower3s = document.getElementById('settingPower3s') as HTMLInputElement | null;
 
     // Accessibility settings
@@ -104,6 +50,13 @@ export function initSettingsLogic(): void {
     const settingExportCsv = document.getElementById('settingExportCsv') as HTMLInputElement | null;
     const settingExportJson = document.getElementById('settingExportJson') as HTMLInputElement | null;
     const settingExportFit = document.getElementById('settingExportFit') as HTMLInputElement | null;
+
+    // Debug settings
+    const settingDebugMode = document.getElementById('settingDebugMode') as HTMLInputElement | null;
+    const debugControls = document.getElementById('debugControls');
+    const downloadDebugLogs = document.getElementById('downloadDebugLogs');
+    const clearDebugLogs = document.getElementById('clearDebugLogs');
+
 
     /**
      * Apply settings to the UI
@@ -123,6 +76,7 @@ export function initSettingsLogic(): void {
         toggleMetric('power', settings.power);
         toggleMetric('cadence', settings.cadence);
         toggleMetric('heartrate', settings.heartrate);
+        toggleMetric('treadmillSpeed', settings.treadmillSpeed);
 
         // Apply 3-second average power indicator
         const powerMetrics = document.querySelectorAll('.metric-group-power');
@@ -146,6 +100,11 @@ export function initSettingsLogic(): void {
             document.documentElement.setAttribute('data-colorblind-patterns', 'true');
         } else {
             document.documentElement.removeAttribute('data-colorblind-patterns');
+        }
+
+        // Apply debug mode UI
+        if (debugControls) {
+            debugControls.style.display = settings.debugMode ? 'flex' : 'none';
         }
     };
 
@@ -171,6 +130,7 @@ export function initSettingsLogic(): void {
             power: settingPower?.checked ?? defaultSettings.power,
             cadence: settingCadence?.checked ?? defaultSettings.cadence,
             heartrate: settingHeartrate?.checked ?? defaultSettings.heartrate,
+            treadmillSpeed: settingTreadmillSpeed?.checked ?? defaultSettings.treadmillSpeed,
             power3s: settingPower3s?.checked ?? defaultSettings.power3s,
             highContrast: settingHighContrast?.checked ?? defaultSettings.highContrast,
             colorblindPatterns: settingColorblindPatterns?.checked ?? defaultSettings.colorblindPatterns,
@@ -181,13 +141,12 @@ export function initSettingsLogic(): void {
             exportCsv: settingExportCsv?.checked ?? defaultSettings.exportCsv,
             exportJson: settingExportJson?.checked ?? defaultSettings.exportJson,
             exportFit: settingExportFit?.checked ?? defaultSettings.exportFit,
+            debugMode: settingDebugMode?.checked ?? defaultSettings.debugMode,
         };
 
-        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+        // saveSettingsToStorage dispatches 'settings-changed' internally
+        saveSettingsToStorage(settings);
         applySettings(settings);
-
-        // Notify other components (like initMetricsDisplay) about the update
-        window.dispatchEvent(new CustomEvent('settings-changed'));
     };
 
     /**
@@ -209,6 +168,7 @@ export function initSettingsLogic(): void {
         if (settingSpeed) settingSpeed.checked = settings.speed;
         if (settingDistance) settingDistance.checked = settings.distance;
         if (settingAltitude) settingAltitude.checked = settings.altitude;
+        if (settingTreadmillSpeed) settingTreadmillSpeed.checked = settings.treadmillSpeed;
         if (settingPower3s) settingPower3s.checked = settings.power3s;
 
         // Accessibility settings
@@ -226,11 +186,25 @@ export function initSettingsLogic(): void {
         if (settingExportJson) settingExportJson.checked = settings.exportJson;
         if (settingExportFit) settingExportFit.checked = settings.exportFit;
 
+        // Debug settings
+        if (settingDebugMode) settingDebugMode.checked = settings.debugMode;
+
         applySettings(settings);
     };
 
     // Event Listeners
     saveSettingsButton?.addEventListener('click', saveSettings);
+
+    downloadDebugLogs?.addEventListener('click', () => {
+        BluetoothDebugService.exportLogs();
+    });
+
+    clearDebugLogs?.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to clear all debug logs?')) {
+            await BluetoothDebugService.clearLogs();
+            alert('Logs cleared.');
+        }
+    });
 
     // Initialize
     loadSettings();

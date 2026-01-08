@@ -49,6 +49,7 @@ export const elements: SensorElementsMap = {
     get distance() { return { display: getElement('distance'), connect: null }; },
     get altitude() { return { display: getElement('altitude'), connect: null }; },
     get treadmill() { return { display: getElement('value-incline'), connect: getElement('connectTreadmill') }; },
+    get treadmillSpeed() { return { display: getElement('treadmillSpeed'), connect: null }; },
 };
 
 /**

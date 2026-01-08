@@ -65,13 +65,14 @@ export interface MeasurementsData {
     altitude: Measurement[];
     gps: GpsPoint[];
     treadmill?: TreadmillMeasurement[];
+    treadmillSpeed?: Measurement[];
     laps?: LapMarker[];
 }
 
 /**
  * Types of measurements that can be recorded
  */
-export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude' | 'gps';
+export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude' | 'gps' | 'treadmillSpeed';
 
 /**
  * Current sensor values (latest readings)
