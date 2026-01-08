@@ -7,6 +7,7 @@
  */
 
 import { registerSW } from 'virtual:pwa-register';
+import { Capacitor } from '@capacitor/core';
 
 /**
  * Update callback type
@@ -20,6 +21,20 @@ type UpdateCallback = (reloadPage?: boolean) => Promise<void>;
  * In production, registers the service worker and handles updates.
  */
 export const registerServiceWorker = (): void => {
+    // Capacitor apps should not use service workers. They can cause hard-to-debug
+    // caching and asset-loading issues in Android WebView.
+    if (Capacitor.isNativePlatform()) {
+        console.log('Service Worker disabled on native platform');
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then((registrations) => {
+                for (const registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+        return;
+    }
+
     // Don't register service worker in development to avoid caching issues
     if (import.meta.env.DEV) {
         console.log('Service Worker disabled in development mode');

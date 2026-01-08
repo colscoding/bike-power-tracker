@@ -13,7 +13,6 @@ export default defineConfig(({ mode }) => {
     const useMocks = env.VITE_USE_MOCK_SENSORS === 'true' || (mode === 'development' && env.VITE_USE_MOCK_SENSORS !== 'false');
 
     return {
-        base: './',
         build: {
             outDir: 'dist',
             assetsDir: 'assets',

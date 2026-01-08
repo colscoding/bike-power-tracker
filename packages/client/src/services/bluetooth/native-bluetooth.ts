@@ -51,7 +51,7 @@ export const connectPowerNative = async (): Promise<SensorConnection> => {
     try {
         device = await BleClient.requestDevice({
             services: [CYCLING_POWER_SERVICE],
-            optionalServices: [CYCLING_POWER_SERVICE]
+            optionalServices: []
         });
     } catch (error) {
         console.error('Error requesting Power device:', error);

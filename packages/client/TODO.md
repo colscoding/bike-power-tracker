@@ -93,3 +93,30 @@ Comparison with other similar clients reveals these missing features:
 - [ ] **Demo/Mock Mode Toggle**
   - Add a setting to enable Mock Sensors for user testing/demonstration.
   - (Currently only available in Development build).
+
+## 5. Expanded Sensor Support
+
+Broader hardware compatibility for a complete fitness hub:
+
+### Cycling Speed & Cadence (CSC)
+- [ ] **Speed Support**
+  - Update `connectCadence` to parse Wheel Revolution Data (Speed/Distance) from CSC sensors (UUID `0x1816`).
+  - Add UI configuration for Wheel Circumference to calculate speed accurately.
+
+### Running Speed & Cadence (RSC)
+- [ ] **Foot Pod Support**
+  - Implement connection to Running Speed and Cadence sensors (UUID `0x1814`).
+  - Use for cadence/speed when running outdoors or on non-smart treadmills.
+
+### Fitness Machine Service (FTMS) Extensions
+- [ ] **Rowing Machines** (Rower Data `0x2AD1`)
+  - Parse Stroke Rate, Stroke Count, and Split Time.
+- [ ] **Cross Trainers / Ellipticals** (Cross Trainer Data `0x2ACE`)
+  - Parse Steps, Resistance, and Inclination.
+- [ ] **Indoor Bike Control** (Indoor Bike Data `0x2AD2`)
+  - Implement FTMS Control Point (`0x2AD9`) to set target resistance or power (ERG mode).
+
+### Health Monitoring
+- [ ] **Bluetooth Weight Scales**
+  - Connect to Body Composition (`0x181B`) or Weight Scale (`0x181D`) services.
+  - Track weight trends in user profile.

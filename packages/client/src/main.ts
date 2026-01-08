@@ -38,27 +38,43 @@ import { initUi } from './init/ui.js';
 import { initHardware } from './init/hardware.js';
 import './ui/navbar.css';
 
-/**
- * Initialize application state
- */
-const { measurementsState, connectionsState, timeState } = getInitState();
+// Global Error Handler for Mobile Debugging
+window.addEventListener('error', (e) => {
+    alert(`Error: ${e.message}\n${e.filename}:${e.lineno}`);
+});
+window.addEventListener('unhandledrejection', (e) => {
+    alert(`Unhandled Rejection: ${e.reason}`);
+});
 
-// Expose state for E2E testing
-exposeVariablesDuringTest({ measurementsState, connectionsState });
+const initApp = (): void => {
+    /**
+     * Initialize application state
+     */
+    const { measurementsState, connectionsState, timeState } = getInitState();
 
-// Initialize Hardware (Sensors & Streaming)
-const { streamManager } = initHardware({ measurementsState, connectionsState, timeState });
+    // Expose state for E2E testing
+    exposeVariablesDuringTest({ measurementsState, connectionsState });
 
-// Initialize UI
-initUi({ measurementsState, timeState, connectionsState, streamManager });
+    // Initialize Hardware (Sensors & Streaming)
+    const { streamManager } = initHardware({ measurementsState, connectionsState, timeState });
 
-// Initialize Navigation Logic
-const router = setupRouter();
+    // Initialize UI
+    initUi({ measurementsState, timeState, connectionsState, streamManager });
 
-router.start();
+    // Initialize Navigation Logic
+    const router = setupRouter();
+    router.start();
 
-// Expose router to window for global access (navigation)
-(window as any).router = router;
+    // Expose router to window for global access (navigation)
+    (window as any).router = router;
+};
+
+// Initialize app when DOM is ready (more robust on Android WebView)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp, { once: true });
+} else {
+    initApp();
+}
 
 // Log initialization
 console.log('Bike Power Tracker initialized');

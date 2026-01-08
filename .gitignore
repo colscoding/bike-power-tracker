@@ -52,3 +52,5 @@ remote.txt
 
 # android
 *.apk
+
+running-app/

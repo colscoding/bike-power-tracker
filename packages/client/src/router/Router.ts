@@ -13,17 +13,26 @@ export class Router implements IRouter {
     private routes: Route[] = [];
     private currentViewId: string | null = null;
     private container: HTMLElement;
+    private isNative: boolean;
 
     constructor(container: HTMLElement) {
         this.container = container;
+        this.isNative = Capacitor.isNativePlatform();
 
-        // Handle browser back/forward buttons
+        // Handle browser back/forward buttons and hash changes
         window.addEventListener('popstate', () => {
             this.handleLocationChange();
         });
 
+        // Also listen for hash changes (for Capacitor/native)
+        if (this.isNative) {
+            window.addEventListener('hashchange', () => {
+                this.handleLocationChange();
+            });
+        }
+
         // Hardware back button handling for Capacitor
-        if (Capacitor.isNativePlatform()) {
+        if (this.isNative) {
             App.addListener('backButton', ({ canGoBack }) => {
                 if (canGoBack) {
                     window.history.back();
@@ -64,20 +73,38 @@ export class Router implements IRouter {
 
     /**
      * Navigate to a specific path.
+     * Uses hash-based routing on native platforms for better compatibility.
      */
     public navigate(path: string, replace = false): void {
-        if (replace) {
-            window.history.replaceState({}, '', path);
+        if (this.isNative) {
+            // Use hash-based routing on Capacitor/native for file:// compatibility
+            if (replace) {
+                window.location.replace('#' + path);
+            } else {
+                window.location.hash = path;
+            }
         } else {
-            window.history.pushState({}, '', path);
+            // Use History API for web browsers
+            if (replace) {
+                window.history.replaceState({}, '', path);
+            } else {
+                window.history.pushState({}, '', path);
+            }
+            this.handleLocationChange();
         }
-        this.handleLocationChange();
     }
 
     /**
      * Start the router and load the initial view.
      */
     public start(): void {
+        if (this.isNative) {
+            // On native, start with initial hash check
+            if (!window.location.hash) {
+                // If no hash, default to root
+                window.location.hash = '/';
+            }
+        }
         this.handleLocationChange();
     }
 
@@ -92,7 +119,25 @@ export class Router implements IRouter {
      * Handle location changes (popstate or navigate).
      */
     private handleLocationChange(): void {
-        const path = window.location.pathname;
+        let path: string;
+
+        if (this.isNative) {
+            // On native platforms, use hash-based routing
+            // Hash format: #/path -> extract '/path'
+            const hash = window.location.hash;
+            path = hash ? hash.slice(1) : '/';
+            // Normalize empty hash to root
+            if (!path || path === '') {
+                path = '/';
+            }
+        } else {
+            // On web, use pathname
+            path = window.location.pathname;
+            // Normalize /index.html to /
+            if (path.endsWith('/index.html') || path.endsWith('.html')) {
+                path = '/';
+            }
+        }
 
         // Simple matching logic
         let matchedRoute = this.routes.find(r => r.path === path);

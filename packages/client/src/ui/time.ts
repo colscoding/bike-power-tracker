@@ -135,8 +135,19 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     // Initialize button visibility
     updateButtonVisibility(elements, getWorkoutState(timeState));
 
+    // Helper to add robust touch/click listeners
+    const addListener = (btn: HTMLButtonElement, callback: () => void) => {
+        const handler = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            callback();
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', handler);
+    };
+
     // Handle Start button click - begin new workout
-    startButton.addEventListener('click', () => {
+    addListener(startButton, () => {
         timeState.startTime = Date.now();
         timeState.endTime = null;
         timeState.running = true;
@@ -149,7 +160,7 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     });
 
     // Handle Pause button click - pause recording
-    pauseButton.addEventListener('click', () => {
+    addListener(pauseButton, () => {
         timeState.running = false;
         timeState.endTime = Date.now();
 
@@ -161,7 +172,7 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     });
 
     // Handle Resume button click - continue paused workout
-    resumeButton.addEventListener('click', () => {
+    addListener(resumeButton, () => {
         if (timeState.endTime && timeState.startTime) {
             // Adjust startTime to account for paused duration
             const pausedDuration = Date.now() - timeState.endTime;
@@ -178,7 +189,7 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     });
 
     // Handle Stop button click - end and save workout
-    stopButton.addEventListener('click', () => {
+    addListener(stopButton, () => {
         // Keep endTime as is (already set when paused)
         // Reset to idle state for next workout
         timeState.running = false;

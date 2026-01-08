@@ -86,7 +86,17 @@ export const initDiscardButton = ({
         return;
     }
 
-    discardButton.addEventListener('click', async () => {
+    const addListener = (btn: HTMLElement, callback: () => void) => {
+        const handler = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            callback();
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', handler);
+    };
+
+    addListener(discardButton, async () => {
         const hasData =
             measurementsState.power.length > 0 ||
             measurementsState.heartrate.length > 0 ||
@@ -258,7 +268,17 @@ export const initExportButton = (measurementsState: MeasurementsState, zoneState
         return;
     }
 
-    exportDataElem.addEventListener('click', () => {
+    const addListener = (btn: HTMLElement, callback: () => void) => {
+        const handler = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            callback();
+        };
+        btn.addEventListener('click', handler);
+        btn.addEventListener('touchend', handler);
+    };
+
+    addListener(exportDataElem, () => {
         try {
             // Get export format settings
             const settingsJson = localStorage.getItem('bpt-settings');

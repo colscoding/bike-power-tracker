@@ -383,18 +383,26 @@ Completed all technical debt items from the backlog:
   - [x] Save custom workouts ✅ *Completed Jan 6, 2026*
   - [x] Share workouts (export/import) ✅ *Completed Jan 6, 2026*
 
-### 4.2 Smart Trainer Control (FTMS)
+### 4.2 Extended Hardware Support
 
-- [ ] **Fitness Machine Service support**
-  - Connect to FTMS trainers
+- [ ] **Fitness Machine Power Control (FTMS)**
+  - Connect to FTMS smart indoor bikes
   - Read supported features
   - ERG mode (target power)
   - Simulation mode (virtual gradient)
 
-- [ ] **ERG mode control**
-  - Set target power
-  - Auto-adjust for structured workouts
-  - Manual +/- controls
+- [ ] **Other Fitness Equipment (FTMS)**
+  - [ ] Rowing Machines (0x2AD1) - Stroke rate, count, power
+  - [ ] Cross Trainers (0x2ACE)
+  - [ ] Step Climbers (0x2ACF)
+
+- [ ] **Speed & Cadence Enhancements**
+  - [ ] Running Speed & Cadence (RSC) 0x1814 (Foot Pods)
+  - [ ] Cycling Speed 0x1816 (parse wheel revolutions from CSC)
+
+- [ ] **Health Devices**
+  - [ ] Bluetooth Weight Scales (Body Composition 0x181B)
+
 
 ### 4.3 Analytics & History
 
