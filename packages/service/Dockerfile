@@ -27,6 +27,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/package*.json ./
 
+# Install pnpm for building
+RUN npm install -g pnpm
+
 # Copy source code
 COPY src ./src
 COPY tsconfig.json ./
@@ -54,18 +57,16 @@ COPY prisma ./prisma/
 
 # Install production dependencies only
 # Using --ignore-scripts to skip postinstall, we'll run prisma generate separately
+# We install ALL deps first (to get prisma CLI), generate client, then prune dev deps
 RUN npm install -g pnpm && \
     rm package-lock.json && \
-    pnpm install --prod --ignore-scripts && \
+    pnpm install --ignore-scripts && \
     npx prisma generate && \
+    pnpm prune --prod && \
     rm -rf /root/.local/share/pnpm/store /tmp/*
 
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
-
-# Copy Prisma client from deps stage (includes generated client)
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=deps --chown=nodejs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 
 # Set environment variables
 ENV NODE_ENV=production
