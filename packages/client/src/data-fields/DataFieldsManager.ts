@@ -305,26 +305,33 @@ export class DataFieldsManager {
     }
 
     private createWorkoutState(): any {
+        const laps = this.measurementsState.laps || [];
+        const lapCount = laps.length;
+        const lastLapTimestamp = lapCount > 0 ? laps[lapCount - 1].timestamp : null;
+        const lapStartTime = lastLapTimestamp ?? this.timeState?.startTime ?? null;
+
         return {
             isActive: this.timeState?.running ?? false,
             isPaused: false,
+            startTime: this.timeState?.startTime ?? null,
             elapsedTime: this.getElapsedTime(),
             movingTime: this.getElapsedTime(),
-            lapCount: this.measurementsState.laps?.length ?? 0,
-            currentLap: {
-                number: (this.measurementsState.laps?.length ?? 0) + 1,
-                startTime: Date.now(),
-                elapsedTime: 0,
+            pausedTime: 0,
+            currentLap: lapCount + 1,
+            lapStartTime,
+            lapElapsedTime: lapStartTime ? Date.now() - lapStartTime : 0,
+            laps: laps.map((lap, idx) => ({
+                lapNumber: lap.number,
+                startTime: idx === 0 ? (this.timeState?.startTime ?? lap.timestamp) : laps[idx - 1].timestamp,
+                endTime: lap.timestamp,
+                duration: lap.elapsedMs ?? 0,
                 distance: 0,
-                measurements: [],
-            },
-            measurements: {
-                power: [],
-                heartrate: [],
-                cadence: [],
-                speed: [],
-                altitude: [],
-            },
+                avgPower: null,
+                avgHeartrate: null,
+                avgCadence: null,
+                avgSpeed: null,
+                elevationGain: 0,
+            })),
         };
     }
 

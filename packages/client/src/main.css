@@ -242,7 +242,7 @@ header {
 }
 
 #time {
-    grid-column: 2;
+    grid-column: 1;
     justify-self: center;
     white-space: nowrap;
 }

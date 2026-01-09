@@ -8,9 +8,10 @@
 
 import { loadUserProfile, saveUserProfile } from './onboarding.js';
 import { BluetoothDebugService } from '../services/debug/BluetoothDebugService.js';
-import { getSettings, saveSettingsToStorage, defaultSettings } from '../config/settings.js';
-import type { AppSettings } from '../config/settings.js';
+import { getSettings, saveSettingsToStorage, defaultSettings, defaultAutoPauseSettings } from '../config/settings.js';
+import type { AppSettings, AutoPauseSource } from '../config/settings.js';
 import { triggerInstallPrompt } from './installPrompt.js';
+import { getAutoPauseSourceUnit } from '../services/AutoPauseService.js';
 
 // Re-export for compatibility if needed (but prefer importing from config)
 export { getSettings };
@@ -46,6 +47,14 @@ export function initSettingsLogic(): void {
     const settingVoiceLaps = document.getElementById('settingVoiceLaps') as HTMLInputElement | null;
     const settingVoiceZones = document.getElementById('settingVoiceZones') as HTMLInputElement | null;
 
+    // Auto-Pause settings
+    const settingAutoPauseEnabled = document.getElementById('settingAutoPauseEnabled') as HTMLInputElement | null;
+    const settingAutoPauseSource = document.getElementById('settingAutoPauseSource') as HTMLSelectElement | null;
+    const settingAutoPauseThreshold = document.getElementById('settingAutoPauseThreshold') as HTMLInputElement | null;
+    const settingAutoPauseDelay = document.getElementById('settingAutoPauseDelay') as HTMLInputElement | null;
+    const autoPauseOptions = document.getElementById('autoPauseOptions');
+    const autoPauseThresholdUnit = document.getElementById('autoPauseThresholdUnit');
+
     // Export format settings
     const settingExportTcx = document.getElementById('settingExportTcx') as HTMLInputElement | null;
     const settingExportCsv = document.getElementById('settingExportCsv') as HTMLInputElement | null;
@@ -61,6 +70,23 @@ export function initSettingsLogic(): void {
     // PWA Install button
     const installPwaButton = document.getElementById('installPwaButton');
 
+    /**
+     * Update auto-pause options visibility and unit label
+     */
+    const updateAutoPauseUI = (): void => {
+        if (autoPauseOptions && settingAutoPauseEnabled) {
+            autoPauseOptions.style.opacity = settingAutoPauseEnabled.checked ? '1' : '0.5';
+            autoPauseOptions.style.pointerEvents = settingAutoPauseEnabled.checked ? 'auto' : 'none';
+        }
+        if (autoPauseThresholdUnit && settingAutoPauseSource) {
+            const unit = getAutoPauseSourceUnit(settingAutoPauseSource.value as AutoPauseSource);
+            autoPauseThresholdUnit.textContent = unit;
+        }
+    };
+
+    // Add event listeners for auto-pause UI updates
+    settingAutoPauseEnabled?.addEventListener('change', updateAutoPauseUI);
+    settingAutoPauseSource?.addEventListener('change', updateAutoPauseUI);
 
     /**
      * Apply settings to the UI
@@ -141,6 +167,12 @@ export function initSettingsLogic(): void {
             voiceEnabled: settingVoiceEnabled?.checked ?? defaultSettings.voiceEnabled,
             voiceLaps: settingVoiceLaps?.checked ?? defaultSettings.voiceLaps,
             voiceZones: settingVoiceZones?.checked ?? defaultSettings.voiceZones,
+            autoPause: {
+                enabled: settingAutoPauseEnabled?.checked ?? defaultAutoPauseSettings.enabled,
+                source: (settingAutoPauseSource?.value as AutoPauseSource) ?? defaultAutoPauseSettings.source,
+                threshold: settingAutoPauseThreshold?.value ? Number(settingAutoPauseThreshold.value) : defaultAutoPauseSettings.threshold,
+                delay: settingAutoPauseDelay?.value ? Number(settingAutoPauseDelay.value) : defaultAutoPauseSettings.delay,
+            },
             exportTcx: settingExportTcx?.checked ?? defaultSettings.exportTcx,
             exportCsv: settingExportCsv?.checked ?? defaultSettings.exportCsv,
             exportJson: settingExportJson?.checked ?? defaultSettings.exportJson,
@@ -183,6 +215,13 @@ export function initSettingsLogic(): void {
         if (settingVoiceEnabled) settingVoiceEnabled.checked = settings.voiceEnabled;
         if (settingVoiceLaps) settingVoiceLaps.checked = settings.voiceLaps;
         if (settingVoiceZones) settingVoiceZones.checked = settings.voiceZones;
+
+        // Auto-Pause settings
+        if (settingAutoPauseEnabled) settingAutoPauseEnabled.checked = settings.autoPause.enabled;
+        if (settingAutoPauseSource) settingAutoPauseSource.value = settings.autoPause.source;
+        if (settingAutoPauseThreshold) settingAutoPauseThreshold.value = settings.autoPause.threshold.toString();
+        if (settingAutoPauseDelay) settingAutoPauseDelay.value = settings.autoPause.delay.toString();
+        updateAutoPauseUI();
 
         // Export format settings
         if (settingExportTcx) settingExportTcx.checked = settings.exportTcx;

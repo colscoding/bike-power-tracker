@@ -25,8 +25,8 @@ test('getCsvString creates CSV with header and data rows', () => {
     const csv = getCsvString(measurements);
     const lines = csv.split('\n');
 
-    // Check header
-    assert.strictEqual(lines[0], 'timestamp,power,cadence,heartrate');
+    // Check header (now includes lap column)
+    assert.strictEqual(lines[0], 'timestamp,lap,power,cadence,heartrate,speed,distance,altitude,lat,lon');
 
     // Check we have 3 lines total (header + 2 data rows)
     assert.strictEqual(lines.length, 3);
@@ -55,9 +55,11 @@ test('getCsvString handles missing values with empty fields', () => {
     // Data row should have empty fields for missing metrics
     assert.strictEqual(lines.length, 2);
     const dataRow = lines[1].split(',');
-    assert.strictEqual(dataRow[1], '250'); // power
-    assert.strictEqual(dataRow[2], ''); // cadence
-    assert.strictEqual(dataRow[3], ''); // heartrate
+    // Format: timestamp,lap,power,cadence,heartrate,speed,distance,altitude,lat,lon
+    assert.strictEqual(dataRow[1], '1'); // lap number (always 1 with no laps)
+    assert.strictEqual(dataRow[2], '250'); // power
+    assert.strictEqual(dataRow[3], ''); // cadence
+    assert.strictEqual(dataRow[4], ''); // heartrate
 });
 
 test('getCsvString handles only cadence data', () => {
@@ -71,9 +73,11 @@ test('getCsvString handles only cadence data', () => {
 
     assert.strictEqual(lines.length, 2);
     const dataRow = lines[1].split(',');
-    assert.strictEqual(dataRow[1], ''); // power
-    assert.strictEqual(dataRow[2], '85'); // cadence
-    assert.strictEqual(dataRow[3], ''); // heartrate
+    // Format: timestamp,lap,power,cadence,heartrate,speed,distance,altitude,lat,lon
+    assert.strictEqual(dataRow[1], '1'); // lap number
+    assert.strictEqual(dataRow[2], ''); // power
+    assert.strictEqual(dataRow[3], '85'); // cadence
+    assert.strictEqual(dataRow[4], ''); // heartrate
 });
 
 test('getCsvString handles only heartrate data', () => {
@@ -87,9 +91,11 @@ test('getCsvString handles only heartrate data', () => {
 
     assert.strictEqual(lines.length, 2);
     const dataRow = lines[1].split(',');
-    assert.strictEqual(dataRow[1], ''); // power
-    assert.strictEqual(dataRow[2], ''); // cadence
-    assert.strictEqual(dataRow[3], '145'); // heartrate
+    // Format: timestamp,lap,power,cadence,heartrate,speed,distance,altitude,lat,lon
+    assert.strictEqual(dataRow[1], '1'); // lap number
+    assert.strictEqual(dataRow[2], ''); // power
+    assert.strictEqual(dataRow[3], ''); // cadence
+    assert.strictEqual(dataRow[4], '145'); // heartrate
 });
 
 test('getCsvString includes timestamp column', () => {

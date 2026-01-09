@@ -126,11 +126,11 @@ function createCyclingLapScreen(): DataScreen {
         icon: '🏁',
         layout: 'auto',
         slots: [
-            slot('lap-number', 'medium'),
+            slot('time-lap-number', 'medium'),
             slot('time-lap', 'large'),
             slot('distance-lap', 'medium'),
             slot('power-lap-avg', 'medium'),
-            slot('heartrate-lap-avg', 'medium'),
+            slot('hr-lap-avg', 'medium'),
             slot('speed-lap-avg', 'medium'),
         ],
     };
@@ -545,7 +545,7 @@ export const PRESET_INTERVALS: DataScreen = (() => {
             slot('time-lap', 'large'),
             slot('power-lap-avg', 'medium'),
             slot('heartrate-current', 'medium'),
-            slot('lap-number', 'medium'),
+            slot('time-lap-number', 'medium'),
             slot('time-elapsed', 'medium'),
         ],
     };

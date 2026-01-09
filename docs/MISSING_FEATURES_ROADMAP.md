@@ -17,51 +17,6 @@ Based on the comparison with Cadence app, this document outlines potential featu
 
 ## Quick Wins (High Impact, Low/Medium Effort)
 
-### 🔴 1. Lap Functionality
-**What:** Manual lap creation during workouts with lap-based statistics
-
-**Why:** Essential for interval training and workout structure
-
-**Implementation:**
-- Add "Lap" button to UI
-- Track lap timestamps in MeasurementsState
-- Calculate per-lap statistics (avg power, cadence, HR, duration)
-- Display current lap number
-- Export laps in TCX/CSV
-
-**Effort:** 🟢 Low (1-2 days)
-
-**Files to modify:**
-- `src/state/MeasurementsState.ts` - Add lap tracking
-- `src/ui/dashboard.ts` - Add lap button and display
-- `src/create-tcx.ts` - Include lap data
-- `src/create-csv.ts` - Include lap splits
-
----
-
-### 🔴 2. Auto-Pause
-**What:** Automatically pause recording when speed drops below threshold (e.g., 3 km/h)
-
-**Why:** Prevents data pollution from stopped time at traffic lights
-
-**Implementation:**
-- Add setting for auto-pause enable/disable
-- Set speed threshold (default 3 km/h)
-- Monitor speed from GPS or speed sensor
-- Pause recording automatically
-- Resume when moving again
-- Track moving time vs elapsed time
-
-**Effort:** 🟡 Medium (2-3 days)
-
-**Files to modify:**
-- `src/config/settings.ts` - Add autoPause setting
-- `src/state/WorkoutState.ts` - Add pause/resume logic
-- `src/services/gps/` - Monitor speed
-- `src/ui/settings.ts` - Add toggle
-
----
-
 ### 🔴 3. Activity Notes & Metadata
 **What:** Add notes, title, and perceived exertion to workouts after completion
 

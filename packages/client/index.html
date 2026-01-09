@@ -425,6 +425,52 @@
                 </div>
             </fieldset>
 
+            <!-- Auto-Pause Settings Section -->
+            <fieldset class="settings-fieldset"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <legend style="font-weight: 600; padding: 0 8px;">⏸️ Auto-Pause</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <label class="settings-option"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                        <input type="checkbox" id="settingAutoPauseEnabled" style="width: 20px; height: 20px;">
+                        <div>
+                            <span style="font-size: 16px;">Enable Auto-Pause</span>
+                            <p style="font-size: 12px; color: #666; margin: 2px 0 0 0;">Automatically pause when
+                                activity drops</p>
+                        </div>
+                    </label>
+                    <div id="autoPauseOptions"
+                        style="margin-left: 30px; display: flex; flex-direction: column; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="settingAutoPauseSource"
+                                style="font-size: 14px; min-width: 80px;">Monitor:</label>
+                            <select id="settingAutoPauseSource"
+                                style="padding: 6px 10px; border-radius: 4px; border: 1px solid #d0d7de; font-size: 14px;">
+                                <option value="speed">Speed</option>
+                                <option value="power">Power</option>
+                                <option value="cadence">Cadence</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="settingAutoPauseThreshold"
+                                style="font-size: 14px; min-width: 80px;">Threshold:</label>
+                            <input type="number" id="settingAutoPauseThreshold" min="0" max="100" step="0.5" value="3"
+                                style="width: 70px; padding: 6px 10px; border-radius: 4px; border: 1px solid #d0d7de; font-size: 14px;">
+                            <span id="autoPauseThresholdUnit" style="font-size: 14px; color: #666;">km/h</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <label for="settingAutoPauseDelay" style="font-size: 14px; min-width: 80px;">Delay:</label>
+                            <input type="number" id="settingAutoPauseDelay" min="1" max="30" step="1" value="3"
+                                style="width: 70px; padding: 6px 10px; border-radius: 4px; border: 1px solid #d0d7de; font-size: 14px;">
+                            <span style="font-size: 14px; color: #666;">seconds</span>
+                        </div>
+                        <p style="font-size: 12px; color: #666; margin: 4px 0 0 0;">
+                            Workout will pause after being below threshold for the delay period.
+                        </p>
+                    </div>
+                </div>
+            </fieldset>
+
             <!-- Export Settings Section -->
             <fieldset class="settings-fieldset"
                 style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px;">

@@ -6,6 +6,25 @@
  */
 
 /**
+ * Auto-pause source metric options
+ */
+export type AutoPauseSource = 'speed' | 'power' | 'cadence';
+
+/**
+ * Auto-pause settings
+ */
+export interface AutoPauseSettings {
+    /** Whether auto-pause is enabled */
+    enabled: boolean;
+    /** Which metric to monitor for auto-pause */
+    source: AutoPauseSource;
+    /** Threshold value below which to pause (in source units: km/h, watts, rpm) */
+    threshold: number;
+    /** Delay in seconds before pausing (debounce) */
+    delay: number;
+}
+
+/**
  * Application settings
  */
 export interface AppSettings {
@@ -34,12 +53,23 @@ export interface AppSettings {
     exportJson: boolean;
     exportFit: boolean;
 
+    // Auto-pause settings
+    autoPause: AutoPauseSettings;
+
     // Debug settings
     debugMode: boolean;
 }
 
 /** Storage key for settings */
 export const SETTINGS_KEY = 'bpt-settings';
+
+/** Default auto-pause settings */
+export const defaultAutoPauseSettings: AutoPauseSettings = {
+    enabled: false,
+    source: 'speed',
+    threshold: 3, // 3 km/h default
+    delay: 3, // 3 seconds delay before pausing
+};
 
 /** Default settings */
 export const defaultSettings: AppSettings = {
@@ -60,6 +90,7 @@ export const defaultSettings: AppSettings = {
     exportCsv: true,
     exportJson: false,
     exportFit: false,
+    autoPause: { ...defaultAutoPauseSettings },
     debugMode: false,
 };
 
@@ -68,9 +99,19 @@ export const defaultSettings: AppSettings = {
  */
 export function getSettings(): AppSettings {
     const settingsJson = localStorage.getItem(SETTINGS_KEY);
-    return settingsJson
-        ? { ...defaultSettings, ...JSON.parse(settingsJson) }
-        : { ...defaultSettings };
+    if (settingsJson) {
+        const parsed = JSON.parse(settingsJson);
+        // Ensure autoPause has all required fields (migration for existing users)
+        return {
+            ...defaultSettings,
+            ...parsed,
+            autoPause: {
+                ...defaultAutoPauseSettings,
+                ...(parsed.autoPause || {}),
+            },
+        };
+    }
+    return { ...defaultSettings };
 }
 
 /**

@@ -1,4 +1,4 @@
-import { initTimerDisplay } from '../ui/time.js';
+import { initTimerDisplay, pauseWorkout, resumeWorkout } from '../ui/time.js';
 import { initDiscardButton, initExportButton, initMetricsToggle, initWorkoutSummaryModal } from '../ui/menu.js';
 import { initMetricsDisplay } from '../initMetricsDisplay.js';
 import { initStreamViewer } from '../ui/streamViewer.js';
@@ -13,6 +13,7 @@ import { initInstallPrompt } from '../ui/installPrompt.js';
 import { initAboutModal } from '../ui/about.js';
 import { handleWakeLock } from '../ui/wakeLock.js';
 import { registerServiceWorker } from '../ui/serviceWorker.js';
+import { AutoPauseService } from '../services/AutoPauseService.js';
 import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState, ConnectionsState } from '../getInitState.js';
 import type { ZoneState } from '../zone-state.js';
@@ -98,6 +99,34 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
 
     initOnboarding();
     initLapButton({ measurementsState, timeState });
+
+    // Initialize Auto-Pause Service
+    const autoPauseService = new AutoPauseService(
+        measurementsState,
+        timeState,
+        {
+            onAutoPause: () => pauseWorkout(timeState, true),
+            onAutoResume: () => resumeWorkout(timeState, true),
+        }
+    );
+
+    // Start auto-pause monitoring when workout starts
+    document.addEventListener('workoutStarted', () => {
+        autoPauseService.start();
+    });
+
+    // Stop auto-pause monitoring when workout is discarded
+    document.addEventListener('workoutDiscarded', () => {
+        autoPauseService.reset();
+    });
+
+    // Re-initialize auto-pause when settings change
+    window.addEventListener('settings-changed', () => {
+        if (timeState.running) {
+            autoPauseService.stop();
+            autoPauseService.start();
+        }
+    });
 
     initWorkoutRecovery(measurementsState, timeState).then((recovered) => {
         if (recovered) {

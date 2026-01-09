@@ -14,6 +14,7 @@
 import { getTimestring } from '../getTimestring.js';
 import { announce, updateWorkoutControlsAccessibility } from './accessibility.js';
 import { onWorkoutStart, onWorkoutPause } from './workoutPlayer.js';
+import { showNotification } from './notifications.js';
 import type { TimeState } from '../getInitState.js';
 
 /**
@@ -73,6 +74,70 @@ function updateButtonVisibility(
     }
 }
 
+/** Module-level reference to control elements for programmatic access */
+let workoutControlElements: WorkoutControlElements | null = null;
+
+/**
+ * Programmatically pause the workout (used by AutoPauseService)
+ * @param timeState - The workout time state object
+ * @param isAutoPause - Whether this is triggered by auto-pause (shows notification)
+ */
+export function pauseWorkout(timeState: TimeState, isAutoPause = false): void {
+    if (!timeState.running || !timeState.startTime) {
+        return;
+    }
+
+    timeState.running = false;
+    timeState.endTime = Date.now();
+
+    onWorkoutPause();
+
+    if (workoutControlElements) {
+        updateButtonVisibility(workoutControlElements, 'paused');
+    }
+    updateWorkoutControlsAccessibility('paused');
+
+    if (isAutoPause) {
+        showNotification('⏸️ Auto-paused', 'info');
+        announce('Auto paused due to low activity', 'polite');
+    } else {
+        announce('Workout paused. Press resume to continue or stop to save.', 'assertive');
+    }
+}
+
+/**
+ * Programmatically resume the workout (used by AutoPauseService)
+ * @param timeState - The workout time state object
+ * @param isAutoResume - Whether this is triggered by auto-resume (shows notification)
+ */
+export function resumeWorkout(timeState: TimeState, isAutoResume = false): void {
+    if (timeState.running || !timeState.startTime) {
+        return;
+    }
+
+    if (timeState.endTime && timeState.startTime) {
+        // Adjust startTime to account for paused duration
+        const pausedDuration = Date.now() - timeState.endTime;
+        timeState.startTime += pausedDuration;
+    }
+    timeState.endTime = null;
+    timeState.running = true;
+
+    onWorkoutStart();
+
+    if (workoutControlElements) {
+        updateButtonVisibility(workoutControlElements, 'recording');
+    }
+    updateWorkoutControlsAccessibility('recording');
+
+    if (isAutoResume) {
+        showNotification('▶️ Auto-resumed', 'info');
+        announce('Auto resumed', 'polite');
+    } else {
+        announce('Workout resumed', 'assertive');
+    }
+}
+
 /**
  * Initialize the timer display and Garmin-style workout controls.
  *
@@ -92,9 +157,8 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     const resumeButton = document.getElementById('resumeButton') as HTMLButtonElement | null;
     const stopButton = document.getElementById('stopButton') as HTMLButtonElement | null;
     const timeElement = document.getElementById('time');
-    const metricsTable = document.getElementById('metricsTable');
 
-    if (!startButton || !pauseButton || !resumeButton || !stopButton || !timeElement || !metricsTable) {
+    if (!startButton || !pauseButton || !resumeButton || !stopButton || !timeElement) {
         console.warn('Workout control elements not found in DOM');
         return;
     }
@@ -106,10 +170,12 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         stopButton,
     };
 
+    // Store reference for programmatic access
+    workoutControlElements = elements;
+
     // Update timer display every 100ms
     setInterval(() => {
         let nextText = '00:00:00';
-        const currentState = getWorkoutState(timeState);
 
         if (timeState.startTime && timeState.running) {
             const elapsedMs = Date.now() - timeState.startTime;
@@ -122,14 +188,6 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         if (timeElement.textContent !== nextText) {
             timeElement.textContent = nextText;
         }
-
-        // Update metrics table styling based on state
-        metricsTable.classList.remove('recording', 'paused');
-        if (currentState === 'recording') {
-            metricsTable.classList.add('recording');
-        } else if (currentState === 'paused') {
-            metricsTable.classList.add('paused');
-        }
     }, 100);
 
     // Initialize button visibility
@@ -139,6 +197,7 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     const addListener = (btn: HTMLButtonElement, callback: () => void) => {
         const handler = (e: Event) => {
             e.stopPropagation();
+            e.preventDefault();
             callback();
         };
         btn.addEventListener('click', handler);
@@ -146,6 +205,7 @@ export const initTimerDisplay = (timeState: TimeState): void => {
 
     // Handle Start button click - begin new workout
     addListener(startButton, () => {
+        console.log('[time.ts] Start button clicked');
         timeState.startTime = Date.now();
         timeState.endTime = null;
         timeState.running = true;
@@ -155,35 +215,19 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         updateButtonVisibility(elements, 'recording');
         updateWorkoutControlsAccessibility('recording');
         announce('Workout started', 'assertive');
+
+        // Dispatch event so auto-pause service can start monitoring
+        document.dispatchEvent(new CustomEvent('workoutStarted'));
     });
 
     // Handle Pause button click - pause recording
     addListener(pauseButton, () => {
-        timeState.running = false;
-        timeState.endTime = Date.now();
-
-        onWorkoutPause();
-
-        updateButtonVisibility(elements, 'paused');
-        updateWorkoutControlsAccessibility('paused');
-        announce('Workout paused. Press resume to continue or stop to save.', 'assertive');
+        pauseWorkout(timeState, false);
     });
 
     // Handle Resume button click - continue paused workout
     addListener(resumeButton, () => {
-        if (timeState.endTime && timeState.startTime) {
-            // Adjust startTime to account for paused duration
-            const pausedDuration = Date.now() - timeState.endTime;
-            timeState.startTime += pausedDuration;
-        }
-        timeState.endTime = null;
-        timeState.running = true;
-
-        onWorkoutStart();
-
-        updateButtonVisibility(elements, 'recording');
-        updateWorkoutControlsAccessibility('recording');
-        announce('Workout resumed', 'assertive');
+        resumeWorkout(timeState, false);
     });
 
     // Handle Stop button click - end and save workout
