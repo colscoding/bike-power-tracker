@@ -207,13 +207,47 @@ pnpm test:e2e:ui
 
 ### Environment Variables
 
-Create `.env` file for local overrides (optional):
+The client uses environment variables for configuration. Vite loads them in the following order (higher priority first):
+
+1. `.env.local` - Local overrides (gitignored, create this for your personal settings)
+2. `.env.development` - Development defaults
+3. `.env.production` - Production defaults
+4. `.env.example` - Example/documentation
+
+**Quick Setup for Development:**
 
 ```bash
-# API URL for streaming service
-VITE_API_URL=http://localhost:3000
+# Copy the example file
+cp .env.local.example .env.local
 
-# Toggle Mock Sensors (Default: true in dev, false in prod)
+# Edit .env.local and uncomment your preferred option:
+# - Leave VITE_API_URL empty for local dev server (via Vite proxy)
+# - Set to http://78.109.17.187 to test against production VPS
+# - Set to any custom URL for different environments
+```
+
+**Available Variables:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_API_URL` | Backend API URL. Empty = Vite proxy to localhost:3000 | `''` (dev) / `http://78.109.17.187` (prod) |
+| `VITE_API_KEY` | Optional API key for authentication | Not set |
+| `VITE_USE_MOCK_SENSORS` | Use mock Bluetooth sensors instead of real ones | `true` (dev) / `false` (prod) |
+
+**Common Configurations:**
+
+```bash
+# Development with local backend (default)
+VITE_API_URL=
+
+# Development with production backend (useful for testing)
+VITE_API_URL=http://78.109.17.187
+VITE_API_KEY=super-secret-bike-tracker-key
+
+# Development with custom backend
+VITE_API_URL=http://192.168.1.100:3000
+
+# Use real Bluetooth sensors in development
 VITE_USE_MOCK_SENSORS=false
 ```
 

@@ -1,6 +1,7 @@
 import type { GpsPoint } from './types/measurements.js';
 import { GpsFactory } from './services/gps/factory.js';
 import type { GpsListener } from './services/gps/types.js';
+import { Capacitor } from '@capacitor/core';
 
 export interface GpsConnection {
     stop: () => Promise<void>;
@@ -28,7 +29,12 @@ export const connectGpsMock = async (listener: GpsListener): Promise<GpsConnecti
 };
 
 export const connectGps = async (listener: GpsListener): Promise<GpsConnection> => {
-    if (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') {
+    // Use mock GPS only in development/test mode AND when not on native platform
+    // Native platforms should always use real GPS regardless of build mode
+    const useMock = (import.meta.env.MODE === 'development' || import.meta.env.MODE === 'test') &&
+        !Capacitor.isNativePlatform();
+
+    if (useMock) {
         return connectGpsMock(listener);
     }
 

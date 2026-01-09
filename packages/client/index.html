@@ -62,18 +62,6 @@
     <!-- Screen Reader Announcements -->
     <div id="srAnnouncements" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-    <!-- PWA Install Prompt -->
-    <div id="installPrompt" role="dialog" aria-labelledby="installPromptTitle" aria-modal="false"
-        style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2196F3; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; max-width: 90%; text-align: center;">
-        <p id="installPromptTitle" style="margin: 0 0 12px 0; font-size: 14px;">Install this app for a better
-            experience!</p>
-        <button id="installButton" aria-label="Install application"
-            style="background: white; color: #2196F3; border: none; padding: 8px 16px; border-radius: 4px; margin-right: 8px; cursor: pointer; font-weight: bold;">Install</button>
-        <button id="dismissInstall" aria-label="Dismiss install prompt"
-            style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Not
-            Now</button>
-    </div>
-
     <!-- Service Worker Update Notification -->
     <div id="updateNotification" role="alertdialog" aria-labelledby="updateNotificationTitle" aria-modal="false"
         style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #4CAF50; color: white; padding: 16px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; max-width: 90%; text-align: center;">
@@ -518,6 +506,21 @@
                             🗑️ Clear Logs
                         </button>
                     </div>
+                </div>
+            </fieldset>
+
+            <!-- PWA Installation Section -->
+            <fieldset class="settings-fieldset" id="installPwaContainer"
+                style="border: 1px solid #d0d7de; border-radius: 8px; padding: 16px; margin-bottom: 20px; display: none;">
+                <legend style="font-weight: 600; padding: 0 8px;">📱 App Installation</legend>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <p style="font-size: 14px; color: #666; margin: 0;">
+                        Install this app on your device for a better experience and offline access.
+                    </p>
+                    <button id="installPwaButton" aria-label="Install application as PWA"
+                        style="background: #2196F3; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">
+                        📲 Install App
+                    </button>
                 </div>
             </fieldset>
 

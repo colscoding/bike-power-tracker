@@ -10,6 +10,7 @@ import { loadUserProfile, saveUserProfile } from './onboarding.js';
 import { BluetoothDebugService } from '../services/debug/BluetoothDebugService.js';
 import { getSettings, saveSettingsToStorage, defaultSettings } from '../config/settings.js';
 import type { AppSettings } from '../config/settings.js';
+import { triggerInstallPrompt } from './installPrompt.js';
 
 // Re-export for compatibility if needed (but prefer importing from config)
 export { getSettings };
@@ -56,6 +57,9 @@ export function initSettingsLogic(): void {
     const debugControls = document.getElementById('debugControls');
     const downloadDebugLogs = document.getElementById('downloadDebugLogs');
     const clearDebugLogs = document.getElementById('clearDebugLogs');
+
+    // PWA Install button
+    const installPwaButton = document.getElementById('installPwaButton');
 
 
     /**
@@ -203,6 +207,20 @@ export function initSettingsLogic(): void {
         if (confirm('Are you sure you want to clear all debug logs?')) {
             await BluetoothDebugService.clearLogs();
             alert('Logs cleared.');
+        }
+    });
+
+    // PWA Install button handler
+    installPwaButton?.addEventListener('click', async () => {
+        const outcome = await triggerInstallPrompt();
+
+        if (outcome === 'accepted') {
+            // App will be installed, button will hide automatically via installPrompt.ts
+            console.log('PWA installation accepted');
+        } else if (outcome === 'dismissed') {
+            console.log('PWA installation dismissed');
+        } else {
+            alert('Installation is not available at this time. The app may already be installed or your browser does not support installation.');
         }
     });
 

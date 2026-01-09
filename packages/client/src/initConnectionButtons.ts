@@ -10,6 +10,7 @@ import { connectCadence } from './connect-cadence.js';
 import { connectHeartRate } from './connect-heartrate.js';
 import { connectPower } from './connect-power.js';
 import { connectTreadmill } from './connect-treadmill.js';
+import { connectGps, type GpsConnection } from './connect-gps.js';
 import { elements } from './elements.js';
 import type { MeasurementsState } from './measurements-state.js';
 import type { MeasurementType, Measurement, TreadmillMeasurement } from './types/measurements.js';
@@ -154,9 +155,28 @@ export const initConnectionButtons = ({
         try {
             updateButtonText(key, 'reconnecting'); // Show loading state
 
-            let connection: SensorConnection | TreadmillConnection;
+            let connection: SensorConnection | TreadmillConnection | GpsConnection;
 
-            if (key === 'treadmill') {
+            if (key === 'gps') {
+                // GPS has a different interface - uses listener callback instead of addListener
+                const gpsConnection = await connectGps((point) => {
+                    measurementsState.addGps(point);
+                });
+
+                // Adapt GpsConnection to match expected interface
+                const state = connectionsState[key];
+                if (state) {
+                    state.disconnect = async () => {
+                        await gpsConnection.stop();
+                    };
+                    state.isConnected = true;
+                }
+
+                // Update UI
+                updateButtonText(key, 'connected', gpsConnection.deviceName);
+                showNotification(`Connected to ${getSensorLabel(key)}`, 'success');
+                return; // GPS doesn't have onStatusChange, early return
+            } else if (key === 'treadmill') {
                 connection = await connectTreadmill();
                 connection.addListener((entry: TreadmillMeasurement) => {
                     measurementsState.addTreadmillData(entry);
@@ -236,6 +256,6 @@ export const initConnectionButtons = ({
     };
 
     // Initialize all supported buttons
-    const supportedTypes: (MeasurementType | 'treadmill')[] = ['power', 'heartrate', 'cadence', 'treadmill'];
+    const supportedTypes: (MeasurementType | 'treadmill')[] = ['power', 'heartrate', 'cadence', 'gps', 'treadmill'];
     supportedTypes.forEach(addListener);
 };

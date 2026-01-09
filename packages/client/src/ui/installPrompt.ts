@@ -22,8 +22,7 @@ interface BeforeInstallPromptEvent extends Event {
 /**
  * Initialize the PWA install prompt handler.
  * 
- * Listens for the beforeinstallprompt event and shows a custom
- * install button when the app can be installed.
+ * Listens for the beforeinstallprompt event and captures it for later use.
  */
 export const initInstallPrompt = (): void => {
     // Skip in test mode
@@ -39,33 +38,36 @@ export const initInstallPrompt = (): void => {
         // Stash the event so it can be triggered later
         deferredPrompt = e as BeforeInstallPromptEvent;
 
-        // Show the install button
-        showInstallButton();
+        // Update install button visibility in settings
+        updateInstallButtonVisibility();
     });
 
     // Listen for the app installed event
     window.addEventListener('appinstalled', () => {
         console.log('PWA was installed successfully');
         deferredPrompt = null;
-        hideInstallButton();
+        updateInstallButtonVisibility();
     });
 };
 
 /**
- * Show the install button and set up click handlers.
+ * Check if the app can be installed.
+ * @returns true if install is available
  */
-const showInstallButton = (): void => {
-    const installContainer = document.getElementById('installPrompt');
-    if (!installContainer) return;
+export const canInstallPwa = (): boolean => {
+    return deferredPrompt !== null;
+};
 
-    installContainer.style.display = 'block';
+/**
+ * Trigger the PWA install prompt.
+ * @returns Promise that resolves to the user's choice outcome
+ */
+export const triggerInstallPrompt = async (): Promise<'accepted' | 'dismissed' | 'unavailable'> => {
+    if (!deferredPrompt) {
+        return 'unavailable';
+    }
 
-    const installButton = document.getElementById('installButton');
-    installButton?.addEventListener('click', async () => {
-        if (!deferredPrompt) {
-            return;
-        }
-
+    try {
         // Show the install prompt
         await deferredPrompt.prompt();
 
@@ -75,21 +77,27 @@ const showInstallButton = (): void => {
 
         // Clear the deferredPrompt
         deferredPrompt = null;
-        hideInstallButton();
-    });
+        updateInstallButtonVisibility();
 
-    const dismissButton = document.getElementById('dismissInstall');
-    dismissButton?.addEventListener('click', () => {
-        hideInstallButton();
-    });
+        return outcome;
+    } catch (error) {
+        console.error('Error triggering install prompt:', error);
+        return 'unavailable';
+    }
 };
 
 /**
- * Hide the install button.
+ * Update the visibility of install buttons based on availability.
  */
-const hideInstallButton = (): void => {
-    const installContainer = document.getElementById('installPrompt');
-    if (installContainer) {
-        installContainer.style.display = 'none';
+const updateInstallButtonVisibility = (): void => {
+    const installButton = document.getElementById('installPwaButton');
+    const installButtonContainer = document.getElementById('installPwaContainer');
+
+    if (installButton) {
+        installButton.style.display = canInstallPwa() ? 'block' : 'none';
+    }
+
+    if (installButtonContainer) {
+        installButtonContainer.style.display = canInstallPwa() ? 'block' : 'none';
     }
 };
