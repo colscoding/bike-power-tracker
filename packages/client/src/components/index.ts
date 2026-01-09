@@ -46,6 +46,14 @@ export { WorkoutTimer } from './WorkoutTimer.js';
 export { Toast, type ToastType, type ToastOptions } from './Toast.js';
 export { Modal, type ButtonVariant, type ModalConfig } from './Modal.js';
 
+// Data Fields Components
+export {
+    DataFieldComponent,
+    DataScreenComponent,
+    ScreenCarouselComponent,
+    registerDataFieldComponents,
+} from './data-fields/index.js';
+
 /**
  * Check if custom elements are supported
  */
@@ -72,6 +80,9 @@ export async function whenAllDefined(): Promise<void> {
         'bpt-workout-timer',
         'bpt-toast',
         'bpt-modal',
+        'bpt-data-field',
+        'bpt-data-screen',
+        'bpt-screen-carousel',
     ];
 
     await Promise.all(components.map((name) => customElements.whenDefined(name)));

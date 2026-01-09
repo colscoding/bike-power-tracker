@@ -1,0 +1,347 @@
+/**
+ * Data Fields Global Styles
+ * 
+ * CSS custom properties and utility classes for the data fields system.
+ * Import this file to apply consistent styling across the app.
+ */
+
+/* ============================================================================
+   CSS Custom Properties (Design Tokens)
+   ============================================================================ */
+
+:root {
+    /* Surface colors */
+    --df-surface: #1a1a2e;
+    --df-surface-elevated: #252542;
+    --df-surface-hover: #2d2d4a;
+
+    /* Text colors */
+    --df-text: #ffffff;
+    --df-text-muted: #a0a0b0;
+    --df-text-dim: #666680;
+
+    /* Border colors */
+    --df-border: #333355;
+    --df-border-subtle: #2a2a44;
+
+    /* Primary accent */
+    --df-primary: #4ecdc4;
+    --df-primary-dark: #3db3aa;
+
+    /* Category colors */
+    --df-power: #ffd700;
+    --df-power-bg: rgba(255, 215, 0, 0.15);
+    --df-heartrate: #ff6b6b;
+    --df-heartrate-bg: rgba(255, 107, 107, 0.15);
+    --df-cadence: #4ecdc4;
+    --df-cadence-bg: rgba(78, 205, 196, 0.15);
+    --df-speed: #45b7d1;
+    --df-speed-bg: rgba(69, 183, 209, 0.15);
+    --df-distance: #96ceb4;
+    --df-distance-bg: rgba(150, 206, 180, 0.15);
+    --df-elevation: #a8e6cf;
+    --df-elevation-bg: rgba(168, 230, 207, 0.15);
+    --df-time: #dda0dd;
+    --df-time-bg: rgba(221, 160, 221, 0.15);
+
+    /* Power zones (Coggan) */
+    --df-zone-1: #b8b8b8;
+    /* Recovery - Gray */
+    --df-zone-2: #45b7d1;
+    /* Endurance - Blue */
+    --df-zone-3: #4ecdc4;
+    /* Tempo - Teal */
+    --df-zone-4: #ffd700;
+    /* Threshold - Yellow */
+    --df-zone-5: #ff9f43;
+    /* VO2max - Orange */
+    --df-zone-6: #ff6b6b;
+    /* Anaerobic - Red */
+    --df-zone-7: #e056fd;
+    /* Neuromuscular - Purple */
+
+    /* Heart rate zones */
+    --df-hr-zone-1: #4ecdc4;
+    /* Zone 1 - Recovery */
+    --df-hr-zone-2: #45b7d1;
+    /* Zone 2 - Aerobic */
+    --df-hr-zone-3: #ffd700;
+    /* Zone 3 - Tempo */
+    --df-hr-zone-4: #ff9f43;
+    /* Zone 4 - Threshold */
+    --df-hr-zone-5: #ff6b6b;
+    /* Zone 5 - Max */
+
+    /* Spacing */
+    --df-spacing-xs: 4px;
+    --df-spacing-sm: 8px;
+    --df-spacing-md: 12px;
+    --df-spacing-lg: 16px;
+    --df-spacing-xl: 24px;
+
+    /* Border radius */
+    --df-radius-sm: 4px;
+    --df-radius-md: 8px;
+    --df-radius-lg: 12px;
+
+    /* Transitions */
+    --df-transition-fast: 0.15s ease;
+    --df-transition: 0.25s ease;
+    --df-transition-slow: 0.4s ease;
+
+    /* Shadows */
+    --df-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+    --df-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --df-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+    /* Font sizes */
+    --df-font-xs: 10px;
+    --df-font-sm: 12px;
+    --df-font-md: 14px;
+    --df-font-lg: 16px;
+    --df-font-xl: 20px;
+    --df-font-2xl: 24px;
+    --df-font-3xl: 32px;
+    --df-font-4xl: 48px;
+}
+
+/* Light theme overrides */
+@media (prefers-color-scheme: light) {
+    :root {
+        --df-surface: #f5f5f7;
+        --df-surface-elevated: #ffffff;
+        --df-surface-hover: #e8e8eb;
+        --df-text: #1a1a2e;
+        --df-text-muted: #666680;
+        --df-text-dim: #999999;
+        --df-border: #d0d0dd;
+        --df-border-subtle: #e5e5ee;
+    }
+}
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+/* Zone background colors */
+.df-zone-1-bg {
+    background-color: var(--df-zone-1) !important;
+    color: #000 !important;
+}
+
+.df-zone-2-bg {
+    background-color: var(--df-zone-2) !important;
+    color: #000 !important;
+}
+
+.df-zone-3-bg {
+    background-color: var(--df-zone-3) !important;
+    color: #000 !important;
+}
+
+.df-zone-4-bg {
+    background-color: var(--df-zone-4) !important;
+    color: #000 !important;
+}
+
+.df-zone-5-bg {
+    background-color: var(--df-zone-5) !important;
+    color: #000 !important;
+}
+
+.df-zone-6-bg {
+    background-color: var(--df-zone-6) !important;
+    color: #fff !important;
+}
+
+.df-zone-7-bg {
+    background-color: var(--df-zone-7) !important;
+    color: #fff !important;
+}
+
+/* Category accent borders */
+.df-power-accent {
+    border-left-color: var(--df-power) !important;
+}
+
+.df-heartrate-accent {
+    border-left-color: var(--df-heartrate) !important;
+}
+
+.df-cadence-accent {
+    border-left-color: var(--df-cadence) !important;
+}
+
+.df-speed-accent {
+    border-left-color: var(--df-speed) !important;
+}
+
+.df-distance-accent {
+    border-left-color: var(--df-distance) !important;
+}
+
+.df-elevation-accent {
+    border-left-color: var(--df-elevation) !important;
+}
+
+.df-time-accent {
+    border-left-color: var(--df-time) !important;
+}
+
+/* Numeric display - tabular figures */
+.df-numeric {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+}
+
+/* Value animation */
+.df-value-updated {
+    animation: df-pulse 0.3s ease-out;
+}
+
+@keyframes df-pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Disconnected state */
+.df-disconnected {
+    opacity: 0.5;
+    filter: grayscale(0.5);
+}
+
+/* Loading state */
+.df-loading {
+    position: relative;
+}
+
+.df-loading::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, 0.1),
+            transparent);
+    animation: df-shimmer 1.5s infinite;
+}
+
+@keyframes df-shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* ============================================================================
+   Grid Layouts
+   ============================================================================ */
+
+.df-grid {
+    display: grid;
+    gap: var(--df-spacing-sm);
+}
+
+.df-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.df-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.df-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.df-grid-auto {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+/* Grid span utilities */
+.df-col-span-2 {
+    grid-column: span 2;
+}
+
+.df-row-span-2 {
+    grid-row: span 2;
+}
+
+.df-col-span-full {
+    grid-column: 1 / -1;
+}
+
+/* ============================================================================
+   Responsive Breakpoints
+   ============================================================================ */
+
+@media (max-width: 400px) {
+    :root {
+        --df-spacing-sm: 6px;
+        --df-spacing-md: 10px;
+        --df-font-3xl: 28px;
+        --df-font-4xl: 40px;
+    }
+
+    .df-grid-3,
+    .df-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 600px) {
+    :root {
+        --df-spacing-sm: 10px;
+        --df-spacing-md: 14px;
+    }
+}
+
+@media (min-width: 900px) {
+    :root {
+        --df-spacing-sm: 12px;
+        --df-spacing-md: 16px;
+        --df-font-4xl: 56px;
+    }
+}
+
+/* ============================================================================
+   Accessibility
+   ============================================================================ */
+
+/* Focus visible ring */
+.df-focusable:focus-visible {
+    outline: 2px solid var(--df-primary);
+    outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --df-border: #ffffff;
+        --df-text-muted: #ffffff;
+    }
+}
