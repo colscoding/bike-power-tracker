@@ -16,6 +16,10 @@
         "test": "API_KEY= tsx node_modules/mocha/bin/mocha.js 'tests/**/*.test.ts' --timeout 10000 --exit",
         "test:unit": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/unit.test.ts tests/workoutService.test.ts tests/userService.test.ts --exit",
         "test:integration": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/redis.test.ts tests/client-integration.test.ts --timeout 10000 --exit",
+        "test:integration:full": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/full-workflow.integration.test.ts --timeout 15000 --exit",
+        "test:integration:database": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/database.integration.test.ts --timeout 15000 --exit",
+        "test:integration:sse": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/sse-streaming.integration.test.ts --timeout 20000 --exit",
+        "test:integration:all": "API_KEY= tsx node_modules/mocha/bin/mocha.js 'tests/**/*.integration.test.ts' --timeout 20000 --exit",
         "test:api": "API_KEY= tsx node_modules/mocha/bin/mocha.js tests/api.test.ts tests/workoutApi.test.ts --timeout 10000 --exit",
         "test:coverage": "nyc pnpm test",
         "test:watch": "nodemon --exec 'pnpm test'",
@@ -61,6 +65,7 @@
     "devDependencies": {
         "@eslint/js": "^9.17.0",
         "@types/express": "^5.0.6",
+        "@types/jest": "^30.0.0",
         "@types/mocha": "^10.0.10",
         "@types/node": "^25.0.3",
         "@types/pino-http": "^6.1.0",

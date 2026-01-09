@@ -27,14 +27,24 @@ cd "$SCRIPT_DIR"
 # 1. Sync Files
 # We exclude node_modules (too big, wrong arch), .git, dist (build artifacts), and .env (secrets)
 echo -e "${GREEN}[1/2] Syncing files to $TARGET:$REMOTE_DIR...${NC}"
-rsync -avz \
-    --exclude 'node_modules' \
+rsync -avz --delete \
     --exclude '.git' \
     --exclude 'dist' \
-    --exclude '.env' \
-    --exclude 'coverage' \
-    --exclude '.DS_Store' \
+    --exclude 'docs' \
+    --exclude 'node_modules' \
+    --exclude 'tetsts' \
     ./ "$TARGET:$REMOTE_DIR"
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}File sync failed!${NC}"
+    exit 1
+fi
+
+# Exit if skip deploy
+if [ "${SKIP_DEPLOY:-false}" = "true" ]; then
+    echo -e "${YELLOW}Skipping deployment as per SKIP_DEPLOY flag.${NC}"
+    exit 0
+fi
 
 # 2. Run Remote Deploy
 # We use ssh to execute the server-side deploy.sh script

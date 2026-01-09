@@ -41,8 +41,8 @@ check_prerequisites() {
         exit 1
     fi
     
-    if [ ! -f "docker-compose.prod.yml" ]; then
-        log_error "docker-compose.prod.yml not found. Are you in the correct directory?"
+    if [ ! -f "docker-compose.yml" ]; then
+        log_error "docker-compose.yml not found. Are you in the correct directory?"
         exit 1
     fi
     
@@ -117,20 +117,20 @@ deploy() {
     
     # Pull latest base images
     log_info "Pulling latest base images..."
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml pull redis nginx || true
+    $DOCKER_COMPOSE_CMD pull redis nginx || true
     
     # Build and start containers
     log_info "Starting containers..."
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml up -d $build_flag
+    $DOCKER_COMPOSE_CMD up -d $build_flag
     
     # Wait for services to be healthy
     log_info "Waiting for services to be healthy..."
     sleep 5
     
     # Health check
-    if ! $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if ! $DOCKER_COMPOSE_CMD ps | grep -q "Up"; then
         log_error "Some containers failed to start. Check logs with:"
-        echo "  $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs"
+        echo "  $DOCKER_COMPOSE_CMD logs"
         exit 1
     fi
 }
@@ -140,7 +140,7 @@ verify() {
     log_info "Verifying deployment..."
     
     # Check container status
-    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps
+    $DOCKER_COMPOSE_CMD ps
     
     # Test health endpoint
     sleep 2
@@ -156,11 +156,17 @@ verify() {
     fi
 }
 
+stop_existing() {
+    log_info "Stopping existing service (if any)..."
+    $DOCKER_COMPOSE_CMD down || true
+}
+
 # Main execution
 main() {
     log_info "=== Bike Power Tracker Deployment ==="
     
     check_prerequisites
+    stop_existing
     setup_env
     load_env
     deploy "$@"
@@ -172,13 +178,10 @@ main() {
     echo "Service is running at: http://localhost (port 80)"
     echo ""
     echo "Useful commands:"
-    echo "  View logs:      $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml logs -f"
-    echo "  Stop service:   $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml down"
-    echo "  Restart:        $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml restart"
-    echo "  View status:    $DOCKER_COMPOSE_CMD -f docker-compose.prod.yml ps"
-    echo "  Stop service:   docker compose -f docker-compose.prod.yml down"
-    echo "  Restart:        docker compose -f docker-compose.prod.yml restart"
-    echo "  View status:    docker compose -f docker-compose.prod.yml ps"
+    echo "  View logs:      $DOCKER_COMPOSE_CMD logs -f"
+    echo "  Stop service:   $DOCKER_COMPOSE_CMD down"
+    echo "  Restart:        $DOCKER_COMPOSE_CMD restart"
+    echo "  View status:    $DOCKER_COMPOSE_CMD ps"
     echo ""
 }
 

@@ -88,21 +88,39 @@ The service runs on `http://localhost:3000`.
 
 ### Docker Compose (Recommended)
 
-The service includes Docker Compose configurations for both production and development.
+The service uses Docker Compose with full production configuration including Nginx reverse proxy.
 
 ```bash
-# Start Production Service (standalone)
-# This starts the service and redis on port 3000
+# Start Full Production Stack
+# This starts redis, postgres, app, and nginx on port 80
 docker compose up -d
 
-# Start Development Service (with hot reload)
-# This starts the service in watch mode on port 3001
-docker compose --profile dev up
-
-# Start Full Production Stack (with Nginx)
-# This starts service, redis, and nginx on port 80
-docker compose -f docker-compose.prod.yml up -d
+# Or use the deployment script (recommended)
+./deploy.sh
 ```
+
+#### Development Setup
+
+For local development with hot-reload, create a `docker-compose.override.yml` file (git-ignored):
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build:
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm run dev
+```
+
+This file automatically merges with `docker-compose.yml` when you run `docker compose up`.
 
 ## API Reference
 
@@ -462,8 +480,7 @@ service/
 │   └── schema.prisma     # Database schema
 ├── nginx/
 │   └── default.conf      # Nginx configuration
-├── docker-compose.yml      # Development Docker config
-├── docker-compose.prod.yml # Production Docker config
+├── docker-compose.yml      # Production Docker config
 ├── Dockerfile              # Production image
 ├── Dockerfile.dev          # Development image
 ├── tsconfig.json           # TypeScript configuration
@@ -502,7 +519,13 @@ pnpm test
 # Run specific test suites
 pnpm test:unit     # Unit tests only
 pnpm test:api      # API tests only
-pnpm test:integration # Redis and Integration tests
+pnpm test:integration # Legacy Redis integration tests
+
+# Run new integration test suites
+pnpm test:integration:full      # Full workflow tests
+pnpm test:integration:database  # Database operations tests
+pnpm test:integration:sse       # SSE streaming tests
+pnpm test:integration:all       # All integration tests
 
 # Run with coverage
 pnpm test:coverage
@@ -512,6 +535,8 @@ pnpm dev # (Run dev server, tests don't have a specific watch script configured)
 ```
 
 ### Test Structure
+
+#### Unit & API Tests
 
 | File | Description |
 |------|-------------|
@@ -524,7 +549,18 @@ pnpm dev # (Run dev server, tests don't have a specific watch script configured)
 | `security.test.ts` | Input validation and security tests |
 | `client-integration.test.ts` | End-to-end client flows |
 
-**Total: 115+ tests across 8 test files**
+#### Integration Tests
+
+| File | Description | Test Count |
+|------|-------------|------------|
+| `integration-setup.ts` | Shared test utilities and setup | N/A |
+| `full-workflow.integration.test.ts` | Complete workout lifecycle workflows | 22 tests |
+| `database.integration.test.ts` | Database operations and queries | 28 tests |
+| `sse-streaming.integration.test.ts` | Real-time SSE streaming | 7 tests |
+
+**Total: 170+ tests across 15+ test files**
+
+See [tests/README.md](tests/README.md) for detailed integration test documentation and [tests/QUICKSTART.md](tests/QUICKSTART.md) for quick setup guide.
 
 ## Deployment
 
@@ -534,8 +570,11 @@ pnpm dev # (Run dev server, tests don't have a specific watch script configured)
 # Build production image
 docker build -t bpt-service .
 
-# Run with Redis
-docker-compose -f docker-compose.prod.yml up -d
+# Run with Redis and Nginx
+docker compose up -d
+
+# Or use the deployment script (recommended)
+./deploy.sh
 ```
 
 ### VPS Deployment
@@ -551,7 +590,7 @@ See detailed guides in the `docs/` folder:
 - [ ] Configure `CORS_ORIGIN` for your domain
 - [ ] Set `NODE_ENV=production`
 - [ ] Enable Redis authentication
-- [ ] Set up SSL/TLS (via Nginx or Cloudflare)
+- [ ] Set up SSL/TLS (via Nginx)
 - [ ] Configure health check monitoring
 - [ ] Set up log aggregation
 

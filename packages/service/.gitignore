@@ -7,3 +7,4 @@ coverage/
 analytics.json
 analytics.db
 analytics.db-journal
+docker-compose.override.yml

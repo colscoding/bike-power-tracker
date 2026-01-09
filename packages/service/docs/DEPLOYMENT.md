@@ -6,7 +6,6 @@ The service is designed to be containerized using Docker.
 
 ### Files
 -   `Dockerfile`: Multi-stage build for production. Optimizes image size by separating build dependencies from runtime.
--   `Dockerfile.dev`: Development container with hot-reload (via `tsx` or `nodemon`).
 -   `docker-compose.yml`: Base composition.
 -   `docker-compose.prod.yml`: Production overrides (restart policies, volume mapping).
 
