@@ -30,6 +30,7 @@ import './main.css';
 
 // Register Web Components (must be imported before they're used in DOM)
 import './components/index.js';
+import { registerDataFieldComponents } from './components/data-fields/index.js';
 
 import { getInitState } from './getInitState.js';
 import { exposeVariablesDuringTest } from './exposeVariablesDuringTest.js';
@@ -40,6 +41,9 @@ import './ui/navbar.css';
 
 const initApp = (): void => {
     try {
+        // Register data field Web Components
+        registerDataFieldComponents();
+
         /**
          * Initialize application state
          */

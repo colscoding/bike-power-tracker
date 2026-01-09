@@ -159,7 +159,7 @@ export function getZoneForValue(
 
     // Check if above highest zone
     const highestZone = zones[zones.length - 1];
-    if (percent >= highestZone.minPercent) {
+    if (highestZone && percent >= highestZone.minPercent) {
         return highestZone.zone;
     }
 

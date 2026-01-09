@@ -1,3 +1,6 @@
+/* Import Data Fields Styles */
+@import './styles/data-fields.css';
+
 /* Reset */
 * {
     margin: 0;
@@ -486,7 +489,6 @@ main {
 }
 
 /* Adjust metrics table for side-by-side view */
-#metricsTable,
 #streamMetricsTable {
     text-align: center;
     width: 100%;
@@ -654,15 +656,7 @@ input:checked+.slider:before {
 }
 
 /* Metrics table */
-/* #metricsTable styles moved to shared block with #streamMetricsTable */
 
-/* Paused/stopped state styling */
-#metricsTable.paused {
-    opacity: 0.5;
-    filter: grayscale(50%);
-}
-
-#metricsTable dt,
 #streamMetricsTable dt {
     font-size: 4cqh;
     color: var(--color-text-secondary);
@@ -670,22 +664,8 @@ input:checked+.slider:before {
     transition: color 0.3s ease;
 }
 
-#streamMetricsTable dt {
-    font-size: 4cqh;
-}
-
-#metricsTable dt:first-child,
 #streamMetricsTable dt:first-child {
     margin-top: 0;
-}
-
-#metricsTable dd {
-    font-size: 18cqh;
-    font-weight: bold;
-    color: var(--color-text-primary);
-    margin-bottom: 0;
-    line-height: 0.9;
-    transition: color 0.3s ease;
 }
 
 #streamMetricsTable dd {
@@ -695,31 +675,6 @@ input:checked+.slider:before {
     margin-bottom: 0;
     line-height: 0.9;
     transition: color 0.3s ease;
-}
-
-/* Adjust font sizes when showing both metrics */
-#streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dd {
-    font-size: 18cqh;
-}
-
-#streamMetrics:not([style*="display: none"]) #streamMetricsTable dd {
-    font-size: 14cqh;
-}
-
-/* Further adjustment for mobile stacked view */
-@media (max-width: 768px) {
-    #streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dd {
-        font-size: 18cqh;
-    }
-
-    #streamMetrics:not([style*="display: none"]) #streamMetricsTable dd {
-        font-size: 14cqh;
-    }
-}
-
-#streamMetrics:not([style*="display: none"])~#yourMetrics #metricsTable dt,
-#streamMetrics:not([style*="display: none"]) #streamMetricsTable dt {
-    font-size: 4cqh;
 }
 
 /* Stream Modal Styles */
@@ -2313,7 +2268,6 @@ body.has-stream-toolbar header {
     }
 
     /* Display metrics in a row instead of column */
-    #metricsTable,
     #streamMetricsTable {
         flex-direction: row;
         flex-wrap: wrap;
@@ -2328,15 +2282,10 @@ body.has-stream-toolbar header {
     }
 
     /* Larger metric values in landscape for visibility */
-    #metricsTable dd {
-        font-size: 14cqh;
-    }
-
     #streamMetricsTable dd {
         font-size: 12cqh;
     }
 
-    #metricsTable dt,
     #streamMetricsTable dt {
         font-size: 3cqh;
     }
@@ -2374,7 +2323,6 @@ body.has-stream-toolbar header {
 /* Tablet landscape with more vertical space */
 @media (orientation: landscape) and (min-height: 501px) and (max-height: 800px) {
 
-    #metricsTable,
     #streamMetricsTable {
         flex-direction: row;
         flex-wrap: wrap;
@@ -2500,7 +2448,6 @@ body.has-stream-toolbar header {
 }
 
 /* High contrast metric values with underlines for differentiation */
-[data-high-contrast="true"] #metricsTable dd,
 [data-high-contrast="true"] #streamMetricsTable dd {
     text-decoration-line: underline;
     text-decoration-style: dotted;

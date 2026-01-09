@@ -17,6 +17,8 @@ import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState, ConnectionsState } from '../getInitState.js';
 import type { ZoneState } from '../zone-state.js';
 import type { StreamManager } from '../stream-manager.js';
+import { createDataFieldsManager } from '../data-fields/DataFieldsManager.js';
+import { loadActiveProfile } from '../data-fields/persistence.js';
 
 /**
  * Parameters for UI initialization
@@ -45,7 +47,26 @@ interface UiInitParams {
 export function initUi({ measurementsState, timeState, connectionsState, streamManager }: UiInitParams): ZoneState {
     // Initialize UI components
     initTimerDisplay(timeState);
-    const zoneState = initMetricsDisplay({ connectionsState, measurementsState });
+    const zoneState = initMetricsDisplay({ measurementsState });
+
+    // Initialize Data Fields System
+    const dataFieldsCarousel = document.getElementById('dataFieldsCarousel') as HTMLElement | null;
+    if (dataFieldsCarousel) {
+        try {
+            const activeProfile = loadActiveProfile();
+            const dataFieldsManager = createDataFieldsManager({
+                measurementsState,
+                connectionsState,
+                timeState,
+                initialProfile: activeProfile,
+            });
+            dataFieldsManager.attachToCarousel(dataFieldsCarousel as any);
+            dataFieldsManager.start();
+            console.log('[DataFields] Manager initialized with profile:', activeProfile.name);
+        } catch (error) {
+            console.error('[DataFields] Failed to initialize:', error);
+        }
+    }
 
     // PWA & System features
     handleWakeLock();

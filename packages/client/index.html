@@ -201,41 +201,11 @@
                             <span id="lapCountLabel">Laps: </span><span id="lapCount">0</span>
                         </div>
                     </div>
-                    <dl id="metricsTable" aria-label="Live workout metrics">
-                        <div class="metric-group metric-group-power">
-                            <dt id="powerLabel">Power</dt>
-                            <dd id="power" aria-labelledby="powerLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-cadence">
-                            <dt id="cadenceLabel">Cadence</dt>
-                            <dd id="cadence" aria-labelledby="cadenceLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-heartrate">
-                            <dt id="heartrateLabel">Heart Rate</dt>
-                            <dd id="heartrate" aria-labelledby="heartrateLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-speed">
-                            <dt id="speedLabel">Speed</dt>
-                            <dd id="speed" aria-labelledby="speedLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-distance">
-                            <dt id="distanceLabel">Distance</dt>
-                            <dd id="distance" aria-labelledby="distanceLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-altitude">
-                            <dt id="altitudeLabel">Altitude</dt>
-                            <dd id="altitude" aria-labelledby="altitudeLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-treadmillSpeed" style="display: none;">
-                            <dt id="treadmillSpeedLabel">Treadmill Speed</dt>
-                            <dd id="treadmillSpeed" aria-labelledby="treadmillSpeedLabel" aria-live="polite"></dd>
-                        </div>
-                        <div class="metric-group metric-group-incline" style="display: none;">
-                            <dt id="inclineLabel">Incline</dt>
-                            <dd id="value-incline" aria-labelledby="inclineLabel" aria-live="polite">--</dd>
-                        </div>
-                    </dl>
+
+                    <!-- Data Fields Carousel - Customizable Data Display -->
+                    <bpt-screen-carousel id="dataFieldsCarousel"></bpt-screen-carousel>
                 </div>
+
                 <div id="streamMetrics" class="metrics-section" aria-label="Stream metrics" style="display: none;">
                     <div class="section-header">
                         <div class="stream-title-with-status">

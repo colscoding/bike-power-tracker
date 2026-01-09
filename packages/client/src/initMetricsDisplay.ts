@@ -1,27 +1,21 @@
 /**
  * Metrics Display Initialization
  * 
- * Sets up real-time display updates for workout metrics.
- * Includes zone tracking and visual zone indicators.
+ * Sets up zone tracking and live charts for workout metrics.
+ * The actual data field display is handled by DataFieldsManager.
  * 
  * @module initMetricsDisplay
  */
 
-import { elements } from './elements.js';
 import type { MeasurementsState } from './measurements-state.js';
-import type { MeasurementType } from './types/measurements.js';
-import type { ConnectionsState } from './getInitState.js';
 import { ZoneState } from './zone-state.js';
-import type { ZoneGauge } from './components/ZoneGauge.js';
 import type { LiveChart } from './components/LiveChart.js';
 import { voiceFeedback } from './services/VoiceFeedback.js';
-import { getSettings } from './config/settings.js';
 
 /**
  * Parameters for metrics display initialization
  */
 interface InitMetricsDisplayParams {
-    connectionsState: ConnectionsState;
     measurementsState: MeasurementsState;
 }
 
@@ -33,43 +27,6 @@ const UPDATE_INTERVAL_MS = 100;
 
 /** Zone state instance - exported for use in summary/exports */
 export let zoneState: ZoneState;
-
-/**
- * Initialize zone gauges in the DOM
- */
-function initZoneGauges(): { powerGauge: ZoneGauge | null; hrGauge: ZoneGauge | null } {
-    // Look for existing zone gauges or create them
-    let powerGauge = document.getElementById('powerZoneGauge') as ZoneGauge | null;
-    let hrGauge = document.getElementById('hrZoneGauge') as ZoneGauge | null;
-
-    // Create power zone gauge if it doesn't exist
-    if (!powerGauge) {
-        const powerMetricGroup = document.querySelector('.metric-group-power');
-        if (powerMetricGroup) {
-            powerGauge = document.createElement('bpt-zone-gauge') as ZoneGauge;
-            powerGauge.id = 'powerZoneGauge';
-            powerGauge.setAttribute('type', 'power');
-            powerGauge.setAttribute('compact', '');
-            powerGauge.style.display = 'none'; // Hidden until zones are active
-            powerMetricGroup.appendChild(powerGauge);
-        }
-    }
-
-    // Create HR zone gauge if it doesn't exist
-    if (!hrGauge) {
-        const hrMetricGroup = document.querySelector('.metric-group-heartrate');
-        if (hrMetricGroup) {
-            hrGauge = document.createElement('bpt-zone-gauge') as ZoneGauge;
-            hrGauge.id = 'hrZoneGauge';
-            hrGauge.setAttribute('type', 'heartrate');
-            hrGauge.setAttribute('compact', '');
-            hrGauge.style.display = 'none'; // Hidden until zones are active
-            hrMetricGroup.appendChild(hrGauge);
-        }
-    }
-
-    return { powerGauge, hrGauge };
-}
 
 /**
  * Initialize live charts for power and heart rate
@@ -88,10 +45,10 @@ function initLiveCharts(): { powerChart: LiveChart | null; hrChart: LiveChart | 
             chartsContainer.className = 'live-charts-container';
             chartsContainer.style.display = 'none'; // Hidden by default
 
-            // Insert after metricsTable
-            const metricsTable = document.getElementById('metricsTable');
-            if (metricsTable && metricsTable.nextSibling) {
-                metricsSection.insertBefore(chartsContainer, metricsTable.nextSibling);
+            // Insert after data fields carousel
+            const dataFieldsCarousel = document.getElementById('dataFieldsCarousel');
+            if (dataFieldsCarousel && dataFieldsCarousel.nextSibling) {
+                metricsSection.insertBefore(chartsContainer, dataFieldsCarousel.nextSibling);
             } else {
                 metricsSection.appendChild(chartsContainer);
             }
@@ -156,89 +113,19 @@ function initChartsToggle(chartsVisible: boolean): HTMLButtonElement | null {
 }
 
 /**
- * Update the zone display elements
- */
-function updateZoneDisplays(
-    powerGauge: ZoneGauge | null,
-    hrGauge: ZoneGauge | null,
-    zoneState: ZoneState
-): void {
-    // Update power zone gauge
-    if (powerGauge) {
-        const powerZone = zoneState.getCurrentPowerZone();
-        if (powerZone && zoneState.hasPowerZones()) {
-            powerGauge.style.display = '';
-            powerGauge.setZone(powerZone.zone, powerZone.name, powerZone.percentInZone);
-        } else if (!zoneState.hasPowerZones()) {
-            powerGauge.style.display = 'none';
-        }
-    }
-
-    // Update HR zone gauge
-    if (hrGauge) {
-        const hrZone = zoneState.getCurrentHrZone();
-        if (hrZone && zoneState.hasHrZones()) {
-            hrGauge.style.display = '';
-            hrGauge.setZone(hrZone.zone, hrZone.name, hrZone.percentInZone);
-        } else if (!zoneState.hasHrZones()) {
-            hrGauge.style.display = 'none';
-        }
-    }
-}
-
-/**
- * Apply zone color to metric display element
- */
-function applyZoneColorToMetric(element: HTMLElement, zone: number | null, _type: 'power' | 'heartrate'): void {
-    const parent = element.closest('.metric-group');
-    if (!parent) return;
-
-    // Zone colors for power (7 zones) and HR (5 zones)
-    const zoneColors: Record<number, string> = {
-        1: '#3b82f6', // Blue - Recovery/Active Recovery
-        2: '#22c55e', // Green - Endurance/Aerobic
-        3: '#eab308', // Yellow - Tempo
-        4: '#f97316', // Orange - Threshold
-        5: '#ef4444', // Red - VO2max/Anaerobic
-        6: '#a855f7', // Purple - Anaerobic (power only)
-        7: '#ec4899', // Pink - Neuromuscular (power only)
-    };
-
-    if (zone !== null && zone >= 1 && zone <= 7) {
-        const color = zoneColors[zone];
-        element.style.color = color;
-        (parent as HTMLElement).style.borderLeftColor = color;
-        (parent as HTMLElement).style.borderLeftWidth = '4px';
-        (parent as HTMLElement).style.borderLeftStyle = 'solid';
-    } else {
-        element.style.color = '';
-        (parent as HTMLElement).style.borderLeftColor = '';
-        (parent as HTMLElement).style.borderLeftWidth = '';
-        (parent as HTMLElement).style.borderLeftStyle = '';
-    }
-}
-
-/**
  * Initialize the metrics display update loop.
  * 
- * Creates an interval that updates the display elements with the latest
- * measurements from connected sensors. Shows '--' for disconnected sensors
- * or stale data (older than 5 seconds).
+ * Sets up zone tracking and live charts. The actual data field display
+ * is handled by DataFieldsManager.
  * 
  * @param params - Object containing state objects
  * @returns The ZoneState instance for external use
  */
 export const initMetricsDisplay = ({
-    connectionsState,
     measurementsState,
 }: InitMetricsDisplayParams): ZoneState => {
-    const emptyValue = '--';
-
     // Initialize zone state
     zoneState = new ZoneState();
-
-    // Initialize zone gauges
-    const { powerGauge, hrGauge } = initZoneGauges();
 
     // Initialize live charts
     const { powerChart, hrChart } = initLiveCharts();
@@ -273,21 +160,6 @@ export const initMetricsDisplay = ({
     let lastPowerZone: number | null = null;
     let lastHrZone: number | null = null;
 
-    // Cache settings to avoid reading localStorage in loop
-    let cachedSettings = getSettings();
-
-    // Listen for settings changes
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'bpt-settings') {
-            cachedSettings = getSettings();
-        }
-    });
-
-    // Custom event for same-window updates
-    window.addEventListener('settings-changed', () => {
-        cachedSettings = getSettings();
-    });
-
     /**
      * Update live charts with new data
      */
@@ -312,146 +184,45 @@ export const initMetricsDisplay = ({
     };
 
     /**
-     * Update incline display from Treadmill data
+     * Update zone tracking and trigger voice announcements
      */
-    const updateInclineDisplay = (): void => {
-        const inclineDisplay = document.getElementById('value-incline');
-        const inclineContainer = document.querySelector('.metric-group-incline') as HTMLElement;
+    const updateZoneTracking = (): void => {
+        // Update power zones
+        if (measurementsState.power.length > 0) {
+            const latest = measurementsState.power[measurementsState.power.length - 1];
+            if (Date.now() - latest.timestamp < DATA_TIMEOUT_MS) {
+                const zoneInfo = zoneState.updatePower(latest.value, latest.timestamp);
+                const currentZone = zoneInfo?.zone ?? null;
 
-        // Show container if we have treadmill data or checks
-
-        let validIncline = false;
-        let displayValue = emptyValue;
-
-        if (measurementsState.treadmill.length > 0) {
-            const latest = measurementsState.treadmill[measurementsState.treadmill.length - 1];
-            if (Date.now() - latest.timestamp < DATA_TIMEOUT_MS && latest.incline != null) {
-                validIncline = true;
-                displayValue = latest.incline.toFixed(1) + '%';
+                if (currentZone !== lastPowerZone) {
+                    if (currentZone !== null && lastPowerZone !== null) {
+                        voiceFeedback.announceZoneChange(zoneInfo!.name);
+                    }
+                    lastPowerZone = currentZone;
+                }
             }
         }
 
-        if (inclineDisplay) {
-            inclineDisplay.textContent = displayValue;
-        }
+        // Update HR zones
+        if (measurementsState.heartrate.length > 0) {
+            const latest = measurementsState.heartrate[measurementsState.heartrate.length - 1];
+            if (Date.now() - latest.timestamp < DATA_TIMEOUT_MS) {
+                const zoneInfo = zoneState.updateHeartRate(latest.value, latest.timestamp);
+                const currentZone = zoneInfo?.zone ?? null;
 
-        if (inclineContainer) {
-            // Only show incline metric group if we have valid data at some point or connectionsState has treadmill
-            // For simplicity, let's toggle based on data
-            inclineContainer.style.display = validIncline ? '' : 'none';
+                if (currentZone !== lastHrZone) {
+                    if (currentZone !== null && lastHrZone !== null) {
+                        voiceFeedback.announceZoneChange(zoneInfo!.name);
+                    }
+                    lastHrZone = currentZone;
+                }
+            }
         }
     };
 
-    /**
-     * Update the display for a single metric type
-     */
-    const updateMetricDisplay = (key: MeasurementType): void => {
-        if (key === 'gps') return;
-
-        const element = elements[key]?.display;
-        const connectionState = connectionsState[key];
-
-        // console.log(`Debug ${key}:`, { element: !!element, connected: connectionState?.isConnected });
-
-        if (!element || !connectionState) {
-            return;
-        }
-
-        const container = element.closest('.metric-group') as HTMLElement;
-
-        // Skip if this metric is disabled in settings
-        // @ts-ignore - dynamic key access
-        const isEnabled = cachedSettings[key];
-
-        if (container) {
-            // Respect settings-based visibility
-            if (isEnabled === false) {
-                container.style.display = 'none';
-                return;
-            } else {
-                // Enabled in settings (or undefined), so ensure it is visible
-                if (container.style.display === 'none') {
-                    container.style.display = '';
-                }
-            }
-        }
-
-        // Show empty value if not connected
-        if (!connectionState.isConnected) {
-            element.textContent = emptyValue;
-            // Clear zone color when disconnected
-            if (key === 'power' || key === 'heartrate') {
-                applyZoneColorToMetric(element, null, key);
-            }
-            return;
-        }
-
-        const arr = measurementsState[key];
-
-        // Show empty value if no measurements
-        if (!Array.isArray(arr) || arr.length === 0) {
-            element.textContent = emptyValue;
-            return;
-        }
-
-        const latestMeasurement = arr[arr.length - 1];
-        // console.log(`Debug ${key} measurement:`, latestMeasurement);
-
-        // Validate measurement data
-        if (
-            !latestMeasurement ||
-            typeof latestMeasurement.value !== 'number' ||
-            typeof latestMeasurement.timestamp !== 'number'
-        ) {
-            element.textContent = emptyValue;
-            return;
-        }
-
-        // Check if data is stale
-        const timeDiff = Date.now() - latestMeasurement.timestamp;
-        if (timeDiff > DATA_TIMEOUT_MS) {
-            element.textContent = emptyValue;
-            return;
-        }
-
-        // Display the current value
-        element.textContent = String(latestMeasurement.value);
-
-        // Update zone tracking and apply zone colors
-        if (key === 'power') {
-            const zoneInfo = zoneState.updatePower(latestMeasurement.value, latestMeasurement.timestamp);
-            const currentZone = zoneInfo?.zone ?? null;
-
-            if (currentZone !== lastPowerZone) {
-                if (currentZone !== null && lastPowerZone !== null) {
-                    voiceFeedback.announceZoneChange(zoneInfo!.name);
-                }
-                lastPowerZone = currentZone;
-            }
-
-            applyZoneColorToMetric(element, currentZone, 'power');
-        } else if (key === 'heartrate') {
-            const zoneInfo = zoneState.updateHeartRate(latestMeasurement.value, latestMeasurement.timestamp);
-            const currentZone = zoneInfo?.zone ?? null;
-
-            if (currentZone !== lastHrZone) {
-                if (currentZone !== null && lastHrZone !== null) {
-                    voiceFeedback.announceZoneChange(zoneInfo!.name);
-                }
-                lastHrZone = currentZone;
-            }
-
-            applyZoneColorToMetric(element, currentZone, 'heartrate');
-        }
-    };
-
-    const metricTypes: MeasurementType[] = ['power', 'heartrate', 'cadence', 'speed', 'distance', 'altitude', 'treadmillSpeed'];
-
-    // Start the update loop
+    // Start the update loop for charts and zone tracking
     setInterval(() => {
-        metricTypes.forEach(updateMetricDisplay);
-        updateInclineDisplay();
-        updateZoneDisplays(powerGauge, hrGauge, zoneState);
+        updateZoneTracking();
         updateLiveCharts();
     }, UPDATE_INTERVAL_MS);
 
