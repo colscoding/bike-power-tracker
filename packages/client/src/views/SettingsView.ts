@@ -1,5 +1,6 @@
 import { View } from '../router/View.js';
 import { initSettingsLogic } from '../ui/settings.js';
+import { initDataFieldsConfig } from '../ui/dataFieldsConfig.js';
 
 export class SettingsView implements View {
     public id = 'settings';
@@ -16,6 +17,7 @@ export class SettingsView implements View {
             // We use setTimeout to ensure the DOM update is processed
             setTimeout(() => {
                 initSettingsLogic();
+                initDataFieldsConfig();
                 // this.isInitialized = true;
             }, 0);
         } else {

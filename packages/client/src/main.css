@@ -1,5 +1,6 @@
 /* Import Data Fields Styles */
 @import './styles/data-fields.css';
+@import './styles/data-fields-config.css';
 
 /* Reset */
 * {

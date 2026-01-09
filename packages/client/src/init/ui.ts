@@ -51,10 +51,12 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
 
     // Initialize Data Fields System
     const dataFieldsCarousel = document.getElementById('dataFieldsCarousel') as HTMLElement | null;
+    let dataFieldsManager: ReturnType<typeof createDataFieldsManager> | null = null;
+
     if (dataFieldsCarousel) {
         try {
             const activeProfile = loadActiveProfile();
-            const dataFieldsManager = createDataFieldsManager({
+            dataFieldsManager = createDataFieldsManager({
                 measurementsState,
                 connectionsState,
                 timeState,
@@ -63,6 +65,15 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
             dataFieldsManager.attachToCarousel(dataFieldsCarousel as any);
             dataFieldsManager.start();
             console.log('[DataFields] Manager initialized with profile:', activeProfile.name);
+
+            // Listen for profile changes from settings
+            document.addEventListener('data-fields-profile-changed', (e: Event) => {
+                const customEvent = e as CustomEvent<{ profile: any }>;
+                if (dataFieldsManager && customEvent.detail?.profile) {
+                    dataFieldsManager.setProfile(customEvent.detail.profile);
+                    console.log('[DataFields] Profile updated from settings');
+                }
+            });
         } catch (error) {
             console.error('[DataFields] Failed to initialize:', error);
         }

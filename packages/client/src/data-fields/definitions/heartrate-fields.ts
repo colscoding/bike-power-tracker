@@ -35,7 +35,7 @@ const hrZoneColorizer = (value: number | null, settings: UserSettings): ZoneColo
 
 /** Heart Rate - Current (real-time from sensor) */
 export const hrCurrent: DataFieldDefinition = {
-    id: 'hr-current',
+    id: 'heartrate-current',
     name: 'Heart Rate',
     shortName: 'HR',
     category: 'heartrate',
