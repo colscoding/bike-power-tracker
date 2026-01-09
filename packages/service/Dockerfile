@@ -42,7 +42,8 @@ FROM node:18-alpine AS production
 
 # Install dumb-init to handle signals properly (critical for graceful shutdown)
 # Also install tini as a fallback init system
-RUN apk add --no-cache dumb-init tini
+# Install OpenSSL for Prisma
+RUN apk add --no-cache dumb-init tini openssl
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \

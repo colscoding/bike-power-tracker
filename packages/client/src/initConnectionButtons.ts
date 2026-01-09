@@ -220,8 +220,7 @@ export const initConnectionButtons = ({
         if (!connectElem) return;
 
         const handler = (e: Event) => {
-            // Prevent default behavior (especially for touch) and propagation
-            e.preventDefault();
+            // Prevent propagation
             e.stopPropagation();
 
             const isConnected = connectionsState[key]?.isConnected;
@@ -232,10 +231,8 @@ export const initConnectionButtons = ({
             }
         };
 
-        // Add both click and touchend to ensure it works on all devices/webviews
-        // Using preventDefault in handler ensures we don't double-fire
+        // Add click listener
         connectElem.addEventListener('click', handler);
-        connectElem.addEventListener('touchend', handler);
     };
 
     // Initialize all supported buttons

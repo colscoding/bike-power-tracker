@@ -7,6 +7,8 @@
  * @module config
  */
 
+import 'dotenv/config';
+
 /** Server port from environment or default */
 export const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 

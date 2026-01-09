@@ -19,7 +19,7 @@ services:
       - network
     restart: unless-stopped
 
-  # PostgreSQL service (optional - comment out if using SQLite)
+  # PostgreSQL service
   postgres:
     image: postgres:16-alpine
     container_name: postgres
@@ -40,8 +40,6 @@ services:
     networks:
       - network
     restart: unless-stopped
-    profiles:
-      - postgres
 
   # Node.js application
   app:
@@ -57,13 +55,15 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD:-}
-      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-}
-      - DATABASE_URL=${DATABASE_URL:-}
+      - DATABASE_PROVIDER=${DATABASE_PROVIDER:-postgresql}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-biketracker}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-biketracker}?schema=public
       - API_KEY=${API_KEY:-}
       - AUTH_ENABLED=${AUTH_ENABLED:-false}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - network
@@ -96,6 +96,8 @@ services:
       - /app/node_modules
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
     networks:
       - network

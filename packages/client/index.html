@@ -56,6 +56,39 @@
 </head>
 
 <body>
+    <!-- DEBUG OVERLAY - Static HTML to test if page loads -->
+    <div id="staticDebugOverlay"
+        style="position: fixed; top: 0; left: 0; right: 0; background: #00ff00; color: black; padding: 8px; font-size: 14px; z-index: 99999; font-weight: bold;">
+        HTML LOADED - JS NOT YET RUN
+    </div>
+
+    <script>
+        // Inline script to verify JS execution
+        try {
+            document.getElementById('staticDebugOverlay').textContent = 'HTML + INLINE JS WORKING';
+            document.getElementById('staticDebugOverlay').style.background = '#ffff00';
+            // Capture console errors for debugging
+            window.addEventListener('error', function (e) {
+                var overlay = document.getElementById('staticDebugOverlay');
+                if (overlay) {
+                    overlay.textContent = 'ERROR: ' + e.message + ' @ ' + e.filename;
+                    overlay.style.background = '#ff0000';
+                }
+            });
+
+            // Capture module load errors
+            window.addEventListener('unhandledrejection', function (e) {
+                var overlay = document.getElementById('staticDebugOverlay');
+                if (overlay) {
+                    overlay.textContent = 'PROMISE REJECT: ' + e.reason;
+                    overlay.style.background = '#ff0000';
+                }
+            });
+        } catch (e) {
+            // Cannot update if there's an error
+        }
+    </script>
+
     <!-- Skip Navigation Link for Keyboard Users -->
     <a href="#mainContent" class="skip-link">Skip to main content</a>
 
@@ -197,6 +230,7 @@
                             <h1 id="time" aria-live="off" aria-label="Elapsed time"></h1>
                             <div id="workoutControls" class="workout-controls" role="group"
                                 aria-label="Workout controls">
+
                                 <button id="startButton" class="workout-btn workout-btn-start"
                                     aria-label="Start workout">▶️</button>
                                 <button id="pauseButton" class="workout-btn workout-btn-pause"
@@ -214,6 +248,7 @@
                         </div>
                     </div>
                     <dl id="metricsTable" aria-label="Live workout metrics">
+                        <button id="debug">Debug</button>
                         <div class="metric-group metric-group-power">
                             <dt id="powerLabel">Power</dt>
                             <dd id="power" aria-labelledby="powerLabel" aria-live="polite"></dd>

@@ -1,11 +1,17 @@
 import { getSettings } from '../ui/settings.js';
 
 export class VoiceFeedback {
-    private synth: SpeechSynthesis;
+    private synth: SpeechSynthesis | null;
     private voice: SpeechSynthesisVoice | null = null;
 
     constructor() {
-        this.synth = window.speechSynthesis;
+        this.synth = window.speechSynthesis || null;
+
+        if (!this.synth) {
+            console.warn('Speech Synthesis not supported on this device');
+            return;
+        }
+
         // Wait for voices to be loaded
         if (this.synth.onvoiceschanged !== undefined) {
             this.synth.onvoiceschanged = () => this.loadVoice();
@@ -14,6 +20,8 @@ export class VoiceFeedback {
     }
 
     private loadVoice() {
+        if (!this.synth) return;
+
         const voices = this.synth.getVoices();
         // Prefer English voices
         this.voice = voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
@@ -34,6 +42,8 @@ export class VoiceFeedback {
     }
 
     public speak(text: string) {
+        if (!this.synth) return;
+
         const settings = getSettings();
         if (!settings.voiceEnabled) return;
 
@@ -49,6 +59,8 @@ export class VoiceFeedback {
     }
 
     public announceLap(lapNumber: number, timeMs: number, avgPower: number) {
+        if (!this.synth) return;
+
         const settings = getSettings();
         if (!settings.voiceLaps) return;
 
@@ -58,6 +70,8 @@ export class VoiceFeedback {
     }
 
     public announceZoneChange(zoneName: string) {
+        if (!this.synth) return;
+
         const settings = getSettings();
         if (!settings.voiceZones) return;
 

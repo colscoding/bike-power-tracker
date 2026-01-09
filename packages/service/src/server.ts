@@ -101,7 +101,11 @@ function createApp(): AppWithCleanup {
 
     // Create and connect Redis client
     const redisClient = createRedisClient();
-    redisClient.connect();
+    // Note: connect() is called but not awaited here to avoid blocking app creation
+    // The connection will be established asynchronously
+    redisClient.connect().catch((err) => {
+        logger.error({ err }, 'Failed to connect to Redis');
+    });
 
     // Log CORS warnings
     logCorsWarnings();
@@ -137,29 +141,41 @@ function createApp(): AppWithCleanup {
 // Start server only if run directly (ESM main module check)
 const isMainModule = import.meta.url === `file://${process.argv[1]}`;
 if (isMainModule) {
-    const app = createApp();
-    const server = app.listen(PORT, () => {
-        logger.info(`Server running on http://localhost:${PORT}`);
-        logger.info(
-            `Database: ${isDatabaseEnabled() ? 'enabled' : 'disabled (Redis-only mode)'}`
-        );
+    (async () => {
+        const app = createApp();
 
-        // Run cleanup every hour
-        setInterval(() => {
-            logger.info('Running scheduled stream cleanup...');
-            app
-                .cleanupStreams?.()
-                .then((count) => {
-                    if (count > 0) logger.info(`Scheduled cleanup removed ${count} streams`);
-                })
-                .catch((err) => logger.error({ err }, 'Scheduled cleanup failed'));
-        }, CLEANUP.INTERVAL_MS);
-    });
+        // Wait for Redis connection before starting server
+        if (app.redisClient && !app.redisClient.isReady) {
+            await new Promise((resolve) => {
+                app.redisClient!.on('ready', resolve);
+                // Timeout after 5 seconds
+                setTimeout(resolve, 5000);
+            });
+        }
 
-    // Initialize graceful shutdown handlers
-    if (app.redisClient) {
-        initializeShutdownHandlers(server, app.redisClient);
-    }
+        const server = app.listen(PORT, () => {
+            logger.info(`Server running on http://localhost:${PORT}`);
+            logger.info(
+                `Database: ${isDatabaseEnabled() ? 'enabled' : 'disabled (Redis-only mode)'}`
+            );
+
+            // Run cleanup every hour
+            setInterval(() => {
+                logger.info('Running scheduled stream cleanup...');
+                app
+                    .cleanupStreams?.()
+                    .then((count) => {
+                        if (count > 0) logger.info(`Scheduled cleanup removed ${count} streams`);
+                    })
+                    .catch((err) => logger.error({ err }, 'Scheduled cleanup failed'));
+            }, CLEANUP.INTERVAL_MS);
+        });
+
+        // Initialize graceful shutdown handlers
+        if (app.redisClient) {
+            initializeShutdownHandlers(server, app.redisClient);
+        }
+    })();
 }
 
 export { getShutdownManager };

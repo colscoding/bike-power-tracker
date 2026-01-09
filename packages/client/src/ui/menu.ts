@@ -88,12 +88,10 @@ export const initDiscardButton = ({
 
     const addListener = (btn: HTMLElement, callback: () => void) => {
         const handler = (e: Event) => {
-            e.preventDefault();
             e.stopPropagation();
             callback();
         };
         btn.addEventListener('click', handler);
-        btn.addEventListener('touchend', handler);
     };
 
     addListener(discardButton, async () => {
@@ -270,12 +268,10 @@ export const initExportButton = (measurementsState: MeasurementsState, zoneState
 
     const addListener = (btn: HTMLElement, callback: () => void) => {
         const handler = (e: Event) => {
-            e.preventDefault();
             e.stopPropagation();
             callback();
         };
         btn.addEventListener('click', handler);
-        btn.addEventListener('touchend', handler);
     };
 
     addListener(exportDataElem, () => {

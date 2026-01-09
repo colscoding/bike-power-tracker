@@ -138,12 +138,10 @@ export const initTimerDisplay = (timeState: TimeState): void => {
     // Helper to add robust touch/click listeners
     const addListener = (btn: HTMLButtonElement, callback: () => void) => {
         const handler = (e: Event) => {
-            e.preventDefault();
             e.stopPropagation();
             callback();
         };
         btn.addEventListener('click', handler);
-        btn.addEventListener('touchend', handler);
     };
 
     // Handle Start button click - begin new workout
