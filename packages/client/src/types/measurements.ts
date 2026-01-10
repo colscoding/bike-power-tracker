@@ -37,6 +37,17 @@ export interface TreadmillMeasurement {
 }
 
 /**
+ * Rower data point (FTMS)
+ */
+export interface RowerMeasurement {
+    timestamp: number;
+    /** Stroke rate in strokes/minute */
+    strokeRate: number | null;
+    /** Power in Watts */
+    power: number | null;
+}
+
+/**
  * A lap marker in the workout
  */
 export interface LapMarker {

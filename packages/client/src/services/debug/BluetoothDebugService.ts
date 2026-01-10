@@ -8,10 +8,14 @@
 import { saveDebugLog, getDebugLogs, clearDebugLogs } from '../../storage/workoutStorage.js';
 import { getSettings } from '../../config/settings.js';
 
+type DebugListener = (sensor: string, hex: string) => void;
+
 /**
  * Service for logging raw Bluetooth data
  */
 export const BluetoothDebugService = {
+    listeners: new Set<DebugListener>(),
+
     /**
      * Check if debug mode is enabled
      */
@@ -29,14 +33,33 @@ export const BluetoothDebugService = {
      * @param data - The raw DataView from the Bluetooth characteristic
      */
     async log(sensor: string, data: DataView): Promise<void> {
+        // Always notify listeners, even if storage logging is disabled?
+        // Let's assume yes for the debug page to work without persisting.
+        const hex = this.bufferToHex(data.buffer);
+
+        this.listeners.forEach(listener => listener(sensor, hex));
+
         if (!this.isEnabled()) return;
 
         try {
-            const hex = this.bufferToHex(data.buffer);
             await saveDebugLog(sensor, hex);
         } catch (e) {
             console.warn('Failed to log debug data', e);
         }
+    },
+
+    /**
+     * Add a listener for real-time debug data
+     */
+    addListener(listener: DebugListener): void {
+        this.listeners.add(listener);
+    },
+
+    /**
+     * Remove a listener
+     */
+    removeListener(listener: DebugListener): void {
+        this.listeners.delete(listener);
     },
 
     /**

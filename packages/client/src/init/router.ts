@@ -4,6 +4,7 @@ import { HistoryView } from '../views/HistoryView.js';
 import { WorkoutsView } from '../views/WorkoutsView.js';
 import { SettingsView } from '../views/SettingsView.js';
 import { PlansView } from '../views/PlansView.js';
+import { DebugView } from '../views/DebugView.js';
 import { NavBar } from '../components/NavBar.js';
 import { ViewId } from '../router/view-ids.js';
 import { selectElement } from '../utils/dom.js';
@@ -19,18 +20,21 @@ export function setupRouter(): Router {
     const workoutsView = new WorkoutsView();
     const settingsView = new SettingsView();
     const plansView = new PlansView();
+    const debugView = new DebugView();
 
     router.registerView(dashboardView);
     router.registerView(historyView);
     router.registerView(workoutsView);
     router.registerView(settingsView);
     router.registerView(plansView);
+    router.registerView(debugView);
 
     router.addRoute('/', ViewId.Dashboard);
     router.addRoute('/history', ViewId.History);
     router.addRoute('/workouts', ViewId.Workouts);
     router.addRoute('/plans', ViewId.Plans);
     router.addRoute('/settings', ViewId.Settings);
+    router.addRoute('/debug', ViewId.Debug);
 
     // Initialize Navigation Bar
     new NavBar(router);

@@ -4,7 +4,7 @@
  * @module bluetooth-types
  */
 
-import type { Measurement, TreadmillMeasurement } from './measurements.js';
+import type { Measurement, TreadmillMeasurement, RowerMeasurement } from './measurements.js';
 
 /**
  * Callback for receiving sensor measurements
@@ -15,6 +15,11 @@ export type MeasurementListener = (entry: Measurement) => void;
  * Callback for receiving treadmill measurements
  */
 export type TreadmillListener = (entry: TreadmillMeasurement) => void;
+
+/**
+ * Callback for receiving rower measurements
+ */
+export type RowerListener = (entry: RowerMeasurement) => void;
 
 /**
  * Callback for connection status changes
@@ -48,6 +53,20 @@ export interface TreadmillConnection {
     disconnect: () => void;
     /** Register a callback for receiving measurements */
     addListener: (callback: TreadmillListener) => void;
+    /** Device name (if available) */
+    deviceName?: string;
+    /** Register a callback for connection status changes */
+    onStatusChange?: (callback: ConnectionStatusListener) => void;
+}
+
+/**
+ * Result of a successful rower connection
+ */
+export interface RowerConnection {
+    /** Disconnect from the sensor */
+    disconnect: () => void;
+    /** Register a callback for receiving measurements */
+    addListener: (callback: RowerListener) => void;
     /** Device name (if available) */
     deviceName?: string;
     /** Register a callback for connection status changes */

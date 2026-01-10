@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
-import type { SensorConnection, TreadmillConnection } from '../../types/bluetooth.js';
+import type { SensorConnection, TreadmillConnection, RowerConnection } from '../../types/bluetooth.js';
 import { connectPowerNative, connectHeartRateNative, connectCadenceNative, connectTreadmillNative } from './native-bluetooth.js';
-import { connectPowerWeb, connectHeartRateWeb, connectCadenceWeb, connectTreadmillWeb } from './web-bluetooth.js';
+import { connectPowerWeb, connectHeartRateWeb, connectCadenceWeb, connectTreadmillWeb, connectRowingWeb } from './web-bluetooth.js';
 
 /**
  * Bluetooth Factory
@@ -77,6 +77,18 @@ export const BluetoothFactory = {
             return connectTreadmillNative();
         } else {
             return connectTreadmillWeb();
+        }
+    },
+
+    /**
+     * Connect to a Rowing Machine
+     * @returns Promise resolving to a RowerConnection
+     */
+    connectRowing: async (): Promise<RowerConnection> => {
+        if (Capacitor.isNativePlatform()) {
+            throw new Error('Native rowing connection not implemented');
+        } else {
+            return connectRowingWeb();
         }
     }
 };

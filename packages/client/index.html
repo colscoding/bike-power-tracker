@@ -1057,6 +1057,27 @@
         </div>
     </div>
 
+    <template id="debugTemplate">
+        <div class="page-header"
+            style="padding: 16px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="debugTitle">🐛 Debug & Connections</h2>
+        </div>
+        <div class="page-content"
+            style="padding: 16px; display: flex; flex-direction: column; gap: 16px; height: 100%;">
+            <div class="connection-controls" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="connectTreadmillDebug" class="action-btn">🏃 Connect Treadmill</button>
+                <button id="connectRowerDebug" class="action-btn">🚣 Connect Rower</button>
+                <button id="downloadLogs" class="secondary-btn">💾 Download Raw Output</button>
+            </div>
+
+            <div class="log-container" style="flex: 1; display: flex; flex-direction: column;">
+                <h3 style="margin-bottom: 8px;">Raw Bluetooth Output</h3>
+                <textarea id="debugLog" readonly
+                    style="flex: 1; min-height: 300px; width: 100%; background: #000; color: #0f0; font-family: monospace; padding: 12px; border-radius: 4px; box-sizing: border-box; resize: none;"></textarea>
+            </div>
+        </div>
+    </template>
+
     <!-- Workout Selection Container - Moved to #page-workouts dynamically -->
     <template id="workoutSelectionTemplate">
         <div class="page-header"

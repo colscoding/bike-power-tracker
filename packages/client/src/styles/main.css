@@ -25,12 +25,14 @@
 @import './data-fields.css';
 
 /* 4. Layout Components */
+@import './components/app-shell.css';
 @import './components/navigation.css';
 @import './components/header.css';
 @import './components/footer.css';
 @import './components/charts.css';
 @import './components/connection-status.css';
 @import './components/metrics.css';
+@import './components/stream-list.css';
 @import './components/toast.css';
 
 /* 5. View-specific Styles */

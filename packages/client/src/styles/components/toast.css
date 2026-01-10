@@ -137,3 +137,24 @@
         padding: 10px 16px;
     }
 }
+/* Toast Container for Stacking */
+.toast-container {
+    position: fixed;
+    /* Position depends on desired location, top-center or top-right? */
+    /* Previous Toast styles were top: 80px left: 50% */
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10001;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: auto;
+    max-width: 90vw;
+    pointer-events: none; /* Let clicks pass through container */
+}
+
+/* Ensure toast components in container intercept clicks */
+.toast-container bpt-toast {
+    pointer-events: auto;
+}

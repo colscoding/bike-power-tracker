@@ -1,5 +1,13 @@
 # State Management Improvements Plan
 
+## Status Checklist
+
+- [x] **Phase 1: Extract Configuration to Settings**
+- [ ] **Phase 2: Decouple State Modules**
+- [ ] **Phase 3: Create Calculation Manager**
+- [ ] **Phase 4: Remove Global State Access**
+- [ ] **Phase 5: Improve State Reactivity**
+
 ## Overview
 
 This plan addresses state management issues including hardcoded values, tight coupling between state modules, and improving the reactivity and testability of state.

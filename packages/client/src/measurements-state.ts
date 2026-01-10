@@ -16,7 +16,9 @@ import {
 } from './storage/workoutStorage.js';
 import { calculateDistance } from './utils/geo.js';
 import { VALIDATION_LIMITS } from './config/constants.js';
-import { getSettings } from './config/settings.js';
+// import { getSettings } from './config/settings.js'; // Keep for legacy until fully migrated? 
+// Actually, I should check if I can remove it. But let's import settingsStore first.
+import { settingsStore, type UserSettings } from './state/SettingsStore.js';
 import { calculateCaloriesFromPower, calculateCaloriesFromHeartRate } from './calculations/calories.js';
 
 /**
@@ -57,20 +59,16 @@ export class MeasurementsState implements MeasurementsData {
     private _lastEnergyTime: number = 0;
     private _lastPowerTime: number = 0;
     private _totalEnergy: number = 0; // accumulated kcal
-    private _userWeight: number = 75;
 
     constructor(enablePersistence: boolean = true) {
         this._persistenceEnabled = enablePersistence && isIndexedDBSupported();
 
-        // Load initial weight
-        this._userWeight = getSettings().weightKg;
+        // Subscribe to settings changes
+        settingsStore.onChange((settings) => {
+            this.onSettingsChange(settings);
+        });
 
-        // Listen for settings changes
         if (typeof window !== 'undefined') {
-            window.addEventListener('settings-changed', () => {
-                this._userWeight = getSettings().weightKg;
-            });
-
             // Set up page unload handler to save any pending changes
             window.addEventListener('beforeunload', () => {
                 flushPendingSave();
@@ -116,12 +114,57 @@ export class MeasurementsState implements MeasurementsData {
         }
     }
 
+    private get userWeight(): number {
+        return settingsStore.get('weight');
+    }
+
+    private get gapThreshold(): number {
+        return settingsStore.get('gapThreshold') * 1000; // Convert to ms
+    }
+
+    private onSettingsChange(_settings: UserSettings): void {
+        // Recalculate or handle changes if needed
+        // For now, getters handle the dynamic values
+    }
+
     /**
      * Update energy calculation
      */
     private _updateEnergy(timestamp: number, value: number, source: 'power' | 'heartrate'): void {
-        // Initialize or reset if gap is too large (>20s)
-        if (this._lastEnergyTime === 0 || (timestamp - this._lastEnergyTime) > 20000) {
+        const method = settingsStore.get('energyMethod');
+
+        // Only use configured method
+        if (method === 'power' && source !== 'power') return;
+        if (method === 'heartrate' && source !== 'heartrate') return;
+
+        // If combined, we prefer power, but fall back to HR? 
+        // Or "combined" usually means use power if available, else HR? 
+        // For simplicity and to avoid double counting, let's assume 'combined' means smart switching or both contribute to separate buckets?
+        // The original code handled both. 
+        // If source is 'heartrate', but we assume power also exists, we shouldn't double add.
+        // Let's implement a simple priority: Power > Heartrate if combined.
+        // But since this method is called per measurement, we need to know context.
+        // If we recently received power, ignore heartrate energy updates?
+
+        // For now, let's stick to the simpler logic of allowing both if 'combined' is set 
+        // BUT preventing double counting is hard without knowing implicit state.
+        // Let's assume the user selects one main method or 'combined' means we simply log both if they come in?
+        // Actually, if we use both, we double count calories.
+        // Let's modify logic: If 'combined', use Power. If Power not available (gap), use HR.
+
+        if (method === 'combined') {
+            if (source === 'heartrate') {
+                // If we have recent power data (within gap threshold), ignore HR energy
+                if (timestamp - this._lastPowerTime < this.gapThreshold) {
+                    return;
+                }
+            } else if (source === 'power') {
+                this._lastPowerTime = timestamp;
+            }
+        }
+
+        // Initialize or reset if gap is too large
+        if (this._lastEnergyTime === 0 || (timestamp - this._lastEnergyTime) > this.gapThreshold) {
             this._lastEnergyTime = timestamp;
             return;
         }
@@ -133,7 +176,7 @@ export class MeasurementsState implements MeasurementsData {
         if (source === 'power') {
             kcal = calculateCaloriesFromPower(value, dt);
         } else {
-            kcal = calculateCaloriesFromHeartRate(value, this._userWeight, dt);
+            kcal = calculateCaloriesFromHeartRate(value, this.userWeight, dt);
         }
 
         if (kcal > 0) {

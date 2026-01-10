@@ -1,5 +1,5 @@
-import type { SensorConnection, TreadmillConnection, MeasurementListener, TreadmillListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
-import type { Measurement, TreadmillMeasurement } from '../../types/measurements.js';
+import type { SensorConnection, TreadmillConnection, RowerConnection, MeasurementListener, TreadmillListener, RowerListener, ConnectionStatusListener, ConnectionStatus } from '../../types/bluetooth.js';
+import type { Measurement, TreadmillMeasurement, RowerMeasurement } from '../../types/measurements.js';
 import { parseTreadmillData } from './ftms.js';
 import { BluetoothDebugService } from '../debug/BluetoothDebugService.js';
 
@@ -534,6 +534,123 @@ export const connectTreadmillWeb = async (): Promise<TreadmillConnection> => {
             notifyStatus('disconnected');
         },
         addListener: (callback: TreadmillListener) => {
+            listeners.push(callback);
+        },
+        deviceName,
+        onStatusChange: (callback: ConnectionStatusListener) => {
+            statusListeners.push(callback);
+        }
+    };
+};
+
+export const connectRowingWeb = async (): Promise<RowerConnection> => {
+    const listeners: RowerListener[] = [];
+    const statusListeners: ConnectionStatusListener[] = [];
+    let isManualDisconnect = false;
+    let reconnectAttempts = 0;
+    let characteristic: BluetoothRemoteGATTCharacteristic | null = null;
+    let server: BluetoothRemoteGATTServer | undefined;
+
+    // Request Bluetooth device with Fitness Machine Service
+    const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ['fitness_machine'] }],
+        optionalServices: ['fitness_machine'],
+    });
+
+    const deviceName = device.name || 'Unknown Rower';
+
+    const notifyStatus = (status: ConnectionStatus) => {
+        statusListeners.forEach(listener => listener(status));
+    };
+
+    const handleCharacteristicChange = (event: Event) => {
+        const target = event.target as BluetoothRemoteGATTCharacteristic;
+        const value = target.value;
+        if (!value) return;
+
+        BluetoothDebugService.log('rower', value);
+
+        // Parsing logic would go here. For now just debug log is the priority.
+        const entry: RowerMeasurement = {
+            timestamp: Date.now(),
+            strokeRate: null,
+            power: null
+        };
+        listeners.forEach(listener => listener(entry));
+    };
+
+    const connect = async (): Promise<void> => {
+        if (!device.gatt) return;
+
+        server = await device.gatt.connect();
+        const service = await server.getPrimaryService('fitness_machine');
+        // 0x2AD1 is Rower Data
+        characteristic = await service.getCharacteristic('rower_data');
+
+        await characteristic.startNotifications();
+        characteristic.addEventListener('characteristicvaluechanged', handleCharacteristicChange);
+
+        reconnectAttempts = 0;
+        notifyStatus('connected');
+    };
+
+    const attemptReconnect = async (): Promise<void> => {
+        if (isManualDisconnect || reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                console.error('Rower: Max reconnection attempts reached');
+                notifyStatus('failed');
+            }
+            return;
+        }
+
+        reconnectAttempts++;
+        const delay = RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts - 1);
+        console.log(`Rower: Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms`);
+        notifyStatus('reconnecting');
+
+        await new Promise(resolve => setTimeout(resolve, delay));
+
+        try {
+            await connect();
+            console.log('Rower: Reconnected successfully');
+        } catch (error) {
+            console.error('Rower: Reconnection failed:', error);
+            attemptReconnect();
+        }
+    };
+
+    device.addEventListener('gattserverdisconnected', () => {
+        if (!isManualDisconnect) {
+            console.log('Rower: Connection lost, attempting to reconnect...');
+            notifyStatus('disconnected');
+            attemptReconnect();
+        }
+    });
+
+    try {
+        await connect();
+    } catch (error) {
+        if (server && server.connected) {
+            server.disconnect();
+        }
+        throw error;
+    }
+
+    return {
+        disconnect: () => {
+            isManualDisconnect = true;
+            if (characteristic) {
+                try {
+                    characteristic.stopNotifications();
+                    characteristic.removeEventListener('characteristicvaluechanged', handleCharacteristicChange);
+                } catch (e) { /* ignore */ }
+            }
+            if (device.gatt?.connected) {
+                device.gatt.disconnect();
+            }
+            notifyStatus('disconnected');
+        },
+        addListener: (callback: RowerListener) => {
             listeners.push(callback);
         },
         deviceName,

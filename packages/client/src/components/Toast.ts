@@ -70,15 +70,35 @@ export class Toast extends BaseComponent {
                 transition: transform 0.3s ease, opacity 0.3s ease;
                 pointer-events: none;
             }
+
+            :host(.stacked) {
+                position: relative;
+                top: auto;
+                left: auto;
+                transform: translateX(100%); /* Start from right */
+                margin-bottom: 10px;
+                pointer-events: auto; /* Container handles layout */
+                opacity: 0;
+            }
             
             :host(.visible) {
                 transform: translateX(-50%) translateY(0);
                 opacity: 1;
                 pointer-events: auto;
             }
+
+            :host(.stacked.visible) {
+                transform: translateX(0);
+                opacity: 1;
+            }
             
             :host(.hiding) {
                 transform: translateX(-50%) translateY(-20px);
+                opacity: 0;
+            }
+
+            :host(.stacked.hiding) {
+                transform: translateX(100%);
                 opacity: 0;
             }
             
