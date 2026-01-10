@@ -30,7 +30,7 @@ export class IntervalsService {
                 return;
             }
 
-            const blob = new Blob([fitData as any], { type: 'application/fit' });
+            const blob = new Blob([fitData], { type: 'application/fit' });
             const formData = new FormData();
             // Append the file. 'file' is the key expected by standard multipart uploads, 
             // though Intervals.icu endpoint documentation should be checked. 

@@ -5,9 +5,31 @@
  * @module workoutClient
  */
 
+import type { ApiError } from './types.js';
+
 // Use relative path for proxy in development, or custom URL in production
 const API_BASE_URL: string = import.meta.env.VITE_API_URL || '';
 const API_KEY: string | undefined = import.meta.env.VITE_API_KEY;
+
+/**
+ * Helper to parse API errors
+ */
+async function parseError(response: Response): Promise<ApiError> {
+    try {
+        const body = await response.json();
+        return {
+            status: response.status,
+            message: body.error || body.message || 'Unknown error',
+            code: body.code,
+            details: body.details,
+        };
+    } catch {
+        return {
+            status: response.status,
+            message: response.statusText || 'Unknown error',
+        };
+    }
+}
 
 /**
  * Workout data from API
@@ -162,11 +184,11 @@ export async function createWorkout({
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create workout');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<CreateWorkoutResponse>;
 }
 
 /**
@@ -198,11 +220,11 @@ export async function listWorkouts({
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to list workouts');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<ListWorkoutsResponse>;
 }
 
 /**
@@ -224,11 +246,11 @@ export async function getWorkout(
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to get workout');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<Workout>;
 }
 
 /**
@@ -251,11 +273,11 @@ export async function updateWorkout(
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update workout');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<CreateWorkoutResponse>;
 }
 
 /**
@@ -278,11 +300,11 @@ export async function completeWorkout(
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to complete workout');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<CompleteWorkoutResponse>;
 }
 
 /**
@@ -298,11 +320,11 @@ export async function deleteWorkout(workoutId: string): Promise<DeleteWorkoutRes
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete workout');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<DeleteWorkoutResponse>;
 }
 
 /**
@@ -325,11 +347,11 @@ export async function getWorkoutByStream(streamName: string): Promise<Workout | 
         }
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to get workout');
+            const errorData = await parseError(response);
+            throw new Error(errorData.message);
         }
 
-        return response.json();
+        return response.json() as Promise<Workout>;
     } catch (error) {
         if (error instanceof Error && error.message.includes('not found')) {
             return null;
@@ -350,11 +372,11 @@ export async function getUserStats(userId: string): Promise<UserStats> {
     });
 
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to get user stats');
+        const errorData = await parseError(response);
+        throw new Error(errorData.message);
     }
 
-    return response.json();
+    return response.json() as Promise<UserStats>;
 }
 
 /**

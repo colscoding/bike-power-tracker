@@ -159,8 +159,8 @@ function renderSummaryTable(parent: HTMLElement, workouts: Workout[]): void {
             stat.elevation += (summary.totalElevationGain || 0);
 
             // Energy
-            if ((summary as any).totalEnergy) {
-                stat.energy += (summary as any).totalEnergy;
+            if (summary.totalEnergy) {
+                stat.energy += summary.totalEnergy;
             } else if (summary.avgPower && w.duration) {
                 stat.energy += (summary.avgPower * w.duration) / 1000;
             }
@@ -273,7 +273,7 @@ function renderTrendsChart(parent: HTMLElement): void {
         // Add event listener
         const select = card.querySelector('#trendMetricSelect') as HTMLSelectElement;
         select?.addEventListener('change', (e) => {
-            trendMetric = (e.target as HTMLSelectElement).value as any;
+            trendMetric = (e.target as HTMLSelectElement).value as typeof trendMetric;
             updateChart();
         });
     }
@@ -319,8 +319,8 @@ function updateChart(): void {
                     weeks[weekKey] += (w.duration || 0); // seconds
                     break;
                 case 'energy':
-                    if ((summary as any).totalEnergy) {
-                        weeks[weekKey] += (summary as any).totalEnergy;
+                    if (summary.totalEnergy) {
+                        weeks[weekKey] += summary.totalEnergy;
                     } else if (summary.avgPower && w.duration) {
                         weeks[weekKey] += (summary.avgPower * w.duration) / 1000;
                     }

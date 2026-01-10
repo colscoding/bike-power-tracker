@@ -315,7 +315,7 @@ export async function getWorkoutHistory(): Promise<StoredWorkout[]> {
 }
 
 // Throttled save mechanism
-let saveTimeout: any = null;
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 let pendingSave: { measurements: MeasurementsData; startTime: number | null } | null = null;
 
 // Allow a 3rd optional parameter for delay to satisfy legacy tests, even if ignored or treated differently

@@ -25,7 +25,7 @@ function loadUserProfile(): UserProfile {
     try {
         const stored = localStorage.getItem(PROFILE_KEY);
         if (stored) {
-            return JSON.parse(stored);
+            return JSON.parse(stored) as UserProfile;
         }
     } catch (e) {
         console.warn('Failed to load user profile:', e);

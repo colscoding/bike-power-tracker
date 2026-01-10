@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 
 // Mock localStorage for loadUserProfile imports
 if (typeof localStorage === 'undefined') {
-    (global as any).localStorage = {
+    const mockStorage = {
         getItem: () => null,
         setItem: () => { },
         removeItem: () => { },
@@ -11,6 +11,9 @@ if (typeof localStorage === 'undefined') {
         length: 0,
         key: () => null
     };
+    Object.defineProperty(global, 'localStorage', {
+        value: mockStorage
+    });
 }
 
 import { WorkoutRunner } from './WorkoutRunner.js';

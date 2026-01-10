@@ -21,7 +21,7 @@ class AudioController {
 
     private ensureContext() {
         if (!this.audioCtx) {
-            const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+            const Ctx = window.AudioContext || window.webkitAudioContext;
             if (Ctx) {
                 this.audioCtx = new Ctx();
                 this.gainNode = this.audioCtx.createGain();

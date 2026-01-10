@@ -124,4 +124,6 @@ export interface WorkoutSummary {
     powerCurve?: { duration: number; watts: number }[];
     trainingLoad?: number;
     intensityFactor?: number;
+    /** Total energy expenditure in kCal/kJ */
+    totalEnergy?: number;
 }

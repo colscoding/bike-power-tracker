@@ -26,6 +26,8 @@ import type { ZoneState } from '../zone-state.js';
 import type { StreamManager } from '../stream-manager.js';
 import { createDataFieldsManager } from '../data-fields/DataFieldsManager.js';
 import { loadActiveProfile, saveActiveScreenIndex } from '../data-fields/persistence.js';
+import type { ActivityProfile } from '../data-fields/types.js';
+import type { ScreenCarouselComponent } from '../components/data-fields/ScreenCarouselComponent.js';
 
 /**
  * Parameters for UI initialization
@@ -72,13 +74,13 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
                 timeState,
                 initialProfile: activeProfile,
             });
-            dataFieldsManager.attachToCarousel(dataFieldsCarousel as any);
+            dataFieldsManager.attachToCarousel(dataFieldsCarousel as ScreenCarouselComponent);
             dataFieldsManager.start();
             console.log('[DataFields] Manager initialized with profile:', activeProfile.name);
 
             // Listen for profile changes from settings
             document.addEventListener('data-fields-profile-changed', (e: Event) => {
-                const customEvent = e as CustomEvent<{ profile: any }>;
+                const customEvent = e as CustomEvent<{ profile: ActivityProfile }>;
                 if (dataFieldsManager && customEvent.detail?.profile) {
                     dataFieldsManager.setProfile(customEvent.detail.profile);
                     console.log('[DataFields] Profile updated from settings');

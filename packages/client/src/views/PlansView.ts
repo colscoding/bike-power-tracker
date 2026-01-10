@@ -6,7 +6,7 @@ import { formatDuration } from '../api/workoutClient.js';
 import { startStructuredWorkout } from '../ui/workoutPlayer.js';
 import { WORKOUT_LIBRARY } from '../workouts/workoutLibrary.js';
 import { getCustomWorkouts } from '../storage/customWorkouts.js';
-import type { StructuredWorkout } from '../workouts/types.js';
+import type { StructuredWorkout, WorkoutStep } from '../workouts/types.js';
 
 export class PlansView implements View {
     public id = ViewId.Plans;
@@ -196,8 +196,8 @@ export class PlansView implements View {
         `;
     }
 
-    private getTotalDuration(workout: any): number {
-        return workout.steps.reduce((sum: number, step: any) => sum + step.duration, 0);
+    private getTotalDuration(workout: StructuredWorkout): number {
+        return workout.steps.reduce((sum: number, step: WorkoutStep) => sum + step.duration, 0);
     }
 
     private attachListeners(container: HTMLElement, currentDetailId?: string) {

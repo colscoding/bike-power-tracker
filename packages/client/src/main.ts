@@ -64,8 +64,9 @@ const initApp = (): void => {
         router.start();
 
         // Expose router to window for global access (navigation)
-        (window as any).router = router;
-    } catch (error: any) {
+        // Using explicit type compatible with window expansion
+        (window as unknown as { router: typeof router }).router = router;
+    } catch (error: unknown) {
         console.error('Failed to initialize app:', error);
     }
 };

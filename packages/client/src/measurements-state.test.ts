@@ -3,14 +3,16 @@ import assert from 'node:assert';
 
 // Mock localStorage
 if (typeof localStorage === 'undefined') {
-    (global as any).localStorage = {
-        getItem: () => null,
-        setItem: () => { },
-        removeItem: () => { },
-        clear: () => { },
-        length: 0,
-        key: () => null
-    };
+    Object.defineProperty(global, 'localStorage', {
+        value: {
+            getItem: () => null,
+            setItem: () => { },
+            removeItem: () => { },
+            clear: () => { },
+            length: 0,
+            key: () => null
+        }
+    });
 }
 
 import { MeasurementsState } from './measurements-state.js';

@@ -188,7 +188,7 @@ export function initKeyboardNavigation(): void {
         key: 'h',
         description: 'Open workout history',
         action: () => {
-            const router = (window as any).router;
+            const router = window.router;
             if (router) {
                 router.navigate('/history');
                 announce('Workout history opened');

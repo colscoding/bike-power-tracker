@@ -4,7 +4,7 @@
  * Manages the UI for creating custom structured workouts.
  */
 
-import type { StructuredWorkout, WorkoutStep, IntervalType, TargetType } from '../workouts/types.js';
+import type { StructuredWorkout, WorkoutStep, WorkoutTarget, IntervalType, TargetType } from '../workouts/types.js';
 import { saveCustomWorkout } from '../storage/customWorkouts.js';
 import { announce } from './accessibility.js';
 import { refreshWorkoutList } from './workoutPlayer.js';
@@ -96,7 +96,7 @@ function addStepFromForm(): void {
     }
 
     // Adapt to new WorkoutTarget structure
-    const target: any = {
+    const target: WorkoutTarget = {
         type: targetTypeStr === 'open' ? 'open' : 'power',
         unit: targetTypeStr === 'percent_ftp' ? 'percent_ftp' : 'watts',
         value: targetValue

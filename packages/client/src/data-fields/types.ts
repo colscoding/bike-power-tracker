@@ -413,3 +413,49 @@ export interface ScreenChangeEvent {
     screenIndex: number;
     screen: DataScreen;
 }
+
+// ============================================================================
+// User Settings & State Types
+// ============================================================================
+
+export interface ZoneDefinition {
+    name: string;
+    min: number;
+    max: number;
+}
+
+export interface UserSettings {
+    unitSystem: 'metric' | 'imperial';
+    ftp: number;
+    maxHr: number;
+    weight: number;
+    restingHr: number;
+    powerZones: ZoneDefinition[];
+    hrZones: ZoneDefinition[];
+}
+
+export interface WorkoutLap {
+    lapNumber: number;
+    startTime: number;
+    endTime: number;
+    duration: number;
+    distance: number;
+    avgPower: number | null;
+    avgHeartrate: number | null;
+    avgCadence: number | null;
+    avgSpeed: number | null;
+    elevationGain: number;
+}
+
+export interface WorkoutState {
+    isActive: boolean;
+    isPaused: boolean;
+    startTime: number | null;
+    elapsedTime: number;
+    movingTime: number;
+    pausedTime: number;
+    currentLap: number;
+    lapStartTime: number | null;
+    lapElapsedTime: number;
+    laps: WorkoutLap[];
+}

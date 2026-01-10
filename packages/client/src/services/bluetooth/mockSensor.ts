@@ -3,7 +3,7 @@ import type { Measurement } from '../../types/measurements.js';
 
 export class MockSensor implements SensorConnection {
     private listeners: MeasurementListener[] = [];
-    private intervalId: any;
+    private intervalId: ReturnType<typeof setInterval>;
 
     constructor(
         public deviceName: string,

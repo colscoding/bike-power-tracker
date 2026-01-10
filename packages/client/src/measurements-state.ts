@@ -22,7 +22,7 @@ import { calculateCaloriesFromPower, calculateCaloriesFromHeartRate } from './ca
 /**
  * Callback type for state change notifications
  */
-export type StateChangeCallback = () => void;
+export type StateChangeCallback = (state: MeasurementsData) => void;
 
 /**
  * State container for workout measurements.
@@ -155,7 +155,7 @@ export class MeasurementsState implements MeasurementsData {
         // Notify listeners
         for (const callback of this._onChangeCallbacks) {
             try {
-                callback();
+                callback(this);
             } catch (e) {
                 console.error('State change callback error:', e);
             }

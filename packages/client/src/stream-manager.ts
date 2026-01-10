@@ -23,7 +23,7 @@ export class StreamManager {
     public isStreaming = false;
     private isPaused = false;
     private streamName: string | null = null;
-    private streamInterval: any = null;
+    private streamInterval: ReturnType<typeof setInterval> | null = null;
     private measurementsState: MeasurementsState;
     private timeState: TimeState;
 

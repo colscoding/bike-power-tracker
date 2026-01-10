@@ -362,31 +362,33 @@ function migrateStoredSettings(stored: StoredSettings): DataFieldSettings {
 /**
  * Validate complete settings object
  */
-function validateSettings(settings: any): settings is DataFieldSettings {
+function validateSettings(settings: unknown): settings is DataFieldSettings {
     if (!settings || typeof settings !== 'object') {
         return false;
     }
 
-    if (!Array.isArray(settings.profiles) || settings.profiles.length === 0) {
+    const s = settings as DataFieldSettings; // Safe to cast for property checking after object check
+
+    if (!Array.isArray(s.profiles) || s.profiles.length === 0) {
         return false;
     }
 
-    if (typeof settings.activeProfileId !== 'string') {
+    if (typeof s.activeProfileId !== 'string') {
         return false;
     }
 
-    if (!['metric', 'imperial'].includes(settings.unitSystem)) {
+    if (!['metric', 'imperial'].includes(s.unitSystem)) {
         return false;
     }
 
     // Validate each profile
-    return settings.profiles.every(validateProfile);
+    return s.profiles.every(validateProfile);
 }
 
 /**
  * Validate a single profile
  */
-function validateProfile(profile: any): profile is ActivityProfile {
+function validateProfile(profile: unknown): profile is ActivityProfile {
     if (!profile || typeof profile !== 'object') {
         return false;
     }

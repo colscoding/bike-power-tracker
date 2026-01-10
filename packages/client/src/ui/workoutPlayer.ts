@@ -58,7 +58,7 @@ function initImportExport(): void {
 async function importWorkoutFile(file: File): Promise<void> {
     try {
         const text = await file.text();
-        const workout = JSON.parse(text);
+        const workout = JSON.parse(text) as StructuredWorkout;
 
         // Basic validation
         if (!workout.name || !Array.isArray(workout.steps)) {

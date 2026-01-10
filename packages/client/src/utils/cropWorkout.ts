@@ -109,8 +109,8 @@ export function cropWorkout(
         // I read lines 100-127 of types/measurements.ts and it DID NOT have totalEnergy.
         // But ui/workoutHistory.ts uses it.
         // So there's a disconnect.
-        // I'll add totalEnergy to the returned object, casting as any if needed, or extending the type.
-        (summary as any).totalEnergy = Math.round((summary.avgPower * duration) / 1000);
+        // Calculate totalEnergy
+        summary.totalEnergy = Math.round((summary.avgPower * duration) / 1000);
     }
 
     // Add distance

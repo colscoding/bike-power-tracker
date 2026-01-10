@@ -21,9 +21,12 @@ globalThis.localStorage = {
 
 // Mock window for VoiceFeedback
 if (typeof globalThis.window === 'undefined') {
-    (globalThis as any).window = {
-        speechSynthesis: null
-    };
+    Object.defineProperty(globalThis, 'window', {
+        value: {
+            speechSynthesis: null,
+            dispatchEvent: () => true
+        }
+    });
 }
 
 function createTimeState(): TimeState {

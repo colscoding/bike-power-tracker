@@ -143,7 +143,7 @@ function createCountdownOverlay(): HTMLElement {
  */
 function playBeep(isFinal: boolean = false): void {
     try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
 

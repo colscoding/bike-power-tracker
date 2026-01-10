@@ -13,7 +13,7 @@
 
 import type { MeasurementsState } from '../measurements-state.js';
 import type { ConnectionsState, TimeState } from '../getInitState.js';
-import type { ActivityProfile } from './types.js';
+import type { ActivityProfile, UserSettings, WorkoutState } from './types.js';
 import type { ScreenCarouselComponent } from '../components/data-fields/ScreenCarouselComponent.js';
 import { getDataField } from './registry.js';
 import { createCalculationManager, type CalculationManager } from './CalculationManager.js';
@@ -304,7 +304,7 @@ export class DataFieldsManager {
         }
     }
 
-    private createWorkoutState(): any {
+    private createWorkoutState(): WorkoutState {
         const laps = this.measurementsState.laps || [];
         const lapCount = laps.length;
         const lastLapTimestamp = lapCount > 0 ? laps[lapCount - 1].timestamp : null;
@@ -348,7 +348,7 @@ export class DataFieldsManager {
      * the AppSettings interface doesn't include training zones.
      * TODO: Add these to settings UI and persist them.
      */
-    private createUserSettings(): any {
+    private createUserSettings(): UserSettings {
         // AppSettings doesn't have training-specific settings yet,
         // so we use reasonable defaults
         return {

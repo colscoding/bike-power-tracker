@@ -1444,7 +1444,7 @@ export async function refreshHistoryView(): Promise<void> {
  */
 function renderWorkoutCharts(telemetryJson: string, startTimeIso: string | number): void {
   try {
-    const data: MeasurementsData = JSON.parse(telemetryJson);
+    const data = JSON.parse(telemetryJson) as MeasurementsData;
     const startTs = typeof startTimeIso === 'string' ? new Date(startTimeIso).getTime() : startTimeIso;
 
     // Power Chart
@@ -1528,7 +1528,7 @@ function startCropTool(workout: Workout): void {
 
   let measurements: MeasurementsData | null = null;
   try {
-    measurements = JSON.parse(workout.telemetry);
+    measurements = JSON.parse(workout.telemetry) as MeasurementsData;
   } catch (e) {
     console.error('Invalid telemetry', e);
     alert('Failed to parse workout data');
