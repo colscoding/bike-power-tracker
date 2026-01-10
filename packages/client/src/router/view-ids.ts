@@ -5,5 +5,6 @@ export enum ViewId {
     Dashboard = 'dashboard',
     History = 'history',
     Workouts = 'workouts',
-    Settings = 'settings'
+    Settings = 'settings',
+    Plans = 'plans'
 }

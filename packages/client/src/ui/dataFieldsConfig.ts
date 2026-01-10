@@ -221,6 +221,7 @@ const CATEGORY_ICONS: Record<DataFieldCategory | 'all', string> = {
     elevation: '⛰️',
     time: '⏱️',
     laps: '🏁',
+    energy: '🔥',
     environment: '🌡️',
     device: '🔋',
     charts: '📈',

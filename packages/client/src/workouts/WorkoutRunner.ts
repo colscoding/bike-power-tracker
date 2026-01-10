@@ -4,48 +4,59 @@
  * Manages the execution state of a structured workout.
  */
 
-import type { StructuredWorkout, WorkoutStep } from './types.js';
-import { loadUserProfile } from '../ui/onboarding.js';
+import type { StructuredWorkout, ActiveWorkoutState, TargetUnit } from './types.js';
+import { loadUserProfile } from '../storage/userSettings.js';
 import { audioManager } from '../ui/audio.js';
 
-export interface RunnerState {
-    workout: StructuredWorkout;
-    currentStepIndex: number;
-    stepElapsedTime: number; // Seconds
-    totalElapsedTime: number;
-    currentStep: WorkoutStep;
-    nextStep: WorkoutStep | null;
-    targetPower: number | null; // Calculated watts
-    isPaused: boolean;
-    isFinished: boolean;
-}
-
-export type StateChangeCallback = (state: RunnerState) => void;
+export type StateChangeCallback = (state: ActiveWorkoutState) => void;
 
 export class WorkoutRunner {
-    private state: RunnerState;
+    private state: ActiveWorkoutState;
     private timerInterval: ReturnType<typeof setInterval> | null = null;
     private onStateChange: StateChangeCallback | null = null;
     private userFtp: number = 200; // Default fallback
 
-    constructor(workout: StructuredWorkout) {
+    constructor(workout: StructuredWorkout, options?: { userFtp?: number }) {
         // Load User FTP
-        const profile = loadUserProfile();
-        if (profile.ftp) {
-            this.userFtp = profile.ftp;
+        if (options?.userFtp) {
+            this.userFtp = options.userFtp;
+        } else {
+            try {
+                const profile = loadUserProfile();
+                if (profile.ftp) {
+                    this.userFtp = profile.ftp;
+                }
+            } catch (e) {
+                // Ignore error (e.g. ssr/test environment)
+            }
         }
+
+        // Initialize State
+        const totalDuration = workout.steps.reduce((acc, step) => acc + step.duration, 0);
 
         this.state = {
             workout,
+            isRunning: false,
+            isPaused: true,
+            isFinished: false,
             currentStepIndex: 0,
+            startTime: null,
             stepElapsedTime: 0,
+            stepTimeRemaining: workout.steps[0].duration,
             totalElapsedTime: 0,
+            totalDuration,
             currentStep: workout.steps[0],
             nextStep: workout.steps.length > 1 ? workout.steps[1] : null,
-            targetPower: this.calculateTargetPower(workout.steps[0]),
-            isPaused: true,
-            isFinished: false
+            totalSteps: workout.steps.length,
+            currentAbsoluteTarget: undefined
         };
+
+        // Initial calculation
+        this.updateCurrentTarget();
+    }
+
+    public getWorkoutName(): string {
+        return this.state.workout.name;
     }
 
     /**
@@ -62,8 +73,13 @@ export class WorkoutRunner {
      */
     public start(): void {
         if (this.state.isFinished) return;
-        if (!this.state.isPaused && this.timerInterval) return;
+        if (this.state.isRunning && !this.state.isPaused) return;
 
+        if (!this.state.startTime) {
+            this.state.startTime = Date.now();
+        }
+
+        this.state.isRunning = true;
         this.state.isPaused = false;
         this.emitState();
 
@@ -77,6 +93,7 @@ export class WorkoutRunner {
      */
     public pause(): void {
         this.state.isPaused = true;
+        this.state.isRunning = false;
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
@@ -104,12 +121,14 @@ export class WorkoutRunner {
 
         this.state.stepElapsedTime++;
         this.state.totalElapsedTime++;
+        this.state.stepTimeRemaining = Math.max(0, this.state.currentStep.duration - this.state.stepElapsedTime);
 
-        const remaining = this.state.currentStep.duration - this.state.stepElapsedTime;
+        // Update Ramp Targets dynamic calculation
+        this.updateCurrentTarget();
 
         // Audio Cues (3, 2, 1)
-        if (remaining <= 3 && remaining > 0) {
-            audioManager.playCountdown();
+        if (this.state.stepTimeRemaining <= 3 && this.state.stepTimeRemaining > 0) {
+            this.safePlaySound('countdown');
         }
 
         // Check if step is complete
@@ -135,31 +154,93 @@ export class WorkoutRunner {
             : null;
 
         this.state.stepElapsedTime = 0;
-        this.state.targetPower = this.calculateTargetPower(this.state.currentStep);
+        this.state.stepTimeRemaining = this.state.currentStep.duration;
+        this.updateCurrentTarget();
 
         // Play interval start sound
-        audioManager.playStart();
+        this.safePlaySound('start');
 
         this.emitState();
     }
 
     private finish(): void {
         this.state.isFinished = true;
+        this.state.isRunning = false;
         this.pause();
-        audioManager.playSuccess();
+        this.safePlaySound('success');
         this.emitState();
     }
 
-    private calculateTargetPower(step: WorkoutStep): number | null {
-        if (!step.targetValue) return null;
+    private safePlaySound(type: 'countdown' | 'start' | 'success'): void {
+        try {
+            if (type === 'countdown') audioManager.playCountdown();
+            if (type === 'start') audioManager.playStart();
+            if (type === 'success') audioManager.playSuccess();
+        } catch (e) {
+            // Ignore (test/headless)
+        }
+    }
 
-        if (step.targetType === 'power') {
-            return step.targetValue;
-        } else if (step.targetType === 'percent_ftp') {
-            return Math.round(this.userFtp * (step.targetValue / 100));
+    private updateCurrentTarget(): void {
+        const step = this.state.currentStep;
+
+        if (step.rampStart && step.rampEnd) {
+            // Ramp Calculation
+            const startVal = this.resolveValue(step.rampStart.value, step.rampStart.unit);
+            const endVal = this.resolveValue(step.rampEnd.value, step.rampEnd.unit);
+
+            if (startVal !== null && endVal !== null) {
+                const progress = this.state.stepElapsedTime / step.duration;
+                const currentVal = startVal + (endVal - startVal) * progress;
+
+                this.state.currentAbsoluteTarget = {
+                    type: step.rampStart.type,
+                    unit: 'watts', // Resolved to watts usually
+                    value: Math.round(currentVal),
+                    min: Math.round(currentVal - 5),
+                    max: Math.round(currentVal + 5)
+                };
+            }
+        } else if (step.target) {
+            // Steady State
+            const val = this.resolveValue(step.target.value, step.target.unit);
+            const min = this.resolveValue(step.target.min, step.target.unit);
+            const max = this.resolveValue(step.target.max, step.target.unit);
+
+            if (val !== null || (min !== null && max !== null)) {
+                this.state.currentAbsoluteTarget = {
+                    type: step.target.type,
+                    unit: 'watts', // Assuming watts for now if resolved
+                    value: val || ((min! + max!) / 2),
+                    min: min || (val ? val - 10 : 0),
+                    max: max || (val ? val + 10 : 999)
+                };
+
+                // Handle HR units
+                if (step.target.type === 'heartrate') {
+                    this.state.currentAbsoluteTarget.unit = 'bpm';
+                }
+            } else {
+                this.state.currentAbsoluteTarget = undefined;
+            }
+        } else {
+            this.state.currentAbsoluteTarget = undefined;
+        }
+    }
+
+    // Resolve %FTP to Watts, etc.
+    private resolveValue(value: number | undefined, unit: TargetUnit): number | null {
+        if (value === undefined) return null;
+
+        if (unit === 'watts' || unit === 'bpm' || unit === 'rpm') {
+            return value;
         }
 
-        return null;
+        if (unit === 'percent_ftp') {
+            return Math.round(this.userFtp * (value / 100));
+        }
+
+        return value;
     }
 
     private emitState(): void {
@@ -168,7 +249,8 @@ export class WorkoutRunner {
         }
     }
 
-    public getState(): RunnerState {
+    public getState(): ActiveWorkoutState {
         return { ...this.state };
     }
 }
+

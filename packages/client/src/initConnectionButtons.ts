@@ -13,8 +13,9 @@ import { connectTreadmill } from './connect-treadmill.js';
 import { connectGps, type GpsConnection } from './connect-gps.js';
 import { elements } from './elements.js';
 import type { MeasurementsState } from './measurements-state.js';
-import type { MeasurementType, Measurement, TreadmillMeasurement } from './types/measurements.js';
+import type { Measurement, TreadmillMeasurement } from './types/measurements.js';
 import type { ConnectionsState } from './getInitState.js';
+import type { SensorType } from './types/connections.js';
 import type { ConnectionStatus, SensorConnection, TreadmillConnection } from './types/bluetooth.js';
 import { showNotification } from './ui/notifications.js';
 import { showConnectionError, showReconnectionFailed } from './ui/connectionError.js';
@@ -30,7 +31,7 @@ interface InitConnectionButtonsParams {
 /**
  * Emoji icons for each sensor type
  */
-const emojis: Record<MeasurementType | 'treadmill', string> = {
+const emojis: Record<SensorType, string> = {
     power: '⚡',
     heartrate: '❤️',
     cadence: '🚴',
@@ -45,7 +46,7 @@ const emojis: Record<MeasurementType | 'treadmill', string> = {
 /**
  * Get formatted sensor type label
  */
-const getSensorLabel = (key: MeasurementType | 'treadmill'): string => {
+const getSensorLabel = (key: SensorType): string => {
     return key.charAt(0).toUpperCase() + key.slice(1);
 };
 
@@ -71,7 +72,7 @@ export const initConnectionButtons = ({
      * Update button text based on connection status
      */
     const updateButtonText = (
-        key: MeasurementType | 'treadmill',
+        key: SensorType,
         status: 'connected' | 'disconnected' | 'reconnecting',
         deviceName?: string
     ): void => {
@@ -101,7 +102,7 @@ export const initConnectionButtons = ({
     /**
      * Disconnect from a sensor
      */
-    const disconnectFn = (key: MeasurementType | 'treadmill'): void => {
+    const disconnectFn = (key: SensorType): void => {
         const connectionState = connectionsState[key];
         if (!connectionState) return;
 
@@ -122,7 +123,7 @@ export const initConnectionButtons = ({
     /**
      * Handle connection status changes from auto-reconnect
      */
-    const handleStatusChange = (key: MeasurementType | 'treadmill', deviceName: string) => (status: ConnectionStatus): void => {
+    const handleStatusChange = (key: SensorType, deviceName: string) => (status: ConnectionStatus): void => {
         const label = getSensorLabel(key);
 
         switch (status) {
@@ -151,7 +152,7 @@ export const initConnectionButtons = ({
     /**
      * Connect to a sensor
      */
-    const connectFn = async (key: MeasurementType | 'treadmill'): Promise<void> => {
+    const connectFn = async (key: SensorType): Promise<void> => {
         try {
             updateButtonText(key, 'reconnecting'); // Show loading state
 
@@ -235,7 +236,7 @@ export const initConnectionButtons = ({
     /**
      * Add click listener to a button
      */
-    const addListener = (key: MeasurementType | 'treadmill'): void => {
+    const addListener = (key: SensorType): void => {
         const connectElem = elements[key]?.connect;
         if (!connectElem) return;
 
@@ -256,6 +257,6 @@ export const initConnectionButtons = ({
     };
 
     // Initialize all supported buttons
-    const supportedTypes: (MeasurementType | 'treadmill')[] = ['power', 'heartrate', 'cadence', 'gps', 'treadmill'];
+    const supportedTypes: (SensorType)[] = ['power', 'heartrate', 'cadence', 'gps', 'treadmill'];
     supportedTypes.forEach(addListener);
 };

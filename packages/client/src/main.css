@@ -1896,6 +1896,127 @@ body.has-stream-toolbar header {
     font-variant-numeric: tabular-nums;
 }
 
+/* ============================================
+   Workout Metadata Modal Styles
+   ============================================ */
+.workout-metadata-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.metadata-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metadata-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.metadata-input {
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: var(--input-bg);
+    color: var(--color-text-primary);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.metadata-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+.metadata-textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 15px;
+    background-color: var(--input-bg);
+    color: var(--color-text-primary);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    font-family: inherit;
+}
+
+.metadata-textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.15);
+}
+
+/* RPE Selector */
+.rpe-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rpe-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+}
+
+.rpe-button {
+    aspect-ratio: 1;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.rpe-button:hover {
+    border-color: var(--rpe-color, var(--color-accent));
+    background-color: var(--color-bg-hover);
+}
+
+.rpe-button.selected {
+    background-color: var(--rpe-color, var(--color-accent));
+    border-color: var(--rpe-color, var(--color-accent));
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.rpe-description {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-align: center;
+    min-height: 18px;
+    padding-top: 4px;
+}
+
+/* Responsive adjustments for RPE grid */
+@media (max-width: 400px) {
+    .rpe-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+
+    .rpe-button {
+        font-size: 16px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+}
+
 /* High contrast mode for zone bars */
 [data-high-contrast="true"] .zone-bar {
     background-image: repeating-linear-gradient(45deg,
@@ -2677,3 +2798,117 @@ body.has-stream-toolbar header {
         width: auto;
     }
 }
+
+/* ============================================
+   Countdown Overlay
+   ============================================ */
+.countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+}
+
+.countdown__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 48px;
+    background: var(--modal-bg);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
+    text-align: center;
+}
+
+.countdown__title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.countdown__number {
+    font-size: 120px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-accent);
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.countdown__number--pulse {
+    animation: countdownPulse 0.5s ease-out;
+}
+
+@keyframes countdownPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.countdown__cancel {
+    padding: 10px 24px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.countdown__cancel:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-text-secondary);
+}
+
+.countdown__cancel:active {
+    transform: scale(0.98);
+}
+
+@media (max-width: 600px) {
+    .countdown__content {
+        padding: 32px;
+        min-width: 250px;
+    }
+
+    .countdown__title {
+        font-size: 20px;
+    }
+
+    .countdown__number {
+        font-size: 96px;
+        min-height: 96px;
+    }
+}
+

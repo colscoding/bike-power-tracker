@@ -38,6 +38,7 @@ import { setupRouter } from './init/router.js';
 import { initUi } from './init/ui.js';
 import { initHardware } from './init/hardware.js';
 import './ui/navbar.css';
+import './ui/map.css';
 
 const initApp = (): void => {
     try {

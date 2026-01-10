@@ -1,5 +1,8 @@
 import { initTimerDisplay, pauseWorkout, resumeWorkout } from '../ui/time.js';
 import { initDiscardButton, initExportButton, initMetricsToggle, initWorkoutSummaryModal } from '../ui/menu.js';
+import { showNotification } from '../ui/notifications.js';
+import { announce } from '../ui/accessibility.js';
+import { getTimestring } from '../getTimestring.js';
 import { initMetricsDisplay } from '../initMetricsDisplay.js';
 import { initStreamViewer } from '../ui/streamViewer.js';
 import { initStreamingControls } from '../initStreamingControls.js';
@@ -13,13 +16,16 @@ import { initInstallPrompt } from '../ui/installPrompt.js';
 import { initAboutModal } from '../ui/about.js';
 import { handleWakeLock } from '../ui/wakeLock.js';
 import { registerServiceWorker } from '../ui/serviceWorker.js';
+import { initMap } from './map.js';
 import { AutoPauseService } from '../services/AutoPauseService.js';
+import { autoLapService } from '../services/AutoLapService.js';
+import { voiceFeedback } from '../services/VoiceFeedback.js';
 import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState, ConnectionsState } from '../getInitState.js';
 import type { ZoneState } from '../zone-state.js';
 import type { StreamManager } from '../stream-manager.js';
 import { createDataFieldsManager } from '../data-fields/DataFieldsManager.js';
-import { loadActiveProfile } from '../data-fields/persistence.js';
+import { loadActiveProfile, saveActiveScreenIndex } from '../data-fields/persistence.js';
 
 /**
  * Parameters for UI initialization
@@ -50,6 +56,9 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
     initTimerDisplay(timeState);
     const zoneState = initMetricsDisplay({ measurementsState });
 
+    // Initialize Map
+    initMap(measurementsState, connectionsState);
+
     // Initialize Data Fields System
     const dataFieldsCarousel = document.getElementById('dataFieldsCarousel') as HTMLElement | null;
     let dataFieldsManager: ReturnType<typeof createDataFieldsManager> | null = null;
@@ -73,6 +82,14 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
                 if (dataFieldsManager && customEvent.detail?.profile) {
                     dataFieldsManager.setProfile(customEvent.detail.profile);
                     console.log('[DataFields] Profile updated from settings');
+                }
+            });
+
+            // Listen for screen changes to persist active screen index
+            dataFieldsCarousel.addEventListener('screen-change', (e: Event) => {
+                const customEvent = e as CustomEvent<{ screenIndex: number }>;
+                if (customEvent.detail && activeProfile) {
+                    saveActiveScreenIndex(activeProfile.id, customEvent.detail.screenIndex);
                 }
             });
         } catch (error) {
@@ -110,14 +127,36 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
         }
     );
 
+    // Initialize Auto-Lap Service
+    autoLapService.init(measurementsState, timeState);
+    autoLapService.onLap((lapNumber) => {
+        const laps = measurementsState.laps;
+        const lap = laps.find(l => l.number === lapNumber);
+
+        if (lap) {
+            const elapsedStr = lap.elapsedMs ? getTimestring(lap.elapsedMs) : '';
+            const message = `Auto Lap ${lap.number}${elapsedStr ? ` at ${elapsedStr}` : ''}`;
+
+            showNotification(`🏁 ${message}`, 'info');
+            announce(message, 'assertive');
+        }
+    });
+
+    // Initialize Enhanced Voice Feedback
+    voiceFeedback.init(measurementsState, timeState);
+
     // Start auto-pause monitoring when workout starts
     document.addEventListener('workoutStarted', () => {
         autoPauseService.start();
+        autoLapService.start();
+        voiceFeedback.startIntervalAnnouncements();
     });
 
     // Stop auto-pause monitoring when workout is discarded
     document.addEventListener('workoutDiscarded', () => {
         autoPauseService.reset();
+        autoLapService.reset();
+        voiceFeedback.reset();
     });
 
     // Re-initialize auto-pause when settings change
@@ -125,6 +164,10 @@ export function initUi({ measurementsState, timeState, connectionsState, streamM
         if (timeState.running) {
             autoPauseService.stop();
             autoPauseService.start();
+            autoLapService.stop();
+            autoLapService.start();
+            voiceFeedback.stopIntervalAnnouncements();
+            voiceFeedback.startIntervalAnnouncements();
         }
     });
 

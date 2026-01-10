@@ -28,6 +28,10 @@ import {
 import { getFtpHistory, type FtpHistoryEntry } from '../api/userClient.js';
 import { calculateWorkoutSummary } from './modal.js';
 import { announce } from './accessibility.js';
+import { renderLineChart } from './charts.js';
+import { renderPeriodStatistics } from './statistics.js';
+import { cropWorkout } from '../utils/cropWorkout.js';
+import type { MeasurementsData } from '../types/measurements.js';
 
 /** Current pagination page */
 let currentPage = 1;
@@ -504,6 +508,14 @@ async function viewWorkoutDetails(workoutId: string): Promise<void> {
     const workout = await getWorkout(workoutId, true);
     detailPanel.innerHTML = renderWorkoutDetail(workout);
 
+    // Render Charts if telemetry exists
+    if (workout.telemetry) {
+      // Allow DOM to update first
+      requestAnimationFrame(() => {
+        renderWorkoutCharts(workout.telemetry!, workout.startTime);
+      });
+    }
+
     // Back button
     detailPanel.querySelector('.workout-back-btn')?.addEventListener('click', () => {
       detailPanel.style.display = 'none';
@@ -513,6 +525,11 @@ async function viewWorkoutDetails(workoutId: string): Promise<void> {
     // Export button
     detailPanel.querySelector('.workout-export-btn')?.addEventListener('click', () => {
       exportWorkoutData(workout);
+    });
+
+    // Crop button
+    detailPanel.querySelector('.workout-crop-btn')?.addEventListener('click', () => {
+      startCropTool(workout);
     });
   } catch (error) {
     console.error('Failed to load workout details:', error);
@@ -607,6 +624,16 @@ function renderWorkoutDetail(workout: Workout): string {
         </div>
       ` : ''}
 
+      ${workout.telemetry ? `
+        <div class="workout-detail-charts">
+            <h4>Charts</h4>
+            <div id="wd-chart-power" class="chart-container" style="height: 200px; margin-bottom: 20px;"></div>
+            <div id="wd-chart-hr" class="chart-container" style="height: 200px; margin-bottom: 20px;"></div>
+            <div id="wd-chart-cadence" class="chart-container" style="height: 200px; margin-bottom: 20px;"></div>
+            <div id="wd-chart-altitude" class="chart-container" style="height: 200px; margin-bottom: 20px;"></div>
+        </div>
+      ` : ''}
+
       ${workout.description ? `
         <div class="workout-detail-description">
           <h4>Notes</h4>
@@ -616,6 +643,7 @@ function renderWorkoutDetail(workout: Workout): string {
 
       <div class="workout-detail-actions">
         ${workout.telemetry ? `
+          <button class="workout-action-btn workout-crop-btn">✂️ Crop</button>
           <button class="workout-export-btn">💾 Export Data</button>
         ` : ''}
       </div>
@@ -899,6 +927,7 @@ async function loadAnalytics(): Promise<void> {
  * Render all analytics charts and stats
  */
 function renderAnalytics(workouts: Workout[], ftpHistory: FtpHistoryEntry[] = []): void {
+  renderPeriodStatistics('workoutAnalyticsView', workouts);
   renderPersonalRecords(workouts);
   renderTrainingLoad(workouts);
   renderPowerCurve(workouts);
@@ -1408,4 +1437,282 @@ export async function refreshHistoryView(): Promise<void> {
   } else if (currentView === 'analytics') {
     await loadAnalytics();
   }
+}
+
+/**
+ * Parses telemetry and renders charts for workout detail
+ */
+function renderWorkoutCharts(telemetryJson: string, startTimeIso: string | number): void {
+  try {
+    const data: MeasurementsData = JSON.parse(telemetryJson);
+    const startTs = typeof startTimeIso === 'string' ? new Date(startTimeIso).getTime() : startTimeIso;
+
+    // Power Chart
+    const powerContainer = document.getElementById('wd-chart-power');
+    if (powerContainer && data.power && data.power.length > 0) {
+      const points = data.power.map(p => ({ x: p.timestamp - startTs, y: p.value }));
+      renderLineChart(powerContainer, points, {
+        title: 'Power',
+        color: '#fbbf24', // Amber 400
+        yLabel: 'Watts',
+        yMin: 0
+      });
+    } else if (powerContainer) {
+      powerContainer.style.display = 'none';
+    }
+
+    // Heart Rate Chart
+    const hrContainer = document.getElementById('wd-chart-hr');
+    if (hrContainer && data.heartrate && data.heartrate.length > 0) {
+      const points = data.heartrate.map(p => ({ x: p.timestamp - startTs, y: p.value }));
+      renderLineChart(hrContainer, points, {
+        title: 'Heart Rate',
+        color: '#f87171', // Red 400
+        yLabel: 'BPM',
+        yMin: 40
+      });
+    } else if (hrContainer) {
+      hrContainer.style.display = 'none';
+    }
+
+    // Cadence Chart
+    const cadContainer = document.getElementById('wd-chart-cadence');
+    if (cadContainer && data.cadence && data.cadence.length > 0) {
+      const points = data.cadence.map(p => ({ x: p.timestamp - startTs, y: p.value }));
+      renderLineChart(cadContainer, points, {
+        title: 'Cadence',
+        color: '#60a5fa', // Blue 400
+        yLabel: 'RPM',
+        yMin: 0
+      });
+    } else if (cadContainer) {
+      cadContainer.style.display = 'none';
+    }
+
+    // Altitude Chart
+    const altContainer = document.getElementById('wd-chart-altitude');
+    if (altContainer && data.altitude && data.altitude.length > 0) {
+      const points = data.altitude.map(p => ({ x: p.timestamp - startTs, y: p.value }));
+      // Filter out zero altitudes if unlikely
+      const validPoints = points.filter(p => p.y !== 0);
+
+      if (validPoints.length > 0) {
+        renderLineChart(altContainer, validPoints, {
+          title: 'Altitude',
+          color: '#34d399', // Emerald 400
+          yLabel: 'Meters'
+        });
+      } else {
+        altContainer.style.display = 'none';
+      }
+    } else if (altContainer) {
+      altContainer.style.display = 'none';
+    }
+
+  } catch (e) {
+    console.error('Failed to parse telemetry for charts', e);
+  }
+}
+
+/**
+ * Start the Crop Tool for a workout
+ */
+function startCropTool(workout: Workout): void {
+  if (!workout.telemetry || !workout.startTime) {
+    alert('No telemetry data available for cropping');
+    return;
+  }
+
+  const detailPanel = document.getElementById('workoutDetailPanel');
+  if (!detailPanel) return;
+
+  let measurements: MeasurementsData | null = null;
+  try {
+    measurements = JSON.parse(workout.telemetry);
+  } catch (e) {
+    console.error('Invalid telemetry', e);
+    alert('Failed to parse workout data');
+    return;
+  }
+
+  if (!measurements) return;
+
+  const originalStart = new Date(workout.startTime).getTime();
+  const originalEnd = workout.endTime ? new Date(workout.endTime).getTime() : originalStart + (workout.duration || 0) * 1000;
+
+  // Initial state
+  let currentStart = originalStart;
+  let currentEnd = originalEnd;
+  const durationMs = originalEnd - originalStart;
+
+  // Render Crop UI
+  detailPanel.innerHTML = `
+    <div class="workout-crop-tool">
+      <div class="workout-detail-header">
+        <button id="cancelCropBtn" class="workout-back-btn">Cancel</button>
+        <h3>Crop Workout</h3>
+        <button id="saveCropBtn" class="workout-action-btn workout-status-completed">Save Changes</button>
+      </div>
+
+      <div class="crop-controls" style="margin: 20px 0; padding: 20px; background: var(--color-bg-secondary); border-radius: 8px;">
+         <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+             <div>
+                 <label>Start Time offset</label>
+                 <div class="value-display" id="cropStartDisplay">00:00</div>
+                 <input type="range" id="cropStartSlider" min="0" max="${durationMs}" value="0" style="width: 100%">
+             </div>
+             <div style="text-align: right;">
+                 <label>End Time offset</label>
+                 <div class="value-display" id="cropEndDisplay">${formatDuration(durationMs / 1000)}</div>
+                 <input type="range" id="cropEndSlider" min="0" max="${durationMs}" value="${durationMs}" style="width: 100%">
+             </div>
+         </div>
+         
+         <div style="text-align: center; font-weight: bold; margin-bottom: 10px;">
+            New Duration: <span id="cropDurationDisplay">${formatDuration(durationMs / 1000)}</span>
+         </div>
+         
+         <div id="cropPreviewChart" style="height: 150px; background: var(--card-bg); border-radius: 8px;"></div>
+      </div>
+      
+      <div class="crop-info" style="font-size: 0.9em; color: var(--color-text-secondary); margin-top: 10px;">
+          <p>⚠️ Saving will overwrite the original workout data. This cannot be undone.</p>
+      </div>
+    </div>
+  `;
+
+  // Init interaction
+  const sliderStart = document.getElementById('cropStartSlider') as HTMLInputElement;
+  const sliderEnd = document.getElementById('cropEndSlider') as HTMLInputElement;
+  const displayStart = document.getElementById('cropStartDisplay');
+  const displayEnd = document.getElementById('cropEndDisplay');
+  const displayDuration = document.getElementById('cropDurationDisplay');
+  const chartContainer = document.getElementById('cropPreviewChart')!;
+
+  // Render preview chart (using Power as reference)
+  const renderPreview = () => {
+    if (measurements && measurements.power) {
+      const cropped = cropWorkout(measurements, originalStart, currentStart, currentEnd);
+      const points = cropped.measurements.power.map(p => ({ x: p.timestamp - currentStart, y: p.value }));
+
+      renderLineChart(chartContainer, points, {
+        title: 'Preview (Power)',
+        color: '#fbbf24',
+        yMin: 0,
+        height: 150
+      });
+    }
+  };
+
+  const updateUI = () => {
+    const startOffset = parseInt(sliderStart.value);
+    const endOffset = parseInt(sliderEnd.value);
+
+    // Enforce constraints
+    if (startOffset >= endOffset) {
+      // Prevent crossing
+      if (document.activeElement === sliderStart) {
+        sliderStart.value = (endOffset - 10000).toString(); // Keep 10s gap
+      } else {
+        sliderEnd.value = (startOffset + 10000).toString();
+      }
+      return;
+    }
+
+    currentStart = originalStart + parseInt(sliderStart.value);
+    currentEnd = originalStart + parseInt(sliderEnd.value);
+
+    if (displayStart) displayStart.textContent = formatDuration(parseInt(sliderStart.value) / 1000);
+    if (displayEnd) displayEnd.textContent = formatDuration(parseInt(sliderEnd.value) / 1000);
+    if (displayDuration) displayDuration.textContent = formatDuration((currentEnd - currentStart) / 1000);
+
+    renderPreview();
+  };
+
+  sliderStart.addEventListener('input', updateUI);
+  sliderEnd.addEventListener('input', updateUI);
+
+  // Initial render
+  setTimeout(renderPreview, 0);
+
+  // Cancel Action
+  document.getElementById('cancelCropBtn')?.addEventListener('click', () => {
+    viewWorkoutDetails(workout.id);
+  });
+
+  // Save Action
+  document.getElementById('saveCropBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('saveCropBtn') as HTMLButtonElement;
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    try {
+      const result = cropWorkout(measurements!, originalStart, currentStart, currentEnd);
+
+      // Construct updated workout object (for future API syncing)
+      // const updatedWorkout = {
+      //     ...workout,
+      //     startTime: new Date(result.startTime).toISOString(),
+      //     endTime: new Date(result.endTime).toISOString(),
+      //     duration: result.duration,
+      //     summary: JSON.stringify(result.summary),
+      //     telemetry: JSON.stringify(result.measurements)
+      // };
+
+      // Save methods
+      if (isIndexedDBSupported()) {
+        // Always update local storage if available
+        const { saveCompletedWorkout } = await import('../storage/workoutStorage.js');
+        await saveCompletedWorkout(
+          result.measurements,
+          result.startTime,
+          result.endTime
+        );
+
+        // If we are renaming/replacing, we might need to delete the old one if the ID depends on start time.
+        // ID is 'workout_' + startTime.
+        // If start time changes, ID changes!
+        if (result.startTime !== originalStart) {
+          // We created a new record. Should we delete the old one?
+          // Yes, to avoid duplicates.
+          // But wait, if it came from API, ID is a UUID usually.
+        }
+      }
+
+      // If pure local (ID starts with workout_), we might need to handle ID change or just update data
+      // If it is an API workout, we need to send update to server
+      // TODO: Implement API update for telemetry. For now, we only update local if possible or alert user.
+      if (dataSource === 'local' || workout.id.startsWith('workout_')) {
+        if (result.startTime !== originalStart) {
+          // const { deleteWorkout: deleteLocal } = await import('../api/workoutClient.js'); 
+          // TODO: Implement local cleanup for renamed/moved workouts
+        }
+        alert('Workout cropped and saved locally.');
+      } else {
+        alert('Cropping currently only supported for local workouts (Server update not implemented). Changes are saved to local history.');
+        // We just saved it to local indexedDb as a new workout potentially.
+      }
+
+      // Return to details
+      // If ID changed, we might need to go to list
+      if (result.startTime !== originalStart && workout.id.startsWith('workout_')) {
+        // Go to list
+        const listPanel = document.getElementById('workoutListPanel');
+        if (detailPanel && listPanel) {
+          detailPanel.style.display = 'none';
+          listPanel.style.display = 'block';
+          // Trigger refresh mechanism?
+          document.getElementById('historyRefresh')?.click();
+        }
+      } else {
+        viewWorkoutDetails(workout.id);
+      }
+
+    } catch (e) {
+      console.error('Failed to save crop', e);
+      alert('Error saving cropped workout');
+      btn.disabled = false;
+      btn.textContent = 'Save Changes';
+    }
+  });
 }

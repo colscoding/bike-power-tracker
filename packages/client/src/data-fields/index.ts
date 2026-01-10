@@ -120,6 +120,7 @@ export { SPEED_FIELDS } from './definitions/speed-fields.js';
 export { DISTANCE_FIELDS } from './definitions/distance-fields.js';
 export { TIME_FIELDS } from './definitions/time-fields.js';
 export { ELEVATION_FIELDS } from './definitions/elevation-fields.js';
+export { energyFields as ENERGY_FIELDS } from './definitions/energy-fields.js';
 
 // Import and register all field definitions
 import { registerDataField } from './registry.js';
@@ -130,6 +131,7 @@ import { SPEED_FIELDS } from './definitions/speed-fields.js';
 import { DISTANCE_FIELDS } from './definitions/distance-fields.js';
 import { TIME_FIELDS } from './definitions/time-fields.js';
 import { ELEVATION_FIELDS } from './definitions/elevation-fields.js';
+import { energyFields as ENERGY_FIELDS } from './definitions/energy-fields.js';
 
 /**
  * Initialize and register all data fields
@@ -145,6 +147,7 @@ const initializeDataFields = (): void => {
         ...DISTANCE_FIELDS,
         ...TIME_FIELDS,
         ...ELEVATION_FIELDS,
+        ...ENERGY_FIELDS,
     ];
 
     for (const field of allFields) {
@@ -169,6 +172,7 @@ export const getAllFields = (): import('./types.js').DataFieldDefinition[] => {
         ...DISTANCE_FIELDS,
         ...TIME_FIELDS,
         ...ELEVATION_FIELDS,
+        ...ENERGY_FIELDS,
     ];
 };
 
@@ -183,11 +187,13 @@ export const DATA_FIELD_SUMMARY = {
     distance: DISTANCE_FIELDS.length,
     time: TIME_FIELDS.length,
     elevation: ELEVATION_FIELDS.length,
+    energy: ENERGY_FIELDS.length,
     total: POWER_FIELDS.length +
         HEARTRATE_FIELDS.length +
         CADENCE_FIELDS.length +
         SPEED_FIELDS.length +
         DISTANCE_FIELDS.length +
         TIME_FIELDS.length +
-        ELEVATION_FIELDS.length,
+        ELEVATION_FIELDS.length +
+        ENERGY_FIELDS.length,
 };

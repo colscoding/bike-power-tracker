@@ -34,6 +34,7 @@ const sensorLabels: Record<MeasurementType | 'treadmill', string> = {
     gps: 'GPS',
     treadmill: 'Treadmill',
     treadmillSpeed: 'Treadmill Speed',
+    energy: 'Energy',
 };
 
 /**
@@ -49,6 +50,7 @@ const sensorIcons: Record<MeasurementType | 'treadmill', string> = {
     gps: '📍',
     treadmill: '🏃',
     treadmillSpeed: '🏃',
+    energy: '🔥'
 };
 
 /**

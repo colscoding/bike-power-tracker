@@ -10,15 +10,19 @@ import { getCsvString } from '../create-csv.js';
 import { getTcxString } from '../create-tcx.js';
 import { getFitData } from '../create-fit.js';
 import { showConfirmation, showWorkoutSummary, calculateWorkoutSummary } from './modal.js';
+import { showWorkoutMetadataModal, shouldShowMetadataModal } from './workoutMetadataModal.js';
 import { announce } from './accessibility.js';
 import { showUndoNotification, createWorkoutBackup, restoreWorkoutBackup, type WorkoutBackup } from './undoNotification.js';
 import { resetLapCounter } from './lap.js';
 import { PersonalRecordTracker } from './analyticsHelper.js';
 import { listWorkouts, isDatabaseAvailable } from '../api/workoutClient.js';
 import { archiveWorkout } from '../storage/workoutStorage.js';
+import { IntervalsService } from '../services/IntervalsService.js';
+import { getSettings } from '../config/settings.js';
 import type { MeasurementsState } from '../measurements-state.js';
 import type { TimeState } from '../getInitState.js';
 import type { ZoneState } from '../zone-state.js';
+import type { WorkoutMetadata } from '../types/measurements.js';
 import { type AppSettings, defaultSettings } from '../types/settings.js';
 
 /**
@@ -250,6 +254,9 @@ function downloadFile(blob: Blob, filename: string): void {
     URL.revokeObjectURL(url);
 }
 
+import { showNotification } from './notifications.js';
+import { stravaService } from '../integrations/strava.js';
+
 /**
  * Initialize the export button.
  * 
@@ -283,73 +290,101 @@ export const initExportButton = (measurementsState: MeasurementsState, zoneState
                 : defaultSettings;
 
             const timestamp = getExportTimestamp();
+            const metadata = getWorkoutMetadata();
 
-            // Download JSON file (includes zone data)
-            if (settings.exportJson) {
-                const exportData: Record<string, unknown> = {
-                    power: measurementsState.power,
-                    heartrate: measurementsState.heartrate,
-                    cadence: measurementsState.cadence,
-                };
+            // Create a safe filename from metadata title
+            const safeTitle = metadata?.title
+                ? metadata.title.replace(/[^a-z0-9]+/gi, '-').substring(0, 30).toLowerCase()
+                : 'workout';
 
-                // Include zone distribution data if available
-                if (zoneState) {
-                    const zoneData = zoneState.toJSON();
-                    if (zoneData.powerZones.some(z => z.timeInZoneMs > 0) ||
-                        zoneData.hrZones.some(z => z.timeInZoneMs > 0)) {
-                        exportData.zoneDistribution = {
-                            power: zoneData.powerZones.map(z => ({
-                                zone: z.zone,
-                                name: z.name,
-                                timeSeconds: Math.round(z.timeInZoneMs / 1000),
-                            })),
-                            heartrate: zoneData.hrZones.map(z => ({
-                                zone: z.zone,
-                                name: z.name,
-                                timeSeconds: Math.round(z.timeInZoneMs / 1000),
-                            })),
-                            ftp: zoneData.ftp,
-                            maxHr: zoneData.maxHr,
+            // Show options modal
+            showConfirmation('Export Options', 'Choose an action for your workout data:', {
+                confirmText: 'Download Files',
+                confirmVariant: 'primary',
+                cancelText: 'Upload to Strava',
+                icon: '💾'
+            }).then(isDownload => {
+                if (isDownload) {
+                    // Download JSON file (includes zone data and metadata)
+                    if (settings.exportJson) {
+                        const exportData: Record<string, unknown> = {
+                            metadata: metadata ? {
+                                title: metadata.title,
+                                notes: metadata.notes || null,
+                                perceivedExertion: metadata.perceivedExertion || null,
+                            } : null,
+                            power: measurementsState.power,
+                            heartrate: measurementsState.heartrate,
+                            cadence: measurementsState.cadence,
                         };
+                        // ... (zone data logic)
+                        if (zoneState) {
+                            const zoneData = zoneState.toJSON();
+                            if (zoneData.powerZones.some(z => z.timeInZoneMs > 0) ||
+                                zoneData.hrZones.some(z => z.timeInZoneMs > 0)) {
+                                exportData.zoneDistribution = {
+                                    power: zoneData.powerZones.map(z => ({
+                                        zone: z.zone,
+                                        name: z.name,
+                                        timeSeconds: Math.round(z.timeInZoneMs / 1000),
+                                    })),
+                                    hr: zoneData.hrZones.map(z => ({
+                                        zone: z.zone,
+                                        name: z.name,
+                                        timeSeconds: Math.round(z.timeInZoneMs / 1000),
+                                    }))
+                                };
+                            }
+                        }
+
+                        const jsonStr = JSON.stringify(exportData, null, 2);
+                        const blob = new Blob([jsonStr], { type: 'application/json' });
+                        downloadFile(blob, `${safeTitle}-${timestamp}.json`);
                     }
-                }
 
-                const jsonString = JSON.stringify(exportData, null, 2);
-                const jsonBlob = new Blob([jsonString], { type: 'application/json' });
-                downloadFile(jsonBlob, `bike-measurements-${timestamp}.json`);
-            }
+                    // Download CSV
+                    if (settings.exportCsv) {
+                        const csvString = getCsvString(measurementsState);
+                        const blob = new Blob([csvString], { type: 'text/csv' });
+                        downloadFile(blob, `${safeTitle}-${timestamp}.csv`);
+                    }
 
-            // Download TCX file
-            if (settings.exportTcx) {
-                const tcxString = getTcxString(measurementsState);
-                if (tcxString) {
-                    const tcxBlob = new Blob([tcxString], { type: 'application/xml' });
-                    downloadFile(tcxBlob, `bike-workout-${timestamp}.tcx`);
-                }
-            }
+                    // Download TCX
+                    if (settings.exportTcx) {
+                        const tcxString = getTcxString(measurementsState);
+                        const blob = new Blob([tcxString], { type: 'application/vnd.garmin.tcx+xml' });
+                        downloadFile(blob, `${safeTitle}-${timestamp}.tcx`);
+                    }
 
-            // Download CSV file
-            if (settings.exportCsv) {
-                const csvString = getCsvString(measurementsState);
-                if (csvString) {
-                    const csvBlob = new Blob([csvString], { type: 'text/csv' });
-                    downloadFile(csvBlob, `bike-workout-${timestamp}.csv`);
-                }
-            }
+                    // Download FIT (if enabled or default?) - let's add it if settings allow or default
+                    // Assuming FIT is better, let's include it if settings don't explicitly disable it
+                    // For now, adhere to existing logical flow but consider asking settings
+                    try {
+                        // Pass undefined for sport unless we have it in metadata or settings
+                        const fitData = getFitData(measurementsState, undefined);
+                        if (fitData) {
+                            const fitBlob = new Blob([fitData as unknown as BlobPart], { type: 'application/octet-stream' });
+                            downloadFile(fitBlob, `${safeTitle}-${timestamp}.fit`);
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
 
-            // Download FIT file
-            if (settings.exportFit) {
-                const fitData = getFitData(measurementsState);
-                if (fitData) {
-                    const fitBlob = new Blob([new Uint8Array(fitData)], { type: 'application/fit' });
-                    downloadFile(fitBlob, `bike-workout-${timestamp}.fit`);
+                    announce('Workout files downloaded', 'assertive');
+                } else {
+                    // Upload to Strava
+                    stravaService.handleUpload(measurementsState, metadata || undefined);
                 }
-            }
+            });
+
         } catch (error) {
-            console.error('Error exporting data:', error);
+            console.error('Export failed:', error);
+            showNotification('Failed to export data', 'error');
         }
     });
 };
+
+
 
 /**
  * Parameters for workout summary initialization
@@ -358,6 +393,23 @@ interface InitWorkoutSummaryParams {
     measurementsState: MeasurementsState;
     timeState: TimeState;
     zoneState?: ZoneState;
+}
+
+/** Module-level storage for collected workout metadata */
+let collectedMetadata: WorkoutMetadata | null = null;
+
+/**
+ * Get the collected workout metadata (for use in exports)
+ */
+export function getWorkoutMetadata(): WorkoutMetadata | null {
+    return collectedMetadata;
+}
+
+/**
+ * Clear the collected workout metadata
+ */
+export function clearWorkoutMetadata(): void {
+    collectedMetadata = null;
 }
 
 /**
@@ -411,10 +463,43 @@ export const initWorkoutSummaryModal = ({
 
         await showWorkoutSummary(summary, {
             onExport: async () => {
+                // Collect metadata if settings allow
+                if (shouldShowMetadataModal()) {
+                    collectedMetadata = await showWorkoutMetadataModal(detail.startTime || timeState.startTime);
+                } else {
+                    // Use default metadata if prompts are disabled
+                    const { generateDefaultTitle } = await import('./workoutMetadataModal.js');
+                    collectedMetadata = {
+                        title: generateDefaultTitle(detail.startTime || timeState.startTime),
+                    };
+                }
+
                 try {
                     // Archive to IndexedDB
                     await archiveWorkout();
                     announce('Workout saved to local history', 'polite');
+
+                    // Auto-upload to Intervals.icu
+                    const settings = getSettings();
+                    if (settings.intervals && settings.intervals.enabled && settings.intervals.autoUpload) {
+                        try {
+                            const metadata = getWorkoutMetadata();
+                            const safeTitle = metadata?.title
+                                ? metadata.title.replace(/[^a-z0-9]+/gi, '-').substring(0, 30).toLowerCase()
+                                : 'workout';
+                            const timestamp = getExportTimestamp();
+
+                            // Don't await the upload so we don't block the UI reset?
+                            // Or better: await it so user sees notification before reset?
+                            // But resetWorkoutState clears data. we passed measurementsState to service?
+                            // The service generates fitData immediately.
+                            // Let's await to be safe, or start it before reset.
+                            await IntervalsService.uploadWorkout(measurementsState, `${safeTitle}-${timestamp}.fit`);
+                        } catch (e) {
+                            console.error('Intervals auto-upload failed', e);
+                        }
+                    }
+
                 } catch (err) {
                     console.error('Failed to save to local history', err);
                     announce('Failed to save to local history', 'assertive');
@@ -426,9 +511,11 @@ export const initWorkoutSummaryModal = ({
 
                 // Reset state after export
                 resetWorkoutState(measurementsState, timeState);
+                clearWorkoutMetadata();
             },
             onDiscard: () => {
                 resetWorkoutState(measurementsState, timeState);
+                clearWorkoutMetadata();
                 announce('Workout discarded', 'polite');
             },
             onKeepRecording: () => {

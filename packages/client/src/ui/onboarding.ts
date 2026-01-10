@@ -16,60 +16,11 @@ import { announce, trapFocus } from './accessibility.js';
 import { showNotification } from './notifications.js';
 import { selectElement } from '../utils/dom.js';
 
-/**
- * User profile settings for training zones
- */
-export interface UserProfile {
-    /** Functional Threshold Power in watts */
-    ftp: number | null;
-    /** Maximum heart rate in bpm */
-    maxHr: number | null;
-    /** Body weight in kg */
-    weight: number | null;
-    /** Whether onboarding has been completed */
-    onboardingComplete: boolean;
-    /** Timestamp of last profile update */
-    lastUpdated: number | null;
-}
+import { type UserProfile, loadUserProfile, saveUserProfile } from '../storage/userSettings.js';
 
-/** Storage key for user profile */
-const PROFILE_KEY = 'bpt-user-profile';
+export { loadUserProfile, saveUserProfile };
+export type { UserProfile };
 
-/** Default profile values */
-const defaultProfile: UserProfile = {
-    ftp: null,
-    maxHr: null,
-    weight: null,
-    onboardingComplete: false,
-    lastUpdated: null,
-};
-
-/**
- * Load user profile from localStorage
- */
-export function loadUserProfile(): UserProfile {
-    try {
-        const stored = localStorage.getItem(PROFILE_KEY);
-        if (stored) {
-            return { ...defaultProfile, ...JSON.parse(stored) };
-        }
-    } catch (e) {
-        console.warn('Failed to load user profile:', e);
-    }
-    return { ...defaultProfile };
-}
-
-/**
- * Save user profile to localStorage
- */
-export function saveUserProfile(profile: UserProfile): void {
-    try {
-        profile.lastUpdated = Date.now();
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-    } catch (e) {
-        console.warn('Failed to save user profile:', e);
-    }
-}
 
 /**
  * Onboarding step configuration

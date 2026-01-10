@@ -21,6 +21,7 @@ export interface MergedDataPoint {
     altitude: number | null;
     lat: number | null;
     lon: number | null;
+    energy: number | null;
 }
 
 /**
@@ -98,6 +99,7 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
     // Convert GPS points to measurements for interpolation
     const latMeasurements: Measurement[] = measurements.gps.map(p => ({ timestamp: p.timestamp, value: p.lat }));
     const lonMeasurements: Measurement[] = measurements.gps.map(p => ({ timestamp: p.timestamp, value: p.lon }));
+    const energyData: Measurement[] = measurements.energy || [];
 
     const sources = [
         measurements.heartrate,
@@ -106,7 +108,8 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
         measurements.speed,
         measurements.distance,
         measurements.altitude,
-        latMeasurements
+        latMeasurements,
+        energyData,
     ];
     const hasData = sources.some(data => data.length > 0);
 
@@ -140,6 +143,7 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
     const syncedAltitude = getValuesAtTimestamps(measurements.altitude, timestamps);
     const syncedLat = getValuesAtTimestamps(latMeasurements, timestamps);
     const syncedLon = getValuesAtTimestamps(lonMeasurements, timestamps);
+    const syncedEnergy = getValuesAtTimestamps(energyData, timestamps);
 
     // Combine into data points
     const dataPoints: MergedDataPoint[] = [];
@@ -155,6 +159,7 @@ export const mergeMeasurements = (measurements: MeasurementsData): MergedDataPoi
             altitude: syncedAltitude[i],
             lat: syncedLat[i],
             lon: syncedLon[i],
+            energy: syncedEnergy[i],
         });
     }
 

@@ -66,13 +66,14 @@ export interface MeasurementsData {
     gps: GpsPoint[];
     treadmill?: TreadmillMeasurement[];
     treadmillSpeed?: Measurement[];
+    energy?: Measurement[]; // Cumulative energy in kcal
     laps?: LapMarker[];
 }
 
 /**
  * Types of measurements that can be recorded
  */
-export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude' | 'gps' | 'treadmillSpeed';
+export type MeasurementType = 'heartrate' | 'power' | 'cadence' | 'speed' | 'distance' | 'altitude' | 'gps' | 'treadmillSpeed' | 'energy';
 
 /**
  * Current sensor values (latest readings)
@@ -84,6 +85,23 @@ export interface CurrentMetrics {
     speed: number | null;
     distance: number | null;
     altitude: number | null;
+}
+
+/**
+ * Perceived exertion rating (1-10 scale, RPE-based)
+ */
+export type PerceivedExertion = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+
+/**
+ * Workout metadata - user-provided context for a workout
+ */
+export interface WorkoutMetadata {
+    /** Workout title (e.g., "Morning Ride", "Interval Training") */
+    title: string;
+    /** Optional notes about the workout */
+    notes?: string;
+    /** Perceived exertion rating (1-10, RPE scale) */
+    perceivedExertion?: PerceivedExertion;
 }
 
 /**

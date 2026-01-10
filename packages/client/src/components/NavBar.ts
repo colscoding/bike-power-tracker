@@ -42,6 +42,10 @@ export class NavBar {
                 <span class="nav-icon">🏋️</span>
                 <span class="nav-label">Workouts</span>
             </button>
+            <button class="nav-item" data-target="${ViewId.Plans}">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Plans</span>
+            </button>
             <button class="nav-item" data-target="${ViewId.Settings}">
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-label">Settings</span>

@@ -8,6 +8,23 @@
 
 import { mergeMeasurements, type MergedDataPoint } from './merge-measurements.js';
 import type { MeasurementsData, LapMarker } from './types/measurements.js';
+import type { SportType } from './config/sport.js';
+
+/**
+ * Map internal sport type to TCX Sport attribute
+ * TCX supports: Running, Biking, Other
+ */
+function getTcxSport(sport?: SportType): string {
+    switch (sport) {
+        case 'running':
+            return 'Running';
+        case 'walking':
+            return 'Other'; // TCX doesn't have Walking, use Other
+        case 'cycling':
+        default:
+            return 'Biking';
+    }
+}
 
 /**
  * Creates heart rate XML element
@@ -95,13 +112,14 @@ const getTcxTrackpoint = (point: MergedDataPoint): string => {
  * Strava, Garmin Connect, and TrainingPeaks.
  * 
  * @param measurements - The measurements data object containing workout data
+ * @param sport - Optional sport type for the activity (defaults to cycling)
  * @returns TCX formatted XML string
  * 
  * @example
- * const tcx = getTcxString(measurementsState);
- * // Returns a valid TCX XML document
+ * const tcx = getTcxString(measurementsState, 'running');
+ * // Returns a valid TCX XML document with Running sport type
  */
-export const getTcxString = (measurements: MeasurementsData): string => {
+export const getTcxString = (measurements: MeasurementsData, sport?: SportType): string => {
     const dataPoints = mergeMeasurements(measurements);
 
     if (!dataPoints || dataPoints.length === 0) {
@@ -139,11 +157,16 @@ export const getTcxString = (measurements: MeasurementsData): string => {
             ? (distancePoints[distancePoints.length - 1].distance! - (distancePoints[0].distance || 0))
             : 0;
 
+        const validEnergyValues = lapDataPoints.filter(p => p.energy !== null);
+        const totalCalories = validEnergyValues.length > 0
+            ? (validEnergyValues[validEnergyValues.length - 1].energy! - (validEnergyValues[0].energy || 0))
+            : 0;
+
         return `
                 <Lap StartTime="${lapStartDate}">
                     <TotalTimeSeconds>${totalTimeSeconds}</TotalTimeSeconds>
                     <DistanceMeters>${Math.round(totalDistance)}</DistanceMeters>
-                    <Calories>0</Calories>
+                    <Calories>${Math.round(totalCalories)}</Calories>
                     ${avgHr !== null ? `<AverageHeartRateBpm><Value>${Math.round(avgHr)}</Value></AverageHeartRateBpm>` : ''}
                     ${maxHr !== null ? `<MaximumHeartRateBpm><Value>${Math.round(maxHr)}</Value></MaximumHeartRateBpm>` : ''}
                     <Intensity>Active</Intensity>
@@ -160,10 +183,11 @@ ${lapDataPoints.map(getTcxTrackpoint).join('\n')}
                 </Lap>`;
     });
 
+    const tcxSport = getTcxSport(sport);
     const tcx = `<?xml version="1.0" encoding="UTF-8"?>
     <TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
         <Activities>
-            <Activity Sport="Biking">
+            <Activity Sport="${tcxSport}">
                 <Id>${startDate}</Id>
 ${lapElements.join('\n')}
             </Activity>

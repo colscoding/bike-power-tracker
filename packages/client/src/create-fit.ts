@@ -9,6 +9,7 @@
 
 import { mergeMeasurements } from './merge-measurements.js';
 import type { MeasurementsData } from './types/measurements.js';
+import type { SportType } from './config/sport.js';
 
 // FIT Protocol Constants
 const FIT_PROTOCOL_VERSION = 0x20; // 2.0
@@ -51,6 +52,8 @@ const SESSION_TIMESTAMP = 253;
 const SESSION_START_TIME = 2;
 const SESSION_TOTAL_ELAPSED_TIME = 7;
 const SESSION_TOTAL_TIMER_TIME = 8;
+const SESSION_TOTAL_DISTANCE = 9;
+const SESSION_TOTAL_CALORIES = 11;
 const SESSION_SPORT = 5;
 const SESSION_SUB_SPORT = 6;
 const SESSION_EVENT = 0;
@@ -61,6 +64,8 @@ const LAP_TIMESTAMP = 253;
 const LAP_START_TIME = 2;
 const LAP_TOTAL_ELAPSED_TIME = 7;
 const LAP_TOTAL_TIMER_TIME = 8;
+const LAP_TOTAL_DISTANCE = 9;
+const LAP_TOTAL_CALORIES = 11;
 const LAP_EVENT = 0;
 const LAP_EVENT_TYPE = 1;
 
@@ -82,7 +87,10 @@ const ACTIVITY_LOCAL_TIMESTAMP = 5;
 const FILE_TYPE_ACTIVITY = 4;
 const MANUFACTURER_DEVELOPMENT = 255;
 const SPORT_CYCLING = 2;
+const SPORT_RUNNING = 1;
+const SPORT_WALKING = 11;
 const SUB_SPORT_INDOOR_CYCLING = 6;
+const SUB_SPORT_GENERIC = 0;
 const EVENT_TIMER = 0;
 const EVENT_SESSION = 8;
 const EVENT_LAP = 9;
@@ -258,28 +266,45 @@ class FitBuilder {
 }
 
 /**
+ * Map internal sport type to FIT sport and sub-sport values
+ */
+function getFitSportValues(sport?: SportType): { sport: number; subSport: number } {
+    switch (sport) {
+        case 'running':
+            return { sport: SPORT_RUNNING, subSport: SUB_SPORT_GENERIC };
+        case 'walking':
+            return { sport: SPORT_WALKING, subSport: SUB_SPORT_GENERIC };
+        case 'cycling':
+        default:
+            return { sport: SPORT_CYCLING, subSport: SUB_SPORT_INDOOR_CYCLING };
+    }
+}
+
+/**
  * Creates a Garmin FIT binary file from workout measurements.
  * 
  * FIT (Flexible and Interoperable Data Transfer) is a binary format
  * used by Garmin devices and supported by most fitness platforms.
  * 
  * @param measurements - The measurements data object containing workout data
+ * @param sport - Optional sport type for the activity (defaults to cycling)
  * @returns FIT binary data as Uint8Array, or null if no data
  * 
  * @example
- * const fitData = getFitData(measurementsState);
+ * const fitData = getFitData(measurementsState, 'running');
  * if (fitData) {
  *     const blob = new Blob([fitData], { type: 'application/fit' });
  *     // Download or upload the file
  * }
  */
-export const getFitData = (measurements: MeasurementsData): Uint8Array | null => {
+export const getFitData = (measurements: MeasurementsData, sport?: SportType): Uint8Array | null => {
     const dataPoints = mergeMeasurements(measurements);
 
     if (!dataPoints || dataPoints.length === 0) {
         return null;
     }
 
+    const fitSportValues = getFitSportValues(sport);
     const fit = new FitBuilder();
     fit.writeHeader();
 
@@ -289,6 +314,17 @@ export const getFitData = (measurements: MeasurementsData): Uint8Array | null =>
     const fitEndTime = toFitTimestamp(lastTimestamp);
     const totalElapsedTime = (lastTimestamp - firstTimestamp) / 1000; // seconds
     const totalElapsedTimeMs = Math.round(totalElapsedTime * 1000); // milliseconds for FIT
+
+    // Calculate totals
+    const validEnergy = dataPoints.filter(p => p.energy !== null);
+    const totalCalories = validEnergy.length > 0
+        ? Math.round(validEnergy[validEnergy.length - 1].energy! - (validEnergy[0].energy || 0))
+        : 0;
+
+    const validDistance = dataPoints.filter(p => p.distance !== null);
+    const totalDistance = validDistance.length > 0 && validDistance[validDistance.length - 1].distance! > (validDistance[0].distance || 0)
+        ? Math.round(validDistance[validDistance.length - 1].distance! - (validDistance[0].distance || 0))
+        : 0;
 
     // Local message type assignments
     const LOCAL_FILE_ID = 0;
@@ -366,6 +402,8 @@ export const getFitData = (measurements: MeasurementsData): Uint8Array | null =>
         { fieldDefNum: LAP_START_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
         { fieldDefNum: LAP_TOTAL_ELAPSED_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
         { fieldDefNum: LAP_TOTAL_TIMER_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
+        { fieldDefNum: LAP_TOTAL_DISTANCE, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
+        { fieldDefNum: LAP_TOTAL_CALORIES, size: 2, baseType: FIT_BASE_TYPE_UINT16 },
         { fieldDefNum: LAP_EVENT, size: 1, baseType: FIT_BASE_TYPE_ENUM },
         { fieldDefNum: LAP_EVENT_TYPE, size: 1, baseType: FIT_BASE_TYPE_ENUM },
     ]);
@@ -373,7 +411,9 @@ export const getFitData = (measurements: MeasurementsData): Uint8Array | null =>
     fit.writeUint32(fitEndTime);
     fit.writeUint32(fitStartTime);
     fit.writeUint32(totalElapsedTimeMs);
-    fit.writeUint32(totalElapsedTimeMs);
+    fit.writeUint32(totalElapsedTimeMs); // Timer time same as elapsed
+    fit.writeUint32(totalDistance);
+    fit.writeUint16(totalCalories);
     fit.writeUint8(EVENT_LAP);
     fit.writeUint8(EVENT_TYPE_STOP);
 
@@ -383,6 +423,8 @@ export const getFitData = (measurements: MeasurementsData): Uint8Array | null =>
         { fieldDefNum: SESSION_START_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
         { fieldDefNum: SESSION_TOTAL_ELAPSED_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
         { fieldDefNum: SESSION_TOTAL_TIMER_TIME, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
+        { fieldDefNum: SESSION_TOTAL_DISTANCE, size: 4, baseType: FIT_BASE_TYPE_UINT32 },
+        { fieldDefNum: SESSION_TOTAL_CALORIES, size: 2, baseType: FIT_BASE_TYPE_UINT16 },
         { fieldDefNum: SESSION_SPORT, size: 1, baseType: FIT_BASE_TYPE_ENUM },
         { fieldDefNum: SESSION_SUB_SPORT, size: 1, baseType: FIT_BASE_TYPE_ENUM },
         { fieldDefNum: SESSION_EVENT, size: 1, baseType: FIT_BASE_TYPE_ENUM },
@@ -393,8 +435,10 @@ export const getFitData = (measurements: MeasurementsData): Uint8Array | null =>
     fit.writeUint32(fitStartTime);
     fit.writeUint32(totalElapsedTimeMs);
     fit.writeUint32(totalElapsedTimeMs);
-    fit.writeUint8(SPORT_CYCLING);
-    fit.writeUint8(SUB_SPORT_INDOOR_CYCLING);
+    fit.writeUint32(totalDistance);
+    fit.writeUint16(totalCalories);
+    fit.writeUint8(fitSportValues.sport);
+    fit.writeUint8(fitSportValues.subSport);
     fit.writeUint8(EVENT_SESSION);
     fit.writeUint8(EVENT_TYPE_STOP);
 

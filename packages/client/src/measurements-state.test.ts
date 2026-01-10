@@ -1,5 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert';
+
+// Mock localStorage
+if (typeof localStorage === 'undefined') {
+    (global as any).localStorage = {
+        getItem: () => null,
+        setItem: () => { },
+        removeItem: () => { },
+        clear: () => { },
+        length: 0,
+        key: () => null
+    };
+}
+
 import { MeasurementsState } from './measurements-state.js';
 
 test('MeasurementsState should add cadence measurement with timestamp and value', () => {
@@ -107,4 +120,39 @@ test('MeasurementsState should ignore cadence 300 or higher', () => {
     bike.addCadence({ timestamp, value: 350 });
 
     assert.strictEqual(bike.cadence.length, 0);
+});
+
+test('MeasurementsState should calculate energy from power measurements', () => {
+    const bike = new MeasurementsState();
+    const t0 = Date.now();
+
+    // First point initializes timer
+    bike.addPower({ timestamp: t0, value: 200 });
+    assert.strictEqual(bike.energy.length, 0);
+
+    // Second point 1 second later
+    // 200W for 1s = 0.2 kJ = 0.2 kcal (approx)
+    bike.addPower({ timestamp: t0 + 1000, value: 200 });
+
+    assert.strictEqual(bike.energy.length, 1);
+    const energy = bike.energy[0].value;
+    assert.ok(Math.abs(energy - 0.2) < 0.001);
+});
+
+test('MeasurementsState should calculate energy from HR if power is missing', () => {
+    const bike = new MeasurementsState();
+    // Default weight is 75kg
+
+    const t0 = Date.now();
+
+    // First point
+    bike.addHeartrate({ timestamp: t0, value: 150 });
+    assert.strictEqual(bike.energy.length, 0);
+
+    // Second point 1s later
+    // HR 150, 75kg, 30yo => ~14.45 kcal/min = 0.24 kcal/sec
+    bike.addHeartrate({ timestamp: t0 + 1000, value: 150 });
+
+    assert.strictEqual(bike.energy.length, 1);
+    assert.ok(bike.energy[0].value > 0.2);
 });

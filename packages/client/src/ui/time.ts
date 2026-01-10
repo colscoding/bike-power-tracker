@@ -15,6 +15,7 @@ import { getTimestring } from '../getTimestring.js';
 import { announce, updateWorkoutControlsAccessibility } from './accessibility.js';
 import { onWorkoutStart, onWorkoutPause } from './workoutPlayer.js';
 import { showNotification } from './notifications.js';
+import { showCountdown } from './countdown.js';
 import type { TimeState } from '../getInitState.js';
 
 /**
@@ -203,21 +204,25 @@ export const initTimerDisplay = (timeState: TimeState): void => {
         btn.addEventListener('click', handler);
     };
 
-    // Handle Start button click - begin new workout
+    // Handle Start button click - begin new workout with countdown
     addListener(startButton, () => {
         console.log('[time.ts] Start button clicked');
-        timeState.startTime = Date.now();
-        timeState.endTime = null;
-        timeState.running = true;
 
-        onWorkoutStart();
+        // Show countdown overlay (if enabled), then start workout
+        showCountdown(() => {
+            timeState.startTime = Date.now();
+            timeState.endTime = null;
+            timeState.running = true;
 
-        updateButtonVisibility(elements, 'recording');
-        updateWorkoutControlsAccessibility('recording');
-        announce('Workout started', 'assertive');
+            onWorkoutStart();
 
-        // Dispatch event so auto-pause service can start monitoring
-        document.dispatchEvent(new CustomEvent('workoutStarted'));
+            updateButtonVisibility(elements, 'recording');
+            updateWorkoutControlsAccessibility('recording');
+            announce('Workout started', 'assertive');
+
+            // Dispatch event so auto-pause service can start monitoring
+            document.dispatchEvent(new CustomEvent('workoutStarted'));
+        });
     });
 
     // Handle Pause button click - pause recording

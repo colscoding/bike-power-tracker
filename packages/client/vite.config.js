@@ -163,6 +163,21 @@ export default defineConfig(({ mode }) => {
                             }
                         },
                         {
+                            // OpenStreetMap Tiles - CacheFirst
+                            urlPattern: /^https:\/\/tile\.openstreetmap\.org\/.*/i,
+                            handler: 'CacheFirst',
+                            options: {
+                                cacheName: 'osm-tiles',
+                                expiration: {
+                                    maxEntries: 5000,
+                                    maxAgeSeconds: 60 * 60 * 24 * 90 // 90 days
+                                },
+                                cacheableResponse: {
+                                    statuses: [0, 200]
+                                }
+                            }
+                        },
+                        {
                             // API calls - NetworkFirst with fallback to cache
                             urlPattern: /\/api\/.*/i,
                             handler: 'NetworkFirst',

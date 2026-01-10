@@ -23,6 +23,7 @@ export type DataFieldCategory =
     | 'elevation'
     | 'time'
     | 'laps'
+    | 'energy'
     | 'environment'
     | 'device'
     | 'charts'
@@ -46,6 +47,7 @@ export const CATEGORY_INFO: Record<DataFieldCategory, CategoryInfo> = {
     elevation: { id: 'elevation', name: 'Elevation', icon: '⛰️', description: 'Altitude and climbing' },
     time: { id: 'time', name: 'Time', icon: '⏱️', description: 'Time and duration' },
     laps: { id: 'laps', name: 'Laps', icon: '🏁', description: 'Lap-specific metrics' },
+    energy: { id: 'energy', name: 'Energy', icon: '🔥', description: 'Calories and Work' },
     environment: { id: 'environment', name: 'Environment', icon: '🌡️', description: 'Weather and conditions' },
     device: { id: 'device', name: 'Device', icon: '🔋', description: 'Device and sensor status' },
     charts: { id: 'charts', name: 'Charts', icon: '📈', description: 'Graphical data displays' },
@@ -147,6 +149,7 @@ export interface UserSettings {
     maxHr: number | null;            // Maximum heart rate (bpm)
     weight: number | null;           // User weight (kg)
     restingHr: number | null;        // Resting heart rate (bpm)
+    showCalories: boolean;           // Show calorie estimation
     targetDistance?: number | null;  // Target distance in user units (km/mi)
 
     // Zone configurations

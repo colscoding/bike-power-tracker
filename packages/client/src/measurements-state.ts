@@ -16,6 +16,8 @@ import {
 } from './storage/workoutStorage.js';
 import { calculateDistance } from './utils/geo.js';
 import { VALIDATION_LIMITS } from './config/constants.js';
+import { getSettings } from './config/settings.js';
+import { calculateCaloriesFromPower, calculateCaloriesFromHeartRate } from './calculations/calories.js';
 
 /**
  * Callback type for state change notifications
@@ -41,6 +43,7 @@ export class MeasurementsState implements MeasurementsData {
     speed: Measurement[] = [];
     distance: Measurement[] = [];
     altitude: Measurement[] = [];
+    energy: Measurement[] = [];
     gps: GpsPoint[] = [];
     treadmill: TreadmillMeasurement[] = [];
     treadmillSpeed: Measurement[] = [];
@@ -50,11 +53,25 @@ export class MeasurementsState implements MeasurementsData {
     private _startTime: number | null = null;
     private _onChangeCallbacks: StateChangeCallback[] = [];
 
+    // Energy calculation state
+    private _lastEnergyTime: number = 0;
+    private _lastPowerTime: number = 0;
+    private _totalEnergy: number = 0; // accumulated kcal
+    private _userWeight: number = 75;
+
     constructor(enablePersistence: boolean = true) {
         this._persistenceEnabled = enablePersistence && isIndexedDBSupported();
 
-        // Set up page unload handler to save any pending changes
-        if (this._persistenceEnabled && typeof window !== 'undefined') {
+        // Load initial weight
+        this._userWeight = getSettings().weightKg;
+
+        // Listen for settings changes
+        if (typeof window !== 'undefined') {
+            window.addEventListener('settings-changed', () => {
+                this._userWeight = getSettings().weightKg;
+            });
+
+            // Set up page unload handler to save any pending changes
             window.addEventListener('beforeunload', () => {
                 flushPendingSave();
             });
@@ -100,6 +117,38 @@ export class MeasurementsState implements MeasurementsData {
     }
 
     /**
+     * Update energy calculation
+     */
+    private _updateEnergy(timestamp: number, value: number, source: 'power' | 'heartrate'): void {
+        // Initialize or reset if gap is too large (>20s)
+        if (this._lastEnergyTime === 0 || (timestamp - this._lastEnergyTime) > 20000) {
+            this._lastEnergyTime = timestamp;
+            return;
+        }
+
+        const dt = (timestamp - this._lastEnergyTime) / 1000;
+        if (dt <= 0) return;
+
+        let kcal = 0;
+        if (source === 'power') {
+            kcal = calculateCaloriesFromPower(value, dt);
+        } else {
+            kcal = calculateCaloriesFromHeartRate(value, this._userWeight, dt);
+        }
+
+        if (kcal > 0) {
+            this._totalEnergy += kcal;
+            // Store cumulative energy point
+            this.energy.push({
+                timestamp,
+                value: this._totalEnergy
+            });
+        }
+
+        this._lastEnergyTime = timestamp;
+    }
+
+    /**
      * Notify listeners and persist state
      */
     private _notifyChange(): void {
@@ -134,6 +183,12 @@ export class MeasurementsState implements MeasurementsData {
             timestamp: entry.timestamp,
             value: entry.value,
         });
+
+        // Calculate energy if power is missing/stale (>5s)
+        if (this._lastPowerTime === 0 || (entry.timestamp - this._lastPowerTime) > 5000) {
+            this._updateEnergy(entry.timestamp, entry.value, 'heartrate');
+        }
+
         this._notifyChange();
     }
 
@@ -153,6 +208,10 @@ export class MeasurementsState implements MeasurementsData {
             timestamp: entry.timestamp,
             value: entry.value,
         });
+
+        this._lastPowerTime = entry.timestamp;
+        this._updateEnergy(entry.timestamp, entry.value, 'power');
+
         this._notifyChange();
     }
 
@@ -423,6 +482,7 @@ export class MeasurementsState implements MeasurementsData {
             altitude: this.altitude.length,
             gps: this.gps.length,
             treadmillSpeed: this.treadmillSpeed.length,
+            energy: this.energy.length,
         };
     }
 

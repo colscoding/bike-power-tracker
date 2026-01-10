@@ -5,8 +5,8 @@
  */
 
 import { WORKOUT_LIBRARY, getWorkoutDuration } from '../workouts/workoutLibrary.js';
-import type { StructuredWorkout, WorkoutStep } from '../workouts/types.js';
-import { WorkoutRunner, type RunnerState } from '../workouts/WorkoutRunner.js';
+import type { StructuredWorkout, WorkoutStep, ActiveWorkoutState } from '../workouts/types.js';
+import { WorkoutRunner } from '../workouts/WorkoutRunner.js';
 import { formatDuration } from '../api/workoutClient.js';
 import { announce } from './accessibility.js';
 import { audioManager } from './audio.js';
@@ -205,7 +205,7 @@ function renderWorkoutItem(w: StructuredWorkout, container: HTMLElement, isCusto
         // Simple check to ensure we didn't click a button
         if ((e.target as HTMLElement).tagName === 'BUTTON') return;
 
-        selectWorkout(w);
+        startStructuredWorkout(w);
         const modal = document.getElementById('workoutSelectionModal');
         if (modal) modal.style.display = 'none';
     });
@@ -214,7 +214,7 @@ function renderWorkoutItem(w: StructuredWorkout, container: HTMLElement, isCusto
     el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            selectWorkout(w);
+            startStructuredWorkout(w);
             const modal = document.getElementById('workoutSelectionModal');
             if (modal) modal.style.display = 'none';
         }
@@ -226,7 +226,7 @@ function renderWorkoutItem(w: StructuredWorkout, container: HTMLElement, isCusto
 /**
  * Select and start a workout
  */
-function selectWorkout(workout: StructuredWorkout): void {
+export function startStructuredWorkout(workout: StructuredWorkout, onComplete?: () => void): void {
     if (activeRunner) {
         if (!confirm('A workout is already active. Stop it and start this one?')) {
             return;
@@ -238,7 +238,18 @@ function selectWorkout(workout: StructuredWorkout): void {
     audioManager.init();
 
     activeRunner = new WorkoutRunner(workout);
-    activeRunner.setCallback(updatePlayerUI);
+
+    // Track if we have already called onComplete
+    let completed = false;
+
+    activeRunner.setCallback((state) => {
+        updatePlayerUI(state);
+
+        if (state.isFinished && !completed && onComplete) {
+            completed = true;
+            onComplete();
+        }
+    });
 
     // Show player
     const overlay = document.getElementById('workoutPlayerOverlay');
@@ -295,7 +306,10 @@ function initPlayerControls(): void {
 /**
  * Update the player UI based on state
  */
-function updatePlayerUI(state: RunnerState): void {
+/**
+ * Update the player UI based on state
+ */
+function updatePlayerUI(state: ActiveWorkoutState): void {
     const nameEl = document.getElementById('wpWorkoutName');
     const descEl = document.getElementById('wpStepDescription');
     const timeEl = document.getElementById('wpStepTime');
@@ -307,16 +321,16 @@ function updatePlayerUI(state: RunnerState): void {
     if (nameEl) nameEl.textContent = state.workout.name;
 
     if (state.currentStep) {
-        if (descEl) descEl.textContent = state.currentStep.description || state.currentStep.type.toUpperCase();
+        if (descEl) descEl.textContent = state.currentStep.description || state.currentStep.name || state.currentStep.type.toUpperCase();
 
         // Timer
         const timeRemaining = state.currentStep.duration - state.stepElapsedTime;
-        if (timeEl) timeEl.textContent = formatTime(timeRemaining);
+        if (timeEl) timeEl.textContent = formatTime(Math.max(0, timeRemaining));
         if (durEl) durEl.textContent = formatTime(state.currentStep.duration);
 
         // Target
         if (targetEl) {
-            targetEl.textContent = state.targetPower ? state.targetPower.toString() : '--';
+            targetEl.textContent = state.currentAbsoluteTarget?.value ? Math.round(state.currentAbsoluteTarget.value).toString() : '--';
         }
     }
 
@@ -333,7 +347,7 @@ function updatePlayerUI(state: RunnerState): void {
     // Progress Bar
     if (progressEl) {
         const pct = (state.stepElapsedTime / state.currentStep.duration) * 100;
-        progressEl.style.width = `${Math.min(100, pct)}%`;
+        progressEl.style.width = `${Math.min(100, Math.max(0, pct))}%`;
 
         // Change color based on zone/intensity?
         // simple: blue for warmup/rest, orange for active
@@ -368,7 +382,9 @@ function formatTime(seconds: number): string {
 // Temporary helper until I expose calculation from Runner or pass it in state
 function calculateNextTarget(step: WorkoutStep): string {
     // This logic is duplicated from Runner, improving later
-    return step.targetValue ? ` @ ~${step.targetValue}${step.targetType === 'percent_ftp' ? '%' : 'W'}` : '';
+    const t = step.target;
+    if (!t) return '';
+    return t.value ? ` @ ~${t.value}${t.unit === 'percent_ftp' ? '%' : 'W'}` : '';
 }
 
 /**

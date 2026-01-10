@@ -245,7 +245,19 @@ export class ScreenCarouselComponent extends HTMLElement {
 
         return `
             <div class="carousel__indicator">
-                ${dots}
+                <button class="carousel__arrow carousel__arrow--prev" 
+                        aria-label="Previous screen"
+                        title="Previous screen (←)">
+                    ‹
+                </button>
+                <div class="carousel__dots">
+                    ${dots}
+                </div>
+                <button class="carousel__arrow carousel__arrow--next" 
+                        aria-label="Next screen"
+                        title="Next screen (→)">
+                    ›
+                </button>
             </div>
         `;
     }
@@ -367,6 +379,21 @@ export class ScreenCarouselComponent extends HTMLElement {
 
     private handleClick(e: Event): void {
         const target = e.target as HTMLElement;
+
+        // Handle arrow button clicks
+        const prevArrow = target.closest('.carousel__arrow--prev');
+        if (prevArrow) {
+            this.prevScreen();
+            return;
+        }
+
+        const nextArrow = target.closest('.carousel__arrow--next');
+        if (nextArrow) {
+            this.nextScreen();
+            return;
+        }
+
+        // Handle dot clicks
         const dot = target.closest('.carousel__dot') as HTMLElement;
         if (dot) {
             const index = parseInt(dot.dataset.index || '0', 10);
@@ -455,10 +482,52 @@ export class ScreenCarouselComponent extends HTMLElement {
             .carousel__indicator {
                 display: flex;
                 justify-content: center;
+                align-items: center;
                 gap: 8px;
                 padding: 8px;
                 height: 32px;
                 background: var(--surface-color, #1a1a2e);
+            }
+
+            .carousel__dots {
+                display: flex;
+                gap: 8px;
+            }
+
+            .carousel__arrow {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 28px;
+                height: 28px;
+                padding: 0;
+                border: none;
+                border-radius: 50%;
+                background: var(--arrow-bg, rgba(255, 255, 255, 0.1));
+                color: var(--arrow-color, rgba(255, 255, 255, 0.7));
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-size: 18px;
+                font-weight: bold;
+                line-height: 1;
+            }
+
+            .carousel__arrow:hover {
+                background: var(--arrow-hover-bg, rgba(255, 255, 255, 0.2));
+                color: var(--arrow-hover-color, #fff);
+            }
+
+            .carousel__arrow:active {
+                transform: scale(0.95);
+            }
+
+            .carousel__arrow:focus {
+                outline: 2px solid var(--focus-color, #4ecdc4);
+                outline-offset: 2px;
+            }
+
+            .carousel__arrow:focus:not(:focus-visible) {
+                outline: none;
             }
 
             .carousel__dot {

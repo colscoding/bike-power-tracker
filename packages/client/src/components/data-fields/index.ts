@@ -12,11 +12,13 @@ export { DataScreenComponent } from './DataScreenComponent.js';
 export { ScreenCarouselComponent } from './ScreenCarouselComponent.js';
 export { FieldPickerComponent } from './FieldPickerComponent.js';
 export { ScreenEditorComponent } from './ScreenEditorComponent.js';
+export { ProfileSettingsComponent } from './ProfileSettingsComponent.js';
 
 // Export types
 export type { ScreenChangeEvent } from './ScreenCarouselComponent.js';
 export type { FieldSelectEvent } from './FieldPickerComponent.js';
 export type { ScreenSaveEvent } from './ScreenEditorComponent.js';
+export type { ProfileChangedEvent } from './ProfileSettingsComponent.js';
 
 // Re-export for convenience - ensures all components are registered
 import './DataFieldComponent.js';
@@ -24,6 +26,7 @@ import './DataScreenComponent.js';
 import './ScreenCarouselComponent.js';
 import './FieldPickerComponent.js';
 import './ScreenEditorComponent.js';
+import './ProfileSettingsComponent.js';
 
 /**
  * Register all data field components.

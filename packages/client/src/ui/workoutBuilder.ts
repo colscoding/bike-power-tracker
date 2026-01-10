@@ -78,13 +78,16 @@ function addStepFromForm(): void {
     const targetValStr = (document.getElementById('wbTargetValue') as HTMLInputElement).value;
 
     const duration = parseInt(durationStr, 10);
+    // Explicitly treat as string because it can contain unit-mixed values like 'percent_ftp'
+    const targetTypeStr = targetType as unknown as string;
+
     if (isNaN(duration) || duration <= 0) {
         alert('Invalid duration');
         return;
     }
 
     let targetValue: number | undefined = undefined;
-    if (targetType !== 'open') {
+    if (targetTypeStr !== 'open') { // Checks against string from DOM
         targetValue = parseInt(targetValStr, 10);
         if (isNaN(targetValue)) {
             alert('Invalid target value');
@@ -92,11 +95,17 @@ function addStepFromForm(): void {
         }
     }
 
+    // Adapt to new WorkoutTarget structure
+    const target: any = {
+        type: targetTypeStr === 'open' ? 'open' : 'power',
+        unit: targetTypeStr === 'percent_ftp' ? 'percent_ftp' : 'watts',
+        value: targetValue
+    };
+
     const step: WorkoutStep = {
         type,
         duration,
-        targetType,
-        targetValue,
+        target,
         description: `${capitalize(type)} (${formatDuration(duration)})`
     };
 
@@ -130,9 +139,10 @@ function renderSteps(): void {
         row.style.alignItems = 'center';
         row.style.border = '1px solid var(--color-border)';
 
-        const desc = step.targetType === 'open'
+        const t = step.target;
+        const desc = !t || t.type === 'open'
             ? 'Open effort'
-            : `${step.targetValue} ${step.targetType === 'percent_ftp' ? '%' : 'W'}`;
+            : `${t.value} ${t.unit === 'percent_ftp' ? '%' : 'W'}`;
 
         row.innerHTML = `
             <div>

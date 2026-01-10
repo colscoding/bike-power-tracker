@@ -8,10 +8,12 @@
 
 import { loadUserProfile, saveUserProfile } from './onboarding.js';
 import { BluetoothDebugService } from '../services/debug/BluetoothDebugService.js';
-import { getSettings, saveSettingsToStorage, defaultSettings, defaultAutoPauseSettings } from '../config/settings.js';
-import type { AppSettings, AutoPauseSource } from '../config/settings.js';
+import { getSettings, saveSettingsToStorage, defaultSettings, defaultAutoPauseSettings, defaultWorkoutMetadataSettings, defaultCountdownSettings, defaultAutoLapSettings, defaultEnhancedVoiceSettings, defaultVoiceMetrics, defaultIntervalsSettings } from '../config/settings.js';
+import type { AppSettings, AutoPauseSource, AutoLapSource } from '../config/settings.js';
 import { triggerInstallPrompt } from './installPrompt.js';
 import { getAutoPauseSourceUnit } from '../services/AutoPauseService.js';
+import { getSportSettings, saveSportSettings, formatPace } from '../config/sport.js';
+import type { SportType } from '../config/sport.js';
 
 // Re-export for compatibility if needed (but prefer importing from config)
 export { getSettings };
@@ -32,6 +34,7 @@ export function initSettingsLogic(): void {
     const settingSpeed = document.getElementById('settingSpeed') as HTMLInputElement | null;
     const settingDistance = document.getElementById('settingDistance') as HTMLInputElement | null;
     const settingAltitude = document.getElementById('settingAltitude') as HTMLInputElement | null;
+    const settingShowCalories = document.getElementById('settingShowCalories') as HTMLInputElement | null;
     const settingPower = document.getElementById('settingPower') as HTMLInputElement | null;
     const settingCadence = document.getElementById('settingCadence') as HTMLInputElement | null;
     const settingHeartrate = document.getElementById('settingHeartrate') as HTMLInputElement | null;
@@ -61,6 +64,49 @@ export function initSettingsLogic(): void {
     const settingExportJson = document.getElementById('settingExportJson') as HTMLInputElement | null;
     const settingExportFit = document.getElementById('settingExportFit') as HTMLInputElement | null;
 
+    // Workout metadata settings
+    const settingPromptForNotes = document.getElementById('settingPromptForNotes') as HTMLInputElement | null;
+    const settingPromptForExertion = document.getElementById('settingPromptForExertion') as HTMLInputElement | null;
+
+    // Countdown settings
+    const settingCountdownDuration = document.getElementById('settingCountdownDuration') as HTMLSelectElement | null;
+    const settingCountdownBeep = document.getElementById('settingCountdownBeep') as HTMLInputElement | null;
+    const settingCountdownVoice = document.getElementById('settingCountdownVoice') as HTMLInputElement | null;
+
+    // Auto-Lap settings
+    const settingAutoLapEnabled = document.getElementById('settingAutoLapEnabled') as HTMLInputElement | null;
+    const settingAutoLapSource = document.getElementById('settingAutoLapSource') as HTMLSelectElement | null;
+    const settingAutoLapDistance = document.getElementById('settingAutoLapDistance') as HTMLSelectElement | null;
+    const settingAutoLapTime = document.getElementById('settingAutoLapTime') as HTMLSelectElement | null;
+    const autoLapOptions = document.getElementById('autoLapOptions');
+    const autoLapDistanceOption = document.getElementById('autoLapDistanceOption');
+    const autoLapTimeOption = document.getElementById('autoLapTimeOption');
+
+    // Enhanced Voice settings
+    const settingVoiceTimeInterval = document.getElementById('settingVoiceTimeInterval') as HTMLSelectElement | null;
+    const settingVoiceDistanceInterval = document.getElementById('settingVoiceDistanceInterval') as HTMLSelectElement | null;
+    const settingVoiceSpeechRate = document.getElementById('settingVoiceSpeechRate') as HTMLSelectElement | null;
+    const settingVoiceMetricPower = document.getElementById('settingVoiceMetricPower') as HTMLInputElement | null;
+    const settingVoiceMetricHeartrate = document.getElementById('settingVoiceMetricHeartrate') as HTMLInputElement | null;
+    const settingVoiceMetricCadence = document.getElementById('settingVoiceMetricCadence') as HTMLInputElement | null;
+    const settingVoiceMetricSpeed = document.getElementById('settingVoiceMetricSpeed') as HTMLInputElement | null;
+    const settingVoiceMetricDistance = document.getElementById('settingVoiceMetricDistance') as HTMLInputElement | null;
+    const settingVoiceMetricTime = document.getElementById('settingVoiceMetricTime') as HTMLInputElement | null;
+
+    // Sport Type settings
+    const settingSportType = document.getElementById('settingSportType') as HTMLSelectElement | null;
+    const settingShowPace = document.getElementById('settingShowPace') as HTMLInputElement | null;
+    const settingThresholdPace = document.getElementById('settingThresholdPace') as HTMLInputElement | null;
+    const runningOptions = document.getElementById('runningOptions');
+
+    // Intervals.icu settings
+    const settingIntervalsEnabled = document.getElementById('settingIntervalsEnabled') as HTMLInputElement | null;
+    const settingIntervalsApiKey = document.getElementById('settingIntervalsApiKey') as HTMLInputElement | null;
+    const toggleIntervalsApiKey = document.getElementById('toggleIntervalsApiKey') as HTMLButtonElement | null;
+    const settingIntervalsAthleteId = document.getElementById('settingIntervalsAthleteId') as HTMLInputElement | null;
+    const settingIntervalsAutoUpload = document.getElementById('settingIntervalsAutoUpload') as HTMLInputElement | null;
+    const intervalsOptions = document.getElementById('intervalsOptions');
+
     // Debug settings
     const settingDebugMode = document.getElementById('settingDebugMode') as HTMLInputElement | null;
     const debugControls = document.getElementById('debugControls');
@@ -69,6 +115,99 @@ export function initSettingsLogic(): void {
 
     // PWA Install button
     const installPwaButton = document.getElementById('installPwaButton');
+
+    /**
+     * Update Intervals UI visibility
+     */
+    const updateIntervalsUI = (): void => {
+        if (intervalsOptions && settingIntervalsEnabled) {
+            intervalsOptions.style.display = settingIntervalsEnabled.checked ? 'flex' : 'none';
+        }
+    };
+
+    /**
+     * Update sport type UI visibility (show running options when running/walking selected)
+     */
+    const updateSportUI = (): void => {
+        if (runningOptions && settingSportType) {
+            const isRunning = settingSportType.value === 'running' || settingSportType.value === 'walking';
+            runningOptions.style.display = isRunning ? 'block' : 'none';
+        }
+    };
+
+    /**
+     * Parse pace string (MM:SS) to seconds per km
+     */
+    const parsePace = (paceStr: string): number | null => {
+        const match = paceStr.match(/^(\d{1,2}):([0-5]\d)$/);
+        if (!match) return null;
+        const minutes = parseInt(match[1], 10);
+        const seconds = parseInt(match[2], 10);
+        return minutes * 60 + seconds;
+    };
+
+    /**
+     * Save sport settings
+     */
+    const saveSportSettingsFromUI = (): void => {
+        const sportSettings = getSportSettings();
+
+        if (settingSportType) {
+            sportSettings.activeSport = settingSportType.value as SportType;
+        }
+        if (settingShowPace !== null) {
+            sportSettings.running.showPace = settingShowPace.checked;
+        }
+        if (settingThresholdPace?.value) {
+            const paceSeconds = parsePace(settingThresholdPace.value);
+            if (paceSeconds !== null) {
+                // Store threshold pace as target pace range (±30 sec)
+                sportSettings.running.targetPaceMin = paceSeconds - 30;
+                sportSettings.running.targetPaceMax = paceSeconds + 30;
+            }
+        }
+
+        saveSportSettings(sportSettings);
+    };
+
+    /**
+     * Load sport settings into UI
+     */
+    const loadSportSettings = (): void => {
+        const sportSettings = getSportSettings();
+
+        if (settingSportType) {
+            settingSportType.value = sportSettings.activeSport;
+        }
+        if (settingShowPace) {
+            settingShowPace.checked = sportSettings.running.showPace;
+        }
+        if (settingThresholdPace) {
+            // Calculate threshold pace from target pace (middle of range)
+            const thresholdPace = Math.round((sportSettings.running.targetPaceMin + sportSettings.running.targetPaceMax) / 2);
+            settingThresholdPace.value = formatPace(thresholdPace);
+        }
+
+        updateSportUI();
+    };
+
+    // Sport type change listener
+    settingSportType?.addEventListener('change', updateSportUI);
+
+    /**
+     * Toggle API Key visibility
+     */
+    toggleIntervalsApiKey?.addEventListener('click', () => {
+        if (settingIntervalsApiKey) {
+            const isPassword = settingIntervalsApiKey.type === 'password';
+            settingIntervalsApiKey.type = isPassword ? 'text' : 'password';
+            if (toggleIntervalsApiKey) {
+                toggleIntervalsApiKey.textContent = isPassword ? '🙈' : '👁️';
+            }
+        }
+    });
+
+    settingIntervalsEnabled?.addEventListener('change', updateIntervalsUI);
 
     /**
      * Update auto-pause options visibility and unit label
@@ -89,6 +228,25 @@ export function initSettingsLogic(): void {
     settingAutoPauseSource?.addEventListener('change', updateAutoPauseUI);
 
     /**
+     * Update auto-lap options visibility and source options
+     */
+    const updateAutoLapUI = (): void => {
+        if (autoLapOptions && settingAutoLapEnabled) {
+            autoLapOptions.style.opacity = settingAutoLapEnabled.checked ? '1' : '0.5';
+            autoLapOptions.style.pointerEvents = settingAutoLapEnabled.checked ? 'auto' : 'none';
+        }
+        if (autoLapDistanceOption && autoLapTimeOption && settingAutoLapSource) {
+            const isDistance = settingAutoLapSource.value === 'distance';
+            autoLapDistanceOption.style.display = isDistance ? 'flex' : 'none';
+            autoLapTimeOption.style.display = isDistance ? 'none' : 'flex';
+        }
+    };
+
+    // Add event listeners for auto-lap UI updates
+    settingAutoLapEnabled?.addEventListener('change', updateAutoLapUI);
+    settingAutoLapSource?.addEventListener('change', updateAutoLapUI);
+
+    /**
      * Apply settings to the UI
      */
     const applySettings = (settings: AppSettings): void => {
@@ -103,6 +261,7 @@ export function initSettingsLogic(): void {
         toggleMetric('speed', settings.speed);
         toggleMetric('distance', settings.distance);
         toggleMetric('altitude', settings.altitude);
+        toggleMetric('energy', settings.showCalories);
         toggleMetric('power', settings.power);
         toggleMetric('cadence', settings.cadence);
         toggleMetric('heartrate', settings.heartrate);
@@ -157,6 +316,8 @@ export function initSettingsLogic(): void {
             speed: settingSpeed?.checked ?? defaultSettings.speed,
             distance: settingDistance?.checked ?? defaultSettings.distance,
             altitude: settingAltitude?.checked ?? defaultSettings.altitude,
+            weightKg: settingWeight?.value ? Number(settingWeight.value) : defaultSettings.weightKg,
+            showCalories: settingShowCalories?.checked ?? defaultSettings.showCalories,
             power: settingPower?.checked ?? defaultSettings.power,
             cadence: settingCadence?.checked ?? defaultSettings.cadence,
             heartrate: settingHeartrate?.checked ?? defaultSettings.heartrate,
@@ -173,6 +334,40 @@ export function initSettingsLogic(): void {
                 threshold: settingAutoPauseThreshold?.value ? Number(settingAutoPauseThreshold.value) : defaultAutoPauseSettings.threshold,
                 delay: settingAutoPauseDelay?.value ? Number(settingAutoPauseDelay.value) : defaultAutoPauseSettings.delay,
             },
+            workoutMetadata: {
+                promptForNotes: settingPromptForNotes?.checked ?? defaultWorkoutMetadataSettings.promptForNotes,
+                promptForExertion: settingPromptForExertion?.checked ?? defaultWorkoutMetadataSettings.promptForExertion,
+            },
+            countdown: {
+                duration: (settingCountdownDuration?.value ? parseInt(settingCountdownDuration.value) : defaultCountdownSettings.duration) as 0 | 3 | 5 | 10,
+                enableBeep: settingCountdownBeep?.checked ?? defaultCountdownSettings.enableBeep,
+                enableVoice: settingCountdownVoice?.checked ?? defaultCountdownSettings.enableVoice,
+            },
+            autoLap: {
+                enabled: settingAutoLapEnabled?.checked ?? defaultAutoLapSettings.enabled,
+                source: (settingAutoLapSource?.value as AutoLapSource) ?? defaultAutoLapSettings.source,
+                distanceKm: settingAutoLapDistance?.value ? Number(settingAutoLapDistance.value) : defaultAutoLapSettings.distanceKm,
+                timeMinutes: settingAutoLapTime?.value ? Number(settingAutoLapTime.value) : defaultAutoLapSettings.timeMinutes,
+            },
+            enhancedVoice: {
+                timeIntervalMinutes: (settingVoiceTimeInterval?.value ? parseInt(settingVoiceTimeInterval.value) : defaultEnhancedVoiceSettings.timeIntervalMinutes) as 0 | 1 | 5 | 10 | 15 | 30,
+                distanceIntervalKm: (settingVoiceDistanceInterval?.value ? parseInt(settingVoiceDistanceInterval.value) : defaultEnhancedVoiceSettings.distanceIntervalKm) as 0 | 1 | 5 | 10,
+                metrics: {
+                    power: settingVoiceMetricPower?.checked ?? defaultVoiceMetrics.power,
+                    heartrate: settingVoiceMetricHeartrate?.checked ?? defaultVoiceMetrics.heartrate,
+                    cadence: settingVoiceMetricCadence?.checked ?? defaultVoiceMetrics.cadence,
+                    speed: settingVoiceMetricSpeed?.checked ?? defaultVoiceMetrics.speed,
+                    distance: settingVoiceMetricDistance?.checked ?? defaultVoiceMetrics.distance,
+                    time: settingVoiceMetricTime?.checked ?? defaultVoiceMetrics.time,
+                },
+                speechRate: (settingVoiceSpeechRate?.value ? parseFloat(settingVoiceSpeechRate.value) : defaultEnhancedVoiceSettings.speechRate) as 0.5 | 0.75 | 1 | 1.25 | 1.5 | 2,
+            },
+            intervals: {
+                enabled: settingIntervalsEnabled?.checked ?? defaultIntervalsSettings.enabled,
+                apiKey: settingIntervalsApiKey?.value ?? defaultIntervalsSettings.apiKey,
+                athleteId: settingIntervalsAthleteId?.value ?? defaultIntervalsSettings.athleteId,
+                autoUpload: settingIntervalsAutoUpload?.checked ?? defaultIntervalsSettings.autoUpload,
+            },
             exportTcx: settingExportTcx?.checked ?? defaultSettings.exportTcx,
             exportCsv: settingExportCsv?.checked ?? defaultSettings.exportCsv,
             exportJson: settingExportJson?.checked ?? defaultSettings.exportJson,
@@ -182,6 +377,10 @@ export function initSettingsLogic(): void {
 
         // saveSettingsToStorage dispatches 'settings-changed' internally
         saveSettingsToStorage(settings);
+
+        // Save sport settings separately
+        saveSportSettingsFromUI();
+
         applySettings(settings);
     };
 
@@ -204,6 +403,7 @@ export function initSettingsLogic(): void {
         if (settingSpeed) settingSpeed.checked = settings.speed;
         if (settingDistance) settingDistance.checked = settings.distance;
         if (settingAltitude) settingAltitude.checked = settings.altitude;
+        if (settingShowCalories) settingShowCalories.checked = settings.showCalories;
         if (settingTreadmillSpeed) settingTreadmillSpeed.checked = settings.treadmillSpeed;
         if (settingPower3s) settingPower3s.checked = settings.power3s;
 
@@ -229,8 +429,45 @@ export function initSettingsLogic(): void {
         if (settingExportJson) settingExportJson.checked = settings.exportJson;
         if (settingExportFit) settingExportFit.checked = settings.exportFit;
 
+        // Workout metadata settings
+        if (settingPromptForNotes) settingPromptForNotes.checked = settings.workoutMetadata.promptForNotes;
+        if (settingPromptForExertion) settingPromptForExertion.checked = settings.workoutMetadata.promptForExertion;
+
+        // Countdown settings
+        if (settingCountdownDuration) settingCountdownDuration.value = settings.countdown.duration.toString();
+        if (settingCountdownBeep) settingCountdownBeep.checked = settings.countdown.enableBeep;
+        if (settingCountdownVoice) settingCountdownVoice.checked = settings.countdown.enableVoice;
+
+        // Auto-Lap settings
+        if (settingAutoLapEnabled) settingAutoLapEnabled.checked = settings.autoLap.enabled;
+        if (settingAutoLapSource) settingAutoLapSource.value = settings.autoLap.source;
+        if (settingAutoLapDistance) settingAutoLapDistance.value = settings.autoLap.distanceKm.toString();
+        if (settingAutoLapTime) settingAutoLapTime.value = settings.autoLap.timeMinutes.toString();
+        updateAutoLapUI();
+
+        // Enhanced Voice settings
+        if (settingVoiceTimeInterval) settingVoiceTimeInterval.value = settings.enhancedVoice.timeIntervalMinutes.toString();
+        if (settingVoiceDistanceInterval) settingVoiceDistanceInterval.value = settings.enhancedVoice.distanceIntervalKm.toString();
+        if (settingVoiceSpeechRate) settingVoiceSpeechRate.value = settings.enhancedVoice.speechRate.toString();
+        if (settingVoiceMetricPower) settingVoiceMetricPower.checked = settings.enhancedVoice.metrics.power;
+        if (settingVoiceMetricHeartrate) settingVoiceMetricHeartrate.checked = settings.enhancedVoice.metrics.heartrate;
+        if (settingVoiceMetricCadence) settingVoiceMetricCadence.checked = settings.enhancedVoice.metrics.cadence;
+        if (settingVoiceMetricSpeed) settingVoiceMetricSpeed.checked = settings.enhancedVoice.metrics.speed;
+        if (settingVoiceMetricDistance) settingVoiceMetricDistance.checked = settings.enhancedVoice.metrics.distance;
+        if (settingVoiceMetricTime) settingVoiceMetricTime.checked = settings.enhancedVoice.metrics.time;
+
+        // Intervals.icu settings
+        if (settingIntervalsEnabled) settingIntervalsEnabled.checked = settings.intervals.enabled;
+        if (settingIntervalsApiKey) settingIntervalsApiKey.value = settings.intervals.apiKey;
+        if (settingIntervalsAthleteId) settingIntervalsAthleteId.value = settings.intervals.athleteId;
+        if (settingIntervalsAutoUpload) settingIntervalsAutoUpload.checked = settings.intervals.autoUpload;
+        updateIntervalsUI();
+
         // Debug settings
         if (settingDebugMode) settingDebugMode.checked = settings.debugMode;
+
+        // Sport settings (stored separately)
+        loadSportSettings();
 
         applySettings(settings);
     };

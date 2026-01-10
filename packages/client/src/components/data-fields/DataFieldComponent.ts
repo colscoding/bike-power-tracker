@@ -292,6 +292,7 @@ export class DataFieldComponent extends HTMLElement {
             weight: 70,
             restingHr: 60,
             unitSystem: 'metric',
+            showCalories: true,
             powerZones: [],
             hrZones: [],
         };
