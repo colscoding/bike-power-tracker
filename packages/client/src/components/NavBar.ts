@@ -30,23 +30,23 @@ export class NavBar {
 
     private render(): void {
         this.container.innerHTML = `
-            <button class="nav-item active" data-target="${ViewId.Dashboard}">
+            <button class="nav-item active" data-target="${ViewId.Dashboard}" data-testid="nav-dashboard">
                 <span class="nav-icon">📊</span>
                 <span class="nav-label">Dashboard</span>
             </button>
-            <button class="nav-item" data-target="${ViewId.History}">
+            <button class="nav-item" data-target="${ViewId.History}" data-testid="nav-history">
                 <span class="nav-icon">📅</span>
                 <span class="nav-label">History</span>
             </button>
-            <button class="nav-item" data-target="${ViewId.Workouts}">
+            <button class="nav-item" data-target="${ViewId.Workouts}" data-testid="nav-workouts">
                 <span class="nav-icon">🏋️</span>
                 <span class="nav-label">Workouts</span>
             </button>
-            <button class="nav-item" data-target="${ViewId.Plans}">
+            <button class="nav-item" data-target="${ViewId.Plans}" data-testid="nav-plans">
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">Plans</span>
             </button>
-            <button class="nav-item" data-target="${ViewId.Settings}">
+            <button class="nav-item" data-target="${ViewId.Settings}" data-testid="nav-settings">
                 <span class="nav-icon">⚙️</span>
                 <span class="nav-label">Settings</span>
             </button>

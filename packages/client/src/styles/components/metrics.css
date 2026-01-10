@@ -1,0 +1,168 @@
+/**
+ * Metrics Display Components
+ */
+
+/* Metrics sections */
+.metrics-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    padding: 0;
+    background: var(--bg-primary);
+    position: relative;
+    container-type: size;
+    transition: background-color var(--transition-normal);
+}
+
+/* Responsive: stack vertically on smaller screens */
+@media (max-width: 768px) {
+    .metrics-section {
+        flex: 1;
+    }
+}
+
+/* Section headers */
+.section-title {
+    font-size: min(1.5em, 3vh);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: min(8px, 1.5vh) min(10px, 1vw);
+    margin-bottom: min(8px, 1.5vh);
+    background: var(--bg-secondary);
+    /* Was --section-header-bg */
+    border-bottom: 2px solid var(--border-default);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    flex: 0 0 auto;
+    height: 10cqh;
+    min-height: 40px;
+    transition: background-color var(--transition-normal), border-color var(--transition-normal);
+}
+
+.close-stream-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.15s ease, color var(--transition-normal);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-stream-btn:hover {
+    background-color: var(--bg-hover);
+}
+
+/* Stream title with status */
+.stream-title-with-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.last-update-inline {
+    font-size: min(0.8em, 2vh);
+    color: var(--text-muted);
+    text-align: center;
+    font-style: italic;
+    margin-top: min(8px, 1vh);
+    padding: 0 min(20px, 2vw) min(12px, 2vh);
+}
+
+/* Adjust metrics table for side-by-side view */
+#streamMetricsTable {
+    text-align: center;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    transition: opacity var(--transition-normal), filter var(--transition-normal);
+    padding: 0 min(20px, 2vw) min(16px, 2vh);
+    overflow: hidden;
+}
+
+.metric-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+}
+
+/* Metrics table values */
+#streamMetricsTable dt {
+    font-size: 4cqh;
+    color: var(--text-secondary);
+    margin-top: 0;
+    transition: color var(--transition-normal);
+}
+
+#streamMetricsTable dt:first-child {
+    margin-top: 0;
+}
+
+#streamMetricsTable dd {
+    font-size: 14cqh;
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: 0;
+    line-height: 0.9;
+    transition: color var(--transition-normal);
+}
+/* ============================================
+   Customizable Dashboard - Metric Order Display
+   ============================================ */
+
+/* Metric groups can be reordered using CSS order property */
+.metric-group[data-order="1"] {
+    order: 1;
+}
+
+.metric-group[data-order="2"] {
+    order: 2;
+}
+
+.metric-group[data-order="3"] {
+    order: 3;
+}
+
+.metric-group[data-order="4"] {
+    order: 4;
+}
+
+.metric-group[data-order="5"] {
+    order: 5;
+}
+
+.metric-group[data-order="6"] {
+    order: 6;
+}
+
+/* Toggle for average power display */
+.metric-group-power[data-show-avg="true"] dd::after {
+    content: attr(data-avg-value);
+    display: block;
+    font-size: 0.4em;
+    opacity: 0.7;
+}
+
+/* Visibility toggling */
+.metric-group.metric-hidden {
+    display: none !important;
+}

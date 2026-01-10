@@ -448,7 +448,7 @@ export class MeasurementsState implements MeasurementsData {
         // Don't persist on restore - data is already persisted
         for (const callback of this._onChangeCallbacks) {
             try {
-                callback();
+                callback(this);
             } catch (e) {
                 console.error('State change callback error:', e);
             }

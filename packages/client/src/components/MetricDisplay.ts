@@ -20,19 +20,7 @@
  */
 
 import { BaseComponent } from './base/BaseComponent.js';
-
-/**
- * Zone color mapping for power/HR zones
- */
-const ZONE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-    '1': { bg: 'rgba(74, 144, 226, 0.15)', text: '#2563eb', border: '#3b82f6' },
-    '2': { bg: 'rgba(34, 197, 94, 0.15)', text: '#16a34a', border: '#22c55e' },
-    '3': { bg: 'rgba(234, 179, 8, 0.15)', text: '#ca8a04', border: '#eab308' },
-    '4': { bg: 'rgba(249, 115, 22, 0.15)', text: '#ea580c', border: '#f97316' },
-    '5': { bg: 'rgba(239, 68, 68, 0.15)', text: '#dc2626', border: '#ef4444' },
-    '6': { bg: 'rgba(168, 85, 247, 0.15)', text: '#9333ea', border: '#a855f7' },
-    '7': { bg: 'rgba(236, 72, 153, 0.15)', text: '#db2777', border: '#ec4899' },
-};
+import { sharedStyles } from './styles/shared.js';
 
 /**
  * Metric Display Web Component
@@ -44,28 +32,41 @@ export class MetricDisplay extends BaseComponent {
 
     protected getStyles(): string {
         return `
+            ${sharedStyles}
+
             :host {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 8px;
-                transition: background-color 0.3s ease, border-color 0.3s ease;
-                border-radius: 8px;
+                padding: var(--space-2);
+                transition: background-color var(--transition-normal), border-color var(--transition-normal);
+                border-radius: var(--radius-md);
                 min-width: 100px;
+                background-color: var(--zone-bg, var(--bg-secondary));
+                color: var(--text-primary);
             }
             
+            /* Zone bindings */
+            :host([zone="1"]) { --zone-color: var(--zone-1-color); --zone-bg: var(--zone-1-color-bg); }
+            :host([zone="2"]) { --zone-color: var(--zone-2-color); --zone-bg: var(--zone-2-color-bg); }
+            :host([zone="3"]) { --zone-color: var(--zone-3-color); --zone-bg: var(--zone-3-color-bg); }
+            :host([zone="4"]) { --zone-color: var(--zone-4-color); --zone-bg: var(--zone-4-color-bg); }
+            :host([zone="5"]) { --zone-color: var(--zone-5-color); --zone-bg: var(--zone-5-color-bg); }
+            :host([zone="6"]) { --zone-color: var(--zone-6-color); --zone-bg: var(--zone-6-color-bg); }
+            :host([zone="7"]) { --zone-color: var(--zone-7-color); --zone-bg: var(--zone-7-color-bg); }
+
             :host([zone]) {
-                border-left: 4px solid var(--zone-border-color, transparent);
+                border-left: 4px solid var(--zone-color, transparent);
             }
             
             .label {
-                font-size: clamp(12px, 3cqh, 16px);
-                color: var(--color-text-secondary, #656d76);
-                margin-bottom: 4px;
+                font-size: var(--font-size-metric-label);
+                color: var(--text-secondary);
+                margin-bottom: var(--space-1);
                 display: flex;
                 align-items: center;
-                gap: 4px;
+                gap: var(--space-1);
             }
             
             .icon {
@@ -75,43 +76,43 @@ export class MetricDisplay extends BaseComponent {
             .value-container {
                 display: flex;
                 align-items: baseline;
-                gap: 4px;
+                gap: var(--space-1);
             }
             
             .value {
-                font-size: clamp(32px, 16cqh, 72px);
-                font-weight: bold;
-                color: var(--zone-text-color, var(--color-text-primary, #1f2328));
+                font-size: var(--font-size-metric-value);
+                font-weight: var(--font-weight-bold);
+                color: var(--zone-color, var(--text-primary));
                 line-height: 1;
-                transition: color 0.3s ease;
+                transition: color var(--transition-normal);
             }
             
             .value.disconnected {
-                color: var(--color-text-muted, #8b949e);
+                color: var(--text-tertiary);
             }
             
             .unit {
-                font-size: clamp(12px, 4cqh, 18px);
-                color: var(--color-text-secondary, #656d76);
+                font-size: var(--font-size-metric-unit);
+                color: var(--text-secondary);
             }
             
             .avg-indicator {
-                font-size: clamp(8px, 2cqh, 12px);
-                color: var(--color-text-muted, #8b949e);
+                font-size: var(--font-size-xs);
+                color: var(--text-tertiary);
                 vertical-align: super;
             }
             
             .zone-badge {
-                font-size: clamp(10px, 2.5cqh, 14px);
+                font-size: var(--font-size-sm);
                 padding: 2px 8px;
                 border-radius: 12px;
-                margin-top: 4px;
-                background-color: var(--zone-bg-color, transparent);
-                color: var(--zone-text-color, var(--color-text-secondary, #656d76));
-                font-weight: 500;
+                margin-top: var(--space-1);
+                background-color: var(--zone-bg, transparent);
+                color: var(--zone-color, var(--text-secondary));
+                font-weight: var(--font-weight-medium);
                 opacity: 0;
                 transform: translateY(-4px);
-                transition: opacity 0.2s ease, transform 0.2s ease;
+                transition: opacity var(--transition-fast), transform var(--transition-fast);
             }
             
             :host([zone]) .zone-badge {
@@ -160,30 +161,9 @@ export class MetricDisplay extends BaseComponent {
         `;
     }
 
-    protected onAttributeChanged(name: string, _oldValue: string | null, newValue: string | null): void {
-        if (name === 'zone') {
-            this.updateZoneStyles(newValue);
-        }
+    protected onAttributeChanged(_name: string, _oldValue: string | null, _newValue: string | null): void {
         // Re-render on any attribute change
         this.render();
-    }
-
-    /**
-     * Update zone-specific styles
-     */
-    private updateZoneStyles(zone: string | null): void {
-        if (zone && ZONE_COLORS[zone]) {
-            const colors = ZONE_COLORS[zone];
-            this.style.setProperty('--zone-bg-color', colors.bg);
-            this.style.setProperty('--zone-text-color', colors.text);
-            this.style.setProperty('--zone-border-color', colors.border);
-            this.style.backgroundColor = colors.bg;
-        } else {
-            this.style.removeProperty('--zone-bg-color');
-            this.style.removeProperty('--zone-text-color');
-            this.style.removeProperty('--zone-border-color');
-            this.style.backgroundColor = '';
-        }
     }
 
     /**

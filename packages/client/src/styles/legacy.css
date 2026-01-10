@@ -1,0 +1,492 @@
+/* Import Data Fields Styles */
+@import './data-fields.css';
+@import './data-fields-config.css';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================
+   High Contrast Mode
+   ============================================ */
+
+/* High contrast mode enabled via data attribute */
+[data-high-contrast="true"] {
+    /* Enhanced contrast colors */
+    --color-text-primary: #000000;
+    --color-text-secondary: #1a1a1a;
+    --color-text-muted: #333333;
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f0f0f0;
+    --color-border: #000000;
+    --color-border-strong: #000000;
+
+    /* High contrast accent colors */
+    --color-accent: #0000cc;
+    --color-accent-hover: #000099;
+    --color-success: #006600;
+    --color-error: #cc0000;
+    --color-warning: #996600;
+}
+
+/* Dark mode high contrast */
+[data-theme="dark"][data-high-contrast="true"],
+[data-high-contrast="true"][data-theme="dark"] {
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #e0e0e0;
+    --color-text-muted: #cccccc;
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #1a1a1a;
+    --color-border: #ffffff;
+    --color-border-strong: #ffffff;
+
+    --color-accent: #66b3ff;
+    --color-accent-hover: #99ccff;
+    --color-success: #66ff66;
+    --color-error: #ff6666;
+    --color-warning: #ffcc66;
+}
+
+/* High contrast patterns for zones (colorblind-friendly) */
+[data-high-contrast="true"] .zone-1,
+[data-high-contrast="true"] .zone-recovery {
+    background: repeating-linear-gradient(45deg,
+            #4a90d9,
+            #4a90d9 5px,
+            #6aa8f0 5px,
+            #6aa8f0 10px) !important;
+    border: 3px solid #2563eb !important;
+}
+
+[data-high-contrast="true"] .zone-2,
+[data-high-contrast="true"] .zone-endurance {
+    background: repeating-linear-gradient(90deg,
+            #22c55e,
+            #22c55e 5px,
+            #4ade80 5px,
+            #4ade80 10px) !important;
+    border: 3px solid #16a34a !important;
+}
+
+[data-high-contrast="true"] .zone-3,
+[data-high-contrast="true"] .zone-tempo {
+    background: repeating-linear-gradient(-45deg,
+            #eab308,
+            #eab308 5px,
+            #facc15 5px,
+            #facc15 10px) !important;
+    border: 3px solid #ca8a04 !important;
+}
+
+[data-high-contrast="true"] .zone-4,
+[data-high-contrast="true"] .zone-threshold {
+    background: repeating-linear-gradient(0deg,
+            #f97316,
+            #f97316 5px,
+            #fb923c 5px,
+            #fb923c 10px) !important;
+    border: 3px solid #ea580c !important;
+}
+
+[data-high-contrast="true"] .zone-5,
+[data-high-contrast="true"] .zone-vo2max,
+[data-high-contrast="true"] .zone-anaerobic {
+    background: repeating-linear-gradient(135deg,
+            #ef4444,
+            #ef4444 5px,
+            #f87171 5px,
+            #f87171 10px) !important;
+    border: 3px solid #dc2626 !important;
+}
+
+/* High contrast focus indicators */
+[data-high-contrast="true"] :focus-visible {
+    outline: 4px solid #000000 !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 6px #ffffff, 0 0 0 10px #000000 !important;
+}
+
+[data-theme="dark"][data-high-contrast="true"] :focus-visible {
+    outline: 4px solid #ffffff !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 6px #000000, 0 0 0 10px #ffffff !important;
+}
+
+/* High contrast buttons */
+[data-high-contrast="true"] button,
+[data-high-contrast="true"] .workout-btn {
+    border: 2px solid currentColor !important;
+}
+
+/* High contrast metric values with underlines for differentiation */
+[data-high-contrast="true"] #streamMetricsTable dd {
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 4px;
+}
+
+/* High contrast switches */
+[data-high-contrast="true"] .slider {
+    border: 2px solid var(--color-border);
+}
+
+[data-high-contrast="true"] input:checked+.slider {
+    background-color: var(--color-success);
+}
+
+/* System preference for high contrast (Windows High Contrast Mode) */
+@media (prefers-contrast: more) {
+    :root {
+        --color-text-primary: #000000;
+        --color-text-secondary: #1a1a1a;
+        --color-border: #000000;
+        --color-accent: #0000cc;
+    }
+
+    button,
+    .workout-btn {
+        border: 2px solid currentColor !important;
+    }
+
+    :focus-visible {
+        outline: 4px solid #000000 !important;
+        outline-offset: 3px !important;
+    }
+}
+
+/* ============================================
+   Customizable Dashboard - Metric Order Display
+   ============================================ */
+
+/* Metric groups can be reordered using CSS order property */
+.metric-group[data-order="1"] {
+    order: 1;
+}
+
+.metric-group[data-order="2"] {
+    order: 2;
+}
+
+.metric-group[data-order="3"] {
+    order: 3;
+}
+
+.metric-group[data-order="4"] {
+    order: 4;
+}
+
+.metric-group[data-order="5"] {
+    order: 5;
+}
+
+.metric-group[data-order="6"] {
+    order: 6;
+}
+
+/* 3-second average power indicator */
+.metric-group-power[data-show-avg="true"] dd::after {
+    content: " (3s)";
+    font-size: 0.4em;
+    color: var(--color-text-muted);
+    vertical-align: super;
+}
+
+/* Hidden metrics (via customization) */
+.metric-group.metric-hidden {
+    display: none !important;
+}
+
+/* Settings fieldset styling */
+.settings-fieldset {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.settings-fieldset legend {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    padding: 0 8px;
+}
+
+.settings-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    margin: 16px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.settings-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 0;
+}
+
+.settings-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--color-accent);
+}
+
+.settings-option span {
+    font-size: 16px;
+    color: var(--color-text-primary);
+}
+
+/* Toggle switch for 3s power average */
+.settings-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--color-border);
+}
+
+.settings-toggle:first-of-type {
+    border-top: none;
+}
+
+.settings-toggle-label {
+    font-size: 14px;
+    color: var(--color-text-primary);
+}
+
+.settings-toggle-sublabel {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
+/* Workout Player Overlay */
+.workout-overlay {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    background: rgba(33, 33, 33, 0.95);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.workout-player-header {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workout-player-body {
+    padding: 16px;
+}
+
+/* Workout List Item */
+.workout-item {
+    background: var(--card-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.workout-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--color-accent);
+}
+
+.workout-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.workout-item-title {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.workout-item-duration {
+    background: var(--color-bg-secondary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.workout-tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.workout-tag {
+    font-size: 0.8em;
+    padding: 2px 6px;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .workout-overlay {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+        width: auto;
+    }
+}
+
+/* ============================================
+   Countdown Overlay
+   ============================================ */
+.countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.countdown__backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+}
+
+.countdown__content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 48px;
+    background: var(--modal-bg);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    min-width: 300px;
+    text-align: center;
+}
+
+.countdown__title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.countdown__number {
+    font-size: 120px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-accent);
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+}
+
+.countdown__number--pulse {
+    animation: countdownPulse 0.5s ease-out;
+}
+
+@keyframes countdownPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.countdown__cancel {
+    padding: 10px 24px;
+    background: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.countdown__cancel:hover {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-text-secondary);
+}
+
+.countdown__cancel:active {
+    transform: scale(0.98);
+}
+
+@media (max-width: 600px) {
+    .countdown__content {
+        padding: 32px;
+        min-width: 250px;
+    }
+
+    .countdown__title {
+        font-size: 20px;
+    }
+
+    .countdown__number {
+        font-size: 96px;
+        min-height: 96px;
+    }
+}

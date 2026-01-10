@@ -26,7 +26,7 @@
  * window.connectionsState
  */
 
-import './main.css';
+import './styles/main.css';
 
 // Register Web Components (must be imported before they're used in DOM)
 import './components/index.js';

@@ -16,6 +16,13 @@ export const BluetoothFactory = {
      * @returns Promise resolving to a SensorConnection
      */
     connectPower: async (): Promise<SensorConnection> => {
+        if (typeof window !== 'undefined' && (window as any).useMockSensors) {
+            const { MockPowerSensor } = await import('./mock.js');
+            const sensor = new MockPowerSensor();
+            await sensor.connect();
+            (window as any).mockSensor = sensor;
+            return sensor;
+        }
         if (Capacitor.isNativePlatform()) {
             return connectPowerNative();
         } else {
@@ -28,6 +35,13 @@ export const BluetoothFactory = {
      * @returns Promise resolving to a SensorConnection
      */
     connectHeartRate: async (): Promise<SensorConnection> => {
+        if (typeof window !== 'undefined' && (window as any).useMockSensors) {
+            const { MockHeartrateSensor } = await import('./mock.js');
+            const sensor = new MockHeartrateSensor();
+            await sensor.connect();
+            (window as any).mockSensor = sensor;
+            return sensor;
+        }
         if (Capacitor.isNativePlatform()) {
             return connectHeartRateNative();
         } else {
@@ -40,6 +54,13 @@ export const BluetoothFactory = {
      * @returns Promise resolving to a SensorConnection
      */
     connectCadence: async (): Promise<SensorConnection> => {
+        if (typeof window !== 'undefined' && (window as any).useMockSensors) {
+            const { MockCadenceSensor } = await import('./mock.js');
+            const sensor = new MockCadenceSensor();
+            await sensor.connect();
+            (window as any).mockSensor = sensor;
+            return sensor;
+        }
         if (Capacitor.isNativePlatform()) {
             return connectCadenceNative();
         } else {

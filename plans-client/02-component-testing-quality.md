@@ -1,5 +1,28 @@
 # Component Testing and Quality Plan
 
+## Status: In Progress
+
+- [x] **Phase 1: Web Component Testing Infrastructure**
+    - [x] install jsdom
+    - [x] Create component test environment setup
+    - [x] Create ComponentTestHelper
+- [ ] **Phase 2: Core Components Coverage**
+    - [x] MetricDisplay.test.ts
+    - [x] PowerGauge.test.ts
+    - [x] ZoneGauge.test.ts
+    - [x] ToastManager/Notification tests
+- [x] **Phase 3: Router & App State**
+    - [x] Router.test.ts
+    - [x] MeasurementsState.test.ts
+- [x] **Phase 4: Bluetooth Services Mocking**
+    - [x] BluetoothFactory.test.ts
+    - [x] `src/services/bluetooth/mock.ts` (Created and integrated with Factory)
+- [x] **Phase 5: E2E Expansion**
+    - [x] `test-e2e/navigation.spec.ts` (Navigation logic)
+    - [x] `test-e2e/workout-flow.spec.ts` (Critical flow with mocks)
+    - [ ] Visual Regression
+    - [ ] Accessibility (Requires @axe-core/playwright)
+
 ## Overview
 
 This plan addresses the lack of component testing for Web Components (MetricDisplay, PowerGauge, ZoneGauge, etc.) and establishes a comprehensive testing strategy for UI components.

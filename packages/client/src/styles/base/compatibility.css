@@ -1,0 +1,48 @@
+/**
+ * Compatibility Layer
+ * Mapping legacy variables to new tokens
+ */
+:root {
+    /* Backgrounds */
+    --color-bg-primary: var(--bg-primary);
+    --color-bg-secondary: var(--bg-secondary);
+    --color-bg-tertiary: var(--bg-tertiary);
+    --color-bg-hover: var(--bg-hover);
+    --color-bg-active: var(--bg-active);
+
+    /* Text */
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-muted: var(--text-muted);
+
+    /* Borders */
+    --color-border: var(--border-default);
+    --color-border-strong: var(--border-focus);
+
+    /* Colors */
+    --color-accent: var(--interactive-default);
+    --color-accent-hover: var(--interactive-hover);
+    --color-success: var(--zone-3-color);
+    --color-error: var(--zone-6-color);
+    --color-warning: var(--zone-4-color);
+
+    /* Components */
+    --header-bg: var(--bg-elevated);
+    --menu-bg: var(--bg-elevated);
+    --modal-bg: var(--bg-elevated);
+    --card-bg: var(--bg-secondary);
+    --input-bg: var(--bg-primary);
+    --switch-bg: var(--bg-tertiary);
+    --switch-knob: var(--text-inverse);
+
+    /* Shadows */
+    --color-shadow: rgba(0, 0, 0, 0.1);
+    --color-shadow-strong: rgba(0, 0, 0, 0.15);
+
+    /* Gradients */
+    --gradient-header: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+
+    /* Missing vars assumed */
+    --section-header-bg: var(--bg-secondary);
+    --modal-overlay: rgba(0, 0, 0, 0.5);
+}

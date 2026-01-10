@@ -1,0 +1,59 @@
+/**
+ * Connection Status Components
+ * Styles for connection error dialogs and indicators
+ */
+
+.connection-error-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.connection-error-message {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+.connection-error-troubleshooting {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    border-left: 3px solid var(--interactive-default);
+}
+
+.connection-error-troubleshooting h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+}
+
+.connection-error-troubleshooting ul {
+    margin: 0;
+    padding: 0 0 0 20px;
+    list-style-type: disc;
+}
+
+.connection-error-troubleshooting li {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 4px;
+}
+
+.connection-error-troubleshooting li:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .connection-error-troubleshooting {
+        padding: 12px;
+    }
+
+    .connection-error-troubleshooting li {
+        font-size: 12px;
+    }
+}

@@ -18,19 +18,7 @@
  */
 
 import { BaseComponent } from './base/BaseComponent.js';
-
-/**
- * Zone color mapping (matches MetricDisplay)
- */
-const ZONE_COLORS: Record<string, { bg: string; fill: string; text: string }> = {
-    '1': { bg: 'rgba(74, 144, 226, 0.15)', fill: '#3b82f6', text: '#2563eb' },
-    '2': { bg: 'rgba(34, 197, 94, 0.15)', fill: '#22c55e', text: '#16a34a' },
-    '3': { bg: 'rgba(234, 179, 8, 0.15)', fill: '#eab308', text: '#ca8a04' },
-    '4': { bg: 'rgba(249, 115, 22, 0.15)', fill: '#f97316', text: '#ea580c' },
-    '5': { bg: 'rgba(239, 68, 68, 0.15)', fill: '#ef4444', text: '#dc2626' },
-    '6': { bg: 'rgba(168, 85, 247, 0.15)', fill: '#a855f7', text: '#9333ea' },
-    '7': { bg: 'rgba(236, 72, 153, 0.15)', fill: '#ec4899', text: '#db2777' },
-};
+import { sharedStyles } from './styles/shared.js';
 
 /**
  * Zone Gauge Web Component
@@ -42,14 +30,16 @@ export class ZoneGauge extends BaseComponent {
 
     protected getStyles(): string {
         return `
+            ${sharedStyles}
+
             :host {
                 display: flex;
                 flex-direction: column;
                 gap: 4px;
-                padding: 8px;
-                border-radius: 8px;
-                background: var(--zone-bg-color, var(--color-bg-secondary, #f6f8fa));
-                transition: background-color 0.3s ease;
+                padding: var(--space-2);
+                border-radius: var(--radius-md);
+                background: var(--zone-bg, var(--bg-secondary));
+                transition: background-color var(--transition-normal);
                 min-width: 80px;
             }
 
@@ -57,6 +47,15 @@ export class ZoneGauge extends BaseComponent {
                 padding: 4px 8px;
                 min-width: 60px;
             }
+
+            /* Zone bindings */
+            :host([zone="1"]) { --zone-color: var(--zone-1-color); --zone-bg: var(--zone-1-color-bg); }
+            :host([zone="2"]) { --zone-color: var(--zone-2-color); --zone-bg: var(--zone-2-color-bg); }
+            :host([zone="3"]) { --zone-color: var(--zone-3-color); --zone-bg: var(--zone-3-color-bg); }
+            :host([zone="4"]) { --zone-color: var(--zone-4-color); --zone-bg: var(--zone-4-color-bg); }
+            :host([zone="5"]) { --zone-color: var(--zone-5-color); --zone-bg: var(--zone-5-color-bg); }
+            :host([zone="6"]) { --zone-color: var(--zone-6-color); --zone-bg: var(--zone-6-color-bg); }
+            :host([zone="7"]) { --zone-color: var(--zone-7-color); --zone-bg: var(--zone-7-color-bg); }
 
             .zone-header {
                 display: flex;
@@ -66,13 +65,27 @@ export class ZoneGauge extends BaseComponent {
             }
 
             .zone-number {
-                font-size: 12px;
-                font-weight: 700;
-                color: var(--zone-text-color, var(--color-text-primary, #1f2328));
-                background: var(--zone-fill-color, #d0d7de);
+                font-size: var(--font-size-xs);
+                font-weight: var(--font-weight-bold);
+                color: var(--text-primary);
+                background: var(--zone-color, #d0d7de);
                 padding: 2px 8px;
                 border-radius: 10px;
                 white-space: nowrap;
+                /* Optimize contrast for zone number badge if needed, for now using text-primary on zone-color might be tricky without contrast calc.
+                   Let's assume zone colors are light enough or we'd need a specific text color for badges. 
+                   Actually, looking at previous code, it used a specific fill color and text color. 
+                   Let's use our background colors which are transparent, so maybe we want solid colors for badges?
+                   The previous code used 'fill' which was solid color for the badge background, and valid text color.
+                   Let's stick to using the zone color for text and background for bg, or maybe reverse for pill.
+                */
+                background: var(--zone-color);
+                color: white; /* Most zone colors work well with white text except maybe yellow */
+            }
+            
+            /* Specific overrides for light colors if needed - zone 4 is yellow */
+            :host([zone="4"]) .zone-number {
+                color: black;
             }
 
             :host([compact]) .zone-number {
@@ -82,8 +95,8 @@ export class ZoneGauge extends BaseComponent {
 
             .zone-name {
                 font-size: 11px;
-                color: var(--zone-text-color, var(--color-text-secondary, #656d76));
-                font-weight: 500;
+                color: var(--text-secondary);
+                font-weight: var(--font-weight-medium);
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
@@ -95,7 +108,7 @@ export class ZoneGauge extends BaseComponent {
 
             .gauge-container {
                 height: 8px;
-                background: var(--color-bg-tertiary, #e1e4e8);
+                background: var(--bg-tertiary);
                 border-radius: 4px;
                 overflow: hidden;
                 position: relative;
@@ -107,9 +120,9 @@ export class ZoneGauge extends BaseComponent {
 
             .gauge-fill {
                 height: 100%;
-                background: var(--zone-fill-color, #3b82f6);
+                background: var(--zone-color, var(--interactive-default));
                 border-radius: 4px;
-                transition: width 0.3s ease, background-color 0.3s ease;
+                transition: width var(--transition-normal), background-color var(--transition-normal);
                 min-width: 4px;
             }
 
@@ -171,31 +184,12 @@ export class ZoneGauge extends BaseComponent {
     }
 
     protected onAttributeChanged(name: string, _oldValue: string | null, newValue: string | null): void {
-        if (name === 'zone') {
-            this.updateZoneStyles(newValue);
-        }
         if (name === 'percent') {
             this.updateGaugeFill(parseFloat(newValue || '0'));
         }
-        // Re-render on zone or zone-name change
+        // Re-render on zone change
         if (name === 'zone' || name === 'zone-name') {
             this.render();
-        }
-    }
-
-    /**
-     * Update zone-specific styles
-     */
-    private updateZoneStyles(zone: string | null): void {
-        if (zone && ZONE_COLORS[zone]) {
-            const colors = ZONE_COLORS[zone];
-            this.style.setProperty('--zone-bg-color', colors.bg);
-            this.style.setProperty('--zone-fill-color', colors.fill);
-            this.style.setProperty('--zone-text-color', colors.text);
-        } else {
-            this.style.removeProperty('--zone-bg-color');
-            this.style.removeProperty('--zone-fill-color');
-            this.style.removeProperty('--zone-text-color');
         }
     }
 
@@ -220,7 +214,7 @@ export class ZoneGauge extends BaseComponent {
         this.setAttribute('zone', String(zone));
         this.setAttribute('zone-name', name);
         this.setAttribute('percent', String(Math.round(percent)));
-        this.updateZoneStyles(String(zone));
+        // Styles are updated declaratively via CSS based on attribute
     }
 
     /**

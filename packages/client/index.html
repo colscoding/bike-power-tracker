@@ -123,10 +123,12 @@
             <details>
                 <summary aria-label="Open menu" aria-expanded="false" tabindex="0">☰</summary>
                 <div id="controls" role="menu">
-                    <button id="connectPower" role="menuitem" aria-label="Connect power meter">⚡ Connect Power</button>
-                    <button id="connectCadence" role="menuitem" aria-label="Connect cadence sensor">🚴 Connect
-                        Cadence</button>
-                    <button id="connectHeartrate" role="menuitem" aria-label="Connect heart rate monitor">❤️ Connect
+                    <button id="connectPower" class="menu-btn" role="menuitem" aria-label="Connect power meter"
+                        data-testid="connect-power">⚡ Connect Power</button>
+                    <button id="connectCadence" class="menu-btn" role="menuitem" aria-label="Connect cadence sensor"
+                        data-testid="connect-cadence">🚴 Connect Cadence</button>
+                    <button id="connectHeartrate" class="menu-btn" role="menuitem"
+                        aria-label="Connect heart rate monitor" data-testid="connect-heartrate">❤️ Connect
                         Heartrate</button>
                     <button id="connectTreadmill" role="menuitem" aria-label="Connect Treadmill">🏃 Connect
                         Treadmill</button>
@@ -187,15 +189,18 @@
                                 aria-label="Workout controls">
 
                                 <button id="startButton" class="workout-btn workout-btn-start"
-                                    aria-label="Start workout">▶️</button>
+                                    aria-label="Start workout" data-testid="start-workout">▶️</button>
                                 <button id="pauseButton" class="workout-btn workout-btn-pause"
-                                    aria-label="Pause workout" style="display: none;">⏸️</button>
+                                    aria-label="Pause workout" style="display: none;"
+                                    data-testid="pause-workout">⏸️</button>
                                 <button id="resumeButton" class="workout-btn workout-btn-resume"
-                                    aria-label="Resume workout" style="display: none;">▶️</button>
+                                    aria-label="Resume workout" style="display: none;"
+                                    data-testid="resume-workout">▶️</button>
                                 <button id="lapButton" class="workout-btn workout-btn-lap" aria-label="Mark lap"
                                     style="display: none;" title="Mark Lap (L)">🏁</button>
                                 <button id="stopButton" class="workout-btn workout-btn-stop"
-                                    aria-label="Stop and save workout" style="display: none;">⏹️</button>
+                                    aria-label="Stop and save workout" style="display: none;"
+                                    data-testid="stop-workout">⏹️</button>
                                 <button id="toggleMapBtn" class="workout-btn workout-btn-map"
                                     aria-label="Toggle Map View" style="display: none;">🗺️</button>
                             </div>

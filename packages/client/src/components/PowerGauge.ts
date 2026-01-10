@@ -18,18 +18,19 @@
  */
 
 import { BaseComponent } from './base/BaseComponent.js';
+import { sharedStyles } from './styles/shared.js';
 
 /**
  * Power zone definitions (Coggan 7-zone model)
  */
 const POWER_ZONES = [
-    { name: 'Recovery', min: 0, max: 0.55, color: '#4a90d9' },
-    { name: 'Endurance', min: 0.55, max: 0.75, color: '#22c55e' },
-    { name: 'Tempo', min: 0.75, max: 0.90, color: '#eab308' },
-    { name: 'Threshold', min: 0.90, max: 1.05, color: '#f97316' },
-    { name: 'VO2max', min: 1.05, max: 1.20, color: '#ef4444' },
-    { name: 'Anaerobic', min: 1.20, max: 1.50, color: '#a855f7' },
-    { name: 'Neuromuscular', min: 1.50, max: 2.0, color: '#ec4899' },
+    { name: 'Recovery', min: 0, max: 0.55 },
+    { name: 'Endurance', min: 0.55, max: 0.75 },
+    { name: 'Tempo', min: 0.75, max: 0.90 },
+    { name: 'Threshold', min: 0.90, max: 1.05 },
+    { name: 'VO2 Max', min: 1.05, max: 1.20 },
+    { name: 'Anaerobic', min: 1.20, max: 1.50 },
+    { name: 'Neuromuscular', min: 1.50, max: 99.9 }
 ];
 
 /**
@@ -45,12 +46,16 @@ export class PowerGauge extends BaseComponent {
 
     protected getStyles(): string {
         return `
+            ${sharedStyles}
+
             :host {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 --gauge-size: 200px;
+                /* Default to accent color if no zone */
+                --gauge-color: var(--color-primary-500); 
             }
             
             .gauge-container {
@@ -67,7 +72,7 @@ export class PowerGauge extends BaseComponent {
             
             .gauge-background {
                 fill: none;
-                stroke: var(--color-bg-tertiary, #f0f0f0);
+                stroke: var(--bg-tertiary);
                 stroke-width: 12;
                 stroke-linecap: round;
             }
@@ -77,19 +82,28 @@ export class PowerGauge extends BaseComponent {
                 stroke-width: 12;
                 stroke-linecap: round;
                 opacity: 0.3;
-                transition: opacity 0.3s ease;
+                transition: opacity var(--transition-normal);
             }
             
             .gauge-zone.active {
                 opacity: 1;
             }
             
+            /* Zone Colors binding via CSS variables */
+            .gauge-zone[data-zone="1"] { stroke: var(--zone-1-color); }
+            .gauge-zone[data-zone="2"] { stroke: var(--zone-2-color); }
+            .gauge-zone[data-zone="3"] { stroke: var(--zone-3-color); }
+            .gauge-zone[data-zone="4"] { stroke: var(--zone-4-color); }
+            .gauge-zone[data-zone="5"] { stroke: var(--zone-5-color); }
+            .gauge-zone[data-zone="6"] { stroke: var(--zone-6-color); }
+            .gauge-zone[data-zone="7"] { stroke: var(--zone-7-color); }
+            
             .gauge-value-arc {
                 fill: none;
-                stroke: var(--gauge-color, #2196F3);
+                stroke: var(--gauge-color);
                 stroke-width: 14;
                 stroke-linecap: round;
-                transition: stroke 0.3s ease;
+                transition: stroke var(--transition-normal);
             }
             
             .gauge-center {
@@ -102,28 +116,28 @@ export class PowerGauge extends BaseComponent {
             
             .gauge-value {
                 font-size: calc(var(--gauge-size) * 0.2);
-                font-weight: bold;
-                color: var(--gauge-color, var(--color-text-primary, #1f2328));
+                font-weight: var(--font-weight-bold);
+                color: var(--gauge-color, var(--text-primary));
                 line-height: 1;
-                transition: color 0.3s ease;
+                transition: color var(--transition-normal);
             }
             
             .gauge-unit {
                 font-size: calc(var(--gauge-size) * 0.08);
-                color: var(--color-text-secondary, #656d76);
+                color: var(--text-secondary);
             }
             
             .gauge-zone-label {
                 font-size: calc(var(--gauge-size) * 0.07);
-                color: var(--gauge-color, var(--color-text-secondary, #656d76));
-                margin-top: 4px;
-                font-weight: 500;
-                transition: color 0.3s ease;
+                color: var(--gauge-color, var(--text-secondary));
+                margin-top: var(--space-1);
+                font-weight: var(--font-weight-medium);
+                transition: color var(--transition-normal);
             }
             
             .gauge-ftp {
                 font-size: calc(var(--gauge-size) * 0.06);
-                color: var(--color-text-muted, #8b949e);
+                color: var(--text-tertiary);
                 margin-top: 2px;
             }
             
@@ -154,12 +168,26 @@ export class PowerGauge extends BaseComponent {
 
         // Calculate the current zone and color
         const ftpPercent = ftp > 0 ? value / ftp : 0;
-        const zone = this.getZone(ftpPercent);
-        const zoneColor = zone ? zone.color : '#2196F3';
+        const _zone = this.getZone(ftpPercent);
+
+        // Map internal zone object back to zone number (1-7)
+        // This is a bit of a hack since getZone returns the object from the local POWER_ZONES array
+        // We really should unify the data structures more deeply, but for now we just want styling
+        // We can infer the zone number by finding the index + 1
+        const zoneIndex = _zone ? POWER_ZONES.indexOf(_zone) : -1;
+        const zoneNumber = zoneIndex >= 0 ? zoneIndex + 1 : 0;
+
+        let zoneColorVar = 'var(--color-primary-500)';
+        if (zoneNumber > 0) {
+            zoneColorVar = `var(--zone-${zoneNumber}-color)`;
+        }
 
         // Calculate arc progress
         const progress = Math.min(value / max, 1);
         const dashOffset = arcLength * (1 - progress);
+
+        // Update CSS variable on the host for color
+        this.style.setProperty('--gauge-color', zoneColorVar);
 
         return `
             <div class="gauge-container">
@@ -179,14 +207,13 @@ export class PowerGauge extends BaseComponent {
                         cx="100" cy="100" r="${radius}"
                         stroke-dasharray="${arcLength} ${circumference}"
                         stroke-dashoffset="${dashOffset}"
-                        style="stroke: ${zoneColor}"
                     />
                 </svg>
                 
                 <div class="gauge-center">
-                    <div class="gauge-value" style="color: ${zoneColor}">${value}</div>
+                    <div class="gauge-value">${value}</div>
                     <div class="gauge-unit">watts</div>
-                    ${zone ? `<div class="gauge-zone-label" style="color: ${zoneColor}">${zone.name}</div>` : ''}
+                    ${_zone ? `<div class="gauge-zone-label">${_zone.name}</div>` : ''}
                     ${ftp > 0 ? `<div class="gauge-ftp">FTP: ${ftp}W</div>` : ''}
                 </div>
             </div>
@@ -214,7 +241,6 @@ export class PowerGauge extends BaseComponent {
                 <circle 
                     class="gauge-zone ${isActive ? 'active' : ''}"
                     cx="100" cy="100" r="${radius}"
-                    stroke="${zone.color}"
                     stroke-dasharray="${zoneArcLength} ${circumference}"
                     stroke-dashoffset="${offset}"
                     data-zone="${index + 1}"

@@ -182,6 +182,12 @@ export class Toast extends BaseComponent {
         }
     }
 
+    protected onAttributeChanged(_name: string, _oldValue: string | null, _newValue: string | null): void {
+        // Re-render when attributes change
+        this.render();
+        this.setupEventListeners();
+    }
+
     /**
      * Dismiss the toast
      */

@@ -1,0 +1,142 @@
+/**
+ * Modal Dialogs
+ */
+
+.stream-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-overlay);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.stream-modal-content {
+    background-color: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-xl);
+    transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.stream-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--border-default);
+    transition: border-color var(--transition-normal);
+}
+
+.stream-modal-header h2 {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+    margin: 0;
+    transition: color var(--transition-normal);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    transition: color var(--transition-normal), background-color 0.15s ease;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+}
+
+.close-button:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.stream-modal-body {
+    padding: var(--space-5) var(--space-6);
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Onboarding Modal specifics */
+.onboarding-modal {
+    text-align: center;
+}
+
+.onboarding-modal h2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.onboarding-modal #onboardingIcon {
+    font-size: 28px;
+}
+
+.onboarding-modal p {
+    margin: 12px 0;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.onboarding-modal ul {
+    list-style: none;
+    padding: 0;
+}
+
+.onboarding-modal li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.onboarding-modal li:last-child {
+    border-bottom: none;
+}
+
+.onboarding-modal kbd {
+    display: inline-block;
+    padding: 4px 8px;
+    font-family: monospace;
+    font-size: 14px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+.onboarding-modal table {
+    border-collapse: collapse;
+}
+
+.onboarding-modal td {
+    padding: 6px 12px;
+}
+
+.onboarding-modal input[type="number"] {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+}
+
+.onboarding-modal input[type="number"]:focus {
+    outline: none;
+    border-color: var(--interactive-default);
+    box-shadow: 0 0 0 3px var(--border-focus);
+}

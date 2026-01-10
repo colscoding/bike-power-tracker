@@ -1,0 +1,178 @@
+/**
+ * Header Components
+ */
+
+header {
+    position: relative;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: 8vh;
+    background: var(--bg-elevated);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 2vw;
+    z-index: 100;
+    transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+/* App title */
+header h1 {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Top bar controls container */
+#topBarControls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+}
+
+#time {
+    grid-column: 1;
+    justify-self: center;
+    white-space: nowrap;
+}
+
+/* Workout controls container */
+.workout-controls {
+    display: flex;
+    gap: 8px;
+    grid-column: 3;
+    justify-self: start;
+}
+
+/* Workout control buttons */
+.workout-btn,
+#startStop,
+#resetButton,
+#exportButton {
+    padding: 8px 12px;
+    font-size: 20px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    line-height: 1;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#resetButton,
+#exportButton {
+    font-size: 14px;
+    min-width: auto;
+    min-height: auto;
+    height: 44px;
+    /* Maintain touch target */
+}
+
+.workout-btn:hover,
+#startStop:hover,
+#resetButton:hover,
+#exportButton:hover {
+    background-color: var(--bg-secondary);
+}
+
+.workout-btn:active,
+#startStop:active,
+#resetButton:active,
+#exportButton:active {
+    background-color: var(--bg-tertiary);
+    transform: scale(0.95);
+}
+
+.workout-btn:focus-visible,
+#startStop:focus-visible,
+#resetButton:focus-visible,
+#exportButton:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
+/* Start button - green accent when idle */
+.workout-btn-start {
+    background-color: var(--zone-3-color-bg);
+    color: var(--zone-3-color);
+}
+
+.workout-btn-start:hover {
+    background-color: rgba(76, 175, 80, 0.25);
+}
+
+/* Pause button - amber when recording */
+.workout-btn-pause {
+    background-color: var(--zone-4-color-bg);
+    color: var(--zone-4-color);
+}
+
+.workout-btn-pause:hover {
+    background-color: rgba(255, 193, 7, 0.25);
+}
+
+/* Resume button - green accent */
+.workout-btn-resume {
+    background-color: var(--zone-3-color-bg);
+    color: var(--zone-3-color);
+}
+
+.workout-btn-resume:hover {
+    background-color: rgba(76, 175, 80, 0.25);
+}
+
+/* Stop button - red when paused */
+.workout-btn-stop {
+    background-color: var(--zone-6-color-bg);
+    color: var(--zone-6-color);
+}
+
+.workout-btn-stop:hover {
+    background-color: rgba(244, 67, 54, 0.25);
+}
+
+/* Lap button - purple */
+.workout-btn-lap {
+    background-color: rgba(156, 39, 176, 0.15);
+    /* Keep strict rgba for now or find token */
+    color: #9c27b0;
+}
+
+.workout-btn-lap:hover {
+    background-color: rgba(156, 39, 176, 0.25);
+}
+
+/* Lap counter display */
+.lap-counter {
+    font-size: 14px;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    background-color: rgba(156, 39, 176, 0.1);
+    border-radius: 4px;
+    margin-left: auto;
+}
+
+.lap-counter #lapCount {
+    font-weight: var(--font-weight-bold);
+    color: #9c27b0;
+}
+
+/* Disabled state */
+.workout-btn:disabled,
+#startStop:disabled,
+#resetButton:disabled,
+#exportButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+}

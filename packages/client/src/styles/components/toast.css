@@ -1,0 +1,139 @@
+/**
+ * Toast Notifications
+ * Styles for transient messages (undo, success, error)
+ */
+
+.undo-notification {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 2001;
+    min-width: 300px;
+    max-width: 90%;
+    overflow: hidden;
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.undo-notification-visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.undo-notification-hiding {
+    transform: translateX(-50%) translateY(100px);
+    opacity: 0;
+}
+
+.undo-notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 16px 12px;
+}
+
+.undo-notification-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.undo-notification-message {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    flex: 1;
+}
+
+.undo-notification-actions {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0 16px 16px;
+}
+
+.undo-notification-btn {
+    background-color: var(--interactive-default);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.undo-notification-btn:hover {
+    background-color: var(--interactive-hover);
+}
+
+.undo-notification-btn:focus-visible {
+    outline: 2px solid var(--interactive-default);
+    outline-offset: 2px;
+}
+
+.undo-countdown {
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+.undo-progress-bar {
+    height: 3px;
+    background-color: var(--border-default);
+    position: relative;
+}
+
+.undo-progress-fill {
+    height: 100%;
+    width: 100%;
+    background-color: var(--interactive-default);
+    transition: width linear;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .undo-notification {
+        transition: none;
+    }
+
+    .undo-progress-fill {
+        transition: none;
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .undo-notification {
+        bottom: 16px;
+        min-width: 280px;
+        left: 16px;
+        right: 16px;
+        transform: translateX(0) translateY(100px);
+        max-width: calc(100% - 32px);
+    }
+
+    .undo-notification-visible {
+        transform: translateX(0) translateY(0);
+    }
+
+    .undo-notification-hiding {
+        transform: translateX(0) translateY(100px);
+    }
+
+    .undo-notification-content {
+        padding: 12px 12px 8px;
+    }
+
+    .undo-notification-actions {
+        padding: 0 12px 12px;
+    }
+
+    .undo-notification-btn {
+        width: 100%;
+        padding: 10px 16px;
+    }
+}

@@ -1,0 +1,465 @@
+/**
+ * History View (Workouts)
+ * Styles for the workout history list and details
+ */
+
+.workout-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.workout-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.workout-control-btn {
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color var(--transition-fast);
+    color: var(--text-primary);
+}
+
+.workout-control-btn:hover:not(:disabled) {
+    background-color: var(--bg-secondary);
+}
+
+.workout-control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--text-tertiary);
+}
+
+#historyPageInfo {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+/* Workout List */
+.workout-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.workout-loading,
+.workout-empty,
+.workout-error {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.workout-empty-hint,
+.workout-error-detail {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+}
+
+.workout-error {
+    color: var(--color-error-main);
+}
+
+/* Workout Card */
+.workout-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    transition: box-shadow var(--transition-fast);
+}
+
+.workout-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Workout Detail */
+.workout-detail-summary {
+    margin-bottom: 16px;
+}
+
+.workout-detail-summary h4 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.summary-item {
+    background: var(--bg-elevated);
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    border: 1px solid var(--border-subtle);
+    /* Added border to match theme */
+}
+
+.summary-label {
+    display: block;
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.summary-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-primary-500);
+}
+
+.workout-detail-description {
+    margin-bottom: 16px;
+}
+
+.workout-detail-description h4 {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.workout-detail-description p {
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.workout-detail-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.workout-export-btn {
+    background: var(--color-primary-500);
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color var(--transition-fast);
+}
+
+.workout-export-btn:hover {
+    background-color: var(--color-primary-700);
+}
+
+/* Workout Summary Modal Content */
+.workout-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.summary-duration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.summary-duration .summary-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-duration .summary-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--interactive-default);
+    margin-top: 4px;
+}
+
+.summary-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.summary-metric-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+.summary-metric-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.summary-metric-values {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-avg,
+.summary-max {
+    font-size: 13px;
+    color: var(--text-primary);
+}
+
+.summary-avg {
+    font-weight: 600;
+}
+
+.summary-max {
+    color: var(--text-secondary);
+}
+
+.summary-samples {
+    text-align: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.summary-samples-text {
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+/* Zone Distribution Chart */
+.zone-distribution {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.zone-distribution-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 12px 0;
+    text-align: center;
+}
+
+.zone-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.zone-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.zone-bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    width: 24px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.zone-bar-container {
+    flex: 1;
+    height: 16px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.zone-bar {
+    height: 100%;
+    border-radius: var(--radius-sm);
+    transition: width 0.3s ease;
+    min-width: 4px;
+}
+
+.zone-bar-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+    width: 40px;
+    text-align: left;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Workout Metadata Form */
+.workout-metadata-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.metadata-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.metadata-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.metadata-input {
+    padding: 10px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.metadata-input:focus {
+    outline: none;
+    border-color: var(--interactive-default);
+    box-shadow: 0 0 0 2px var(--color-primary-200);
+}
+
+.metadata-textarea {
+    padding: 10px 12px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    background-color: var(--bg-elevated);
+    color: var(--text-primary);
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    font-family: inherit;
+}
+
+.metadata-textarea:focus {
+    outline: none;
+    border-color: var(--interactive-default);
+    box-shadow: 0 0 0 2px var(--color-primary-200);
+}
+
+/* RPE Selector */
+.rpe-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rpe-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 4px;
+}
+
+.rpe-button {
+    aspect-ratio: 1;
+    border: 2px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+}
+
+.rpe-button:hover {
+    border-color: var(--rpe-color, var(--interactive-default));
+    background-color: var(--bg-tertiary);
+}
+
+.rpe-button.selected {
+    background-color: var(--rpe-color, var(--interactive-default));
+    border-color: var(--rpe-color, var(--interactive-default));
+    color: var(--text-inverse);
+    transform: scale(1.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.rpe-description {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    min-height: 18px;
+    padding-top: 4px;
+}
+
+/* Responsive adjustments for RPE grid */
+@media (max-width: 400px) {
+    .rpe-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+    }
+}
+
+/* High contrast mode for zone bars */
+[data-high-contrast="true"] .zone-bar {
+    background-image: repeating-linear-gradient(45deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.3) 2px,
+            rgba(255, 255, 255, 0.3) 4px);
+}
+
+/* Colorblind patterns for zone bars */
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(1) .zone-bar {
+    background-image: repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(255, 255, 255, 0.4) 4px, rgba(255, 255, 255, 0.4) 8px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(2) .zone-bar {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255, 255, 255, 0.4) 4px, rgba(255, 255, 255, 0.4) 8px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(3) .zone-bar {
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(255, 255, 255, 0.4) 4px, rgba(255, 255, 255, 0.4) 8px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(4) .zone-bar {
+    background-image: repeating-linear-gradient(-45deg, transparent, transparent 4px, rgba(255, 255, 255, 0.4) 4px, rgba(255, 255, 255, 0.4) 8px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(5) .zone-bar {
+    background-image: repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0.4) 4px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(6) .zone-bar {
+    background-image: repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0.4) 4px);
+}
+
+[data-colorblind-patterns="true"] .zone-bar-row:nth-child(7) .zone-bar {
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.4) 2px, rgba(255, 255, 255, 0.4) 4px);
+}
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

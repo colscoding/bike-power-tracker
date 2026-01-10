@@ -1,0 +1,100 @@
+/**
+ * Power Zone Styles
+ * Used by components that display zone information
+ */
+
+/* Zone indicator classes */
+.zone-1 {
+    --current-zone-color: var(--zone-1-color);
+}
+
+.zone-2 {
+    --current-zone-color: var(--zone-2-color);
+}
+
+.zone-3 {
+    --current-zone-color: var(--zone-3-color);
+}
+
+.zone-4 {
+    --current-zone-color: var(--zone-4-color);
+}
+
+.zone-5 {
+    --current-zone-color: var(--zone-5-color);
+}
+
+.zone-6 {
+    --current-zone-color: var(--zone-6-color);
+}
+
+.zone-7 {
+    --current-zone-color: var(--zone-7-color);
+}
+
+/* Zone backgrounds */
+.zone-1-bg {
+    background-color: var(--zone-1-color-bg);
+}
+
+.zone-2-bg {
+    background-color: var(--zone-2-color-bg);
+}
+
+.zone-3-bg {
+    background-color: var(--zone-3-color-bg);
+}
+
+.zone-4-bg {
+    background-color: var(--zone-4-color-bg);
+}
+
+.zone-5-bg {
+    background-color: var(--zone-5-color-bg);
+}
+
+.zone-6-bg {
+    background-color: var(--zone-6-color-bg);
+}
+
+.zone-7-bg {
+    background-color: var(--zone-7-color-bg);
+}
+
+/* Zone text colors */
+.zone-1-text {
+    color: var(--zone-1-color);
+}
+
+.zone-2-text {
+    color: var(--zone-2-color);
+}
+
+.zone-3-text {
+    color: var(--zone-3-color);
+}
+
+.zone-4-text {
+    color: var(--zone-4-color);
+}
+
+.zone-5-text {
+    color: var(--zone-5-color);
+}
+
+.zone-6-text {
+    color: var(--zone-6-color);
+}
+
+.zone-7-text {
+    color: var(--zone-7-color);
+}
+
+/* Zone border accents */
+.zone-accent {
+    border-left: 4px solid var(--current-zone-color, var(--border-default));
+}
+
+.zone-glow {
+    box-shadow: 0 0 10px var(--current-zone-color);
+}

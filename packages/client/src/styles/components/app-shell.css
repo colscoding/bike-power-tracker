@@ -1,0 +1,43 @@
+/**
+ * App Shell Layout
+ */
+
+/* Main content area - below header */
+main {
+    margin-top: 0;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    overflow: hidden;
+    min-height: 0;
+    background-color: var(--bg-primary);
+    transition: background-color var(--transition-normal);
+}
+
+/* Main content wrapper for side-by-side metrics */
+#mainContent {
+    display: flex;
+    gap: 0;
+    width: 100%;
+    height: 100%;
+    align-items: stretch;
+}
+
+/* Page View Wrapper (introduced by Router) */
+.page-view {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Responsive: stack vertically on smaller screens */
+@media (max-width: 768px) {
+    #mainContent {
+        flex-direction: column;
+        gap: 0;
+    }
+}

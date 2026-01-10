@@ -1,0 +1,152 @@
+/**
+ * Dashboard View (Stream Viewer)
+ * Styles for the live data dashboard
+ */
+
+.streams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    width: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
+
+.stream-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-fast);
+}
+
+.stream-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.stream-card-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.stream-card-power {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-primary-500);
+    margin-bottom: 8px;
+}
+
+.stream-card-power::after {
+    content: 'W';
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 2px;
+}
+
+.stream-card-secondary {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stream-card-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stream-card-metric span:first-child {
+    font-size: 10px;
+    margin-bottom: 2px;
+}
+
+.stream-card-metric span:last-child {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* View Toggle Button */
+.view-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color var(--transition-fast);
+    color: var(--text-secondary);
+}
+
+.view-toggle-btn:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.view-toggle-btn.active {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
+
+/* Compact List View */
+.streams-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    padding: 10px;
+    overflow-y: auto;
+    max-height: calc(100vh - 150px);
+}
+
+.stream-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+}
+
+.stream-row-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 12px;
+}
+
+.stream-row-power {
+    font-weight: 700;
+    color: var(--color-primary-500);
+    min-width: 60px;
+    text-align: right;
+}
+
+.stream-row-power::after {
+    content: 'W';
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-left: 2px;
+}

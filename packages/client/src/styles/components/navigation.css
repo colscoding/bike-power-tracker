@@ -1,0 +1,80 @@
+/**
+ * Navigation Components (Menus, Breadcrumbs)
+ */
+
+/* Hamburger menu in header */
+details {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    z-index: 101;
+}
+
+/* Hamburger icon */
+summary {
+    font-size: 24px;
+    padding: 8px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    color: var(--text-primary);
+    transition: color var(--transition-normal);
+}
+
+/* Remove default triangle */
+summary::-webkit-details-marker {
+    display: none;
+}
+
+/* Dropdown menu when open */
+#controls {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+    transition: background-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+/* Menu buttons */
+#controls button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    background-color: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    text-align: left;
+    transition: background-color 0.15s ease, color var(--transition-normal);
+    color: var(--text-primary);
+    font-weight: 400;
+}
+
+#controls button:hover {
+    background-color: var(--bg-hover);
+}
+
+#controls button:active {
+    background-color: var(--bg-active);
+}
+
+/* Menu toggle item container */
+.menu-toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: var(--text-primary);
+    transition: color var(--transition-normal);
+}

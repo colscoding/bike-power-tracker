@@ -1,0 +1,84 @@
+/**
+ * Live Charts Components
+ * Styles for real-time data visualization charts
+ */
+
+.live-charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.live-charts-container.hidden {
+    display: none;
+}
+
+.live-charts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.live-charts-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.charts-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.charts-toggle-btn:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.charts-toggle-btn:focus-visible {
+    outline: 2px solid var(--interactive-default);
+    outline-offset: 2px;
+}
+
+.charts-toggle-btn[aria-pressed="true"] {
+    background-color: var(--interactive-default);
+    color: var(--text-inverse);
+    border-color: var(--interactive-default);
+}
+
+.charts-toggle-btn .toggle-icon {
+    font-size: 14px;
+}
+
+.charts-wrapper {
+    display: flex;
+    gap: 8px;
+}
+
+.live-charts-wrapper.hidden {
+    display: none;
+}
+
+/* Responsive: stack charts vertically on narrow screens */
+@media (max-width: 480px) {
+    .charts-wrapper {
+        flex-direction: column;
+    }
+}

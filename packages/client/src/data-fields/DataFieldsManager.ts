@@ -13,7 +13,7 @@
 
 import type { MeasurementsState } from '../measurements-state.js';
 import type { ConnectionsState, TimeState } from '../getInitState.js';
-import type { ActivityProfile, UserSettings, WorkoutState } from './types.js';
+import { DEFAULT_HR_ZONES, DEFAULT_POWER_ZONES, type ActivityProfile, type UserSettings, type WorkoutState } from './types.js';
 import type { ScreenCarouselComponent } from '../components/data-fields/ScreenCarouselComponent.js';
 import { getDataField } from './registry.js';
 import { createCalculationManager, type CalculationManager } from './CalculationManager.js';
@@ -357,24 +357,11 @@ export class DataFieldsManager {
             maxHr: 190,      // Maximum heart rate (bpm)
             weight: 70,      // Rider weight (kg)
             restingHr: 60,   // Resting heart rate (bpm)
+            showCalories: true,
             // Power zones as percentage of FTP
-            powerZones: [
-                { name: 'Zone 1', min: 0, max: 55 },
-                { name: 'Zone 2', min: 55, max: 75 },
-                { name: 'Zone 3', min: 75, max: 90 },
-                { name: 'Zone 4', min: 90, max: 105 },
-                { name: 'Zone 5', min: 105, max: 120 },
-                { name: 'Zone 6', min: 120, max: 150 },
-                { name: 'Zone 7', min: 150, max: 999 },
-            ],
+            powerZones: DEFAULT_POWER_ZONES,
             // HR zones as percentage of max HR
-            hrZones: [
-                { name: 'Zone 1', min: 0, max: 60 },
-                { name: 'Zone 2', min: 60, max: 70 },
-                { name: 'Zone 3', min: 70, max: 80 },
-                { name: 'Zone 4', min: 80, max: 90 },
-                { name: 'Zone 5', min: 90, max: 100 },
-            ],
+            hrZones: DEFAULT_HR_ZONES,
         };
     }
 }

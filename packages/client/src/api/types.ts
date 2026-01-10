@@ -14,4 +14,4 @@ export interface ApiError {
 
 // Re-export common domain types used in API
 // This allows centralized type management if needed
-export type { WorkoutState, UserSettings, ZoneDefinition } from '../data-fields/types.js';
+export type { WorkoutState, UserSettings, ZoneConfig as ZoneDefinition } from '../data-fields/types.js';

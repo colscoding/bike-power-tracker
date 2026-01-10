@@ -393,15 +393,17 @@ function validateProfile(profile: unknown): profile is ActivityProfile {
         return false;
     }
 
-    if (typeof profile.id !== 'string' || profile.id.length === 0) {
+    const p = profile as { id?: unknown; name?: unknown; screens?: unknown };
+
+    if (typeof p.id !== 'string' || p.id.length === 0) {
         return false;
     }
 
-    if (typeof profile.name !== 'string' || profile.name.length === 0) {
+    if (typeof p.name !== 'string' || p.name.length === 0) {
         return false;
     }
 
-    if (!Array.isArray(profile.screens)) {
+    if (!Array.isArray(p.screens)) {
         return false;
     }
 

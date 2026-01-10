@@ -32,7 +32,7 @@ This plan addresses the fragmented styling approach where colors and theme value
 
 ### Phase 1: Create Design Token System
 
-**Priority: HIGH**
+**Priority: HIGH** (Completed)
 
 #### 1.1 Define design tokens
 
@@ -317,7 +317,7 @@ This plan addresses the fragmented styling approach where colors and theme value
 
 ### Phase 2: Create Shared Styles Module
 
-**Priority: HIGH**
+**Priority: HIGH** (Completed)
 
 #### 2.1 Zone styles module (for components)
 
@@ -451,7 +451,7 @@ export function getHRZone(percentMaxHR: number): HRZone {
 
 ### Phase 3: Split main.css into Feature Modules
 
-**Priority: HIGH**
+**Priority: HIGH** (Completed - Structural Split)
 
 #### 3.1 New file structure
 
@@ -621,7 +621,7 @@ packages/client/src/styles/
 
 ### Phase 4: Component Style Migration
 
-**Priority: MEDIUM**
+**Priority: MEDIUM** (In Progress - MetricDisplay done)
 
 #### 4.1 Create component style helper
 
@@ -756,7 +756,37 @@ protected getStyles(): string {
 
 ---
 
-### Phase 5: CSS-in-JS Consideration (Future)
+### Phase 5: Legacy Migration
+
+**Priority: HIGH** (In Progress)
+
+#### 5.1 Migrate Global Styles
+- [x] Move Reset rules to `base/reset.css`
+- [x] Create Compatibility layer in `base/compatibility.css`
+- [x] Move Layout rules to `utilities/layout.css` and `components/app-shell.css`
+- [x] Move Typography settings to `base/typography.css`
+
+#### 5.2 Migrate Component Styles
+- [x] Header & Navigation -> `components/header.css`, `components/navigation.css`
+- [x] Modals -> `modules/modals.css`
+- [x] Stream List -> `components/stream-list.css`
+- [x] Inputs/Switches -> `modules/inputs.css`
+- [x] Metrics Display -> `components/metrics.css`
+- [x] Live Charts -> `components/charts.css`
+- [x] Connection Status -> `components/connection-status.css`
+- [x] Toast Notifications -> `components/toast.css`
+- [x] Settings View -> `views/settings.css` and `data-fields-config.css`
+- [x] Data Field Configuration -> `data-fields-config.css`
+
+#### 5.3 Clean up Legacy CSS
+- [x] Remove migrated sections from `legacy.css`
+- [x] Continue iterating until `legacy.css` is empty
+- [x] Remove `legacy.css` import from `main.css`
+- [x] Delete `legacy.css` file
+
+---
+
+### Phase 6: CSS-in-JS Consideration (Future)
 
 **Priority: LOW**
 
@@ -989,3 +1019,17 @@ analyzeCSSFiles().catch(console.error);
 - Phase 6: 2-3 hours (build optimization)
 
 **Total: 15-22 hours**
+
+## Implementation Status (Updated 2026-01-10)
+
+**Completed Work:**
+- **Dashboard View**: Migrated `.streams-grid`, `.stream-card`, and related styles to `src/styles/views/dashboard.css`.
+- **History View**: Migrated `.workout-list`, `.workout-card`, `.workout-detail-summary`, and metadata forms to `src/styles/views/history.css`.
+- **Modals**: Migrated `.custom-modal` and related generic modal styles to `src/styles/components/modal.css`.
+- **Cleanup**: Removed the corresponding migrated styles from `src/styles/legacy.css`.
+
+**Remaining in `legacy.css`:**
+- Live Charts Section
+- Undo Notification
+- Global responsive adjustments
+- Settings View styles (if any remain)
